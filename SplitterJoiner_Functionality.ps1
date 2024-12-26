@@ -1,7 +1,7 @@
 # Load Windows Forms assembly
 Add-Type -AssemblyName System.Windows.Forms
 
-# Create form to host dialogs but make it invisible
+# Creates a form to host dialogs but make it invisible
 $form = New-Object System.Windows.Forms.Form
 $form.TopMost = $true
 $form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
@@ -10,7 +10,7 @@ $form.ShowInTaskbar = $false
 $form.Opacity = 0
 $form.Size = New-Object System.Drawing.Size(1,1)
 
-# Define a function to split a file
+# Function to split a file
 function Split-File {
     param (
         [string]$FilePath,
@@ -41,7 +41,7 @@ function Split-File {
     Write-Output "File split into $ChunkNum chunks."
 }
 
-# Define a function to join files
+# Function to join files
 function Join-Files {
     param (
         [string]$BaseName,
@@ -70,7 +70,6 @@ function Join-Files {
     Write-Output "Files joined into $OutputFile."
 }
 
-# Example usage
 while ($true) {
     Write-Output "`nChoose an option:"
     Write-Output "1. Split a file"
