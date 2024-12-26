@@ -1,3 +1,15 @@
+# Load Windows Forms assembly
+Add-Type -AssemblyName System.Windows.Forms
+
+# Create form to host dialogs but make it invisible
+$form = New-Object System.Windows.Forms.Form
+$form.TopMost = $true
+$form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+$form.WindowState = [System.Windows.Forms.FormWindowState]::Minimized
+$form.ShowInTaskbar = $false
+$form.Opacity = 0
+$form.Size = New-Object System.Drawing.Size(1,1)
+
 # Define a function to split a file
 function Split-File {
     param (
@@ -60,7 +72,7 @@ function Join-Files {
 
 # Example usage
 while ($true) {
-    Write-Output "Choose an option:"
+    Write-Output "`nChoose an option:"
     Write-Output "1. Split a file"
     Write-Output "2. Join files"
     Write-Output "3. Exit"
@@ -68,12 +80,12 @@ while ($true) {
 
     switch ($Choice) {
         "1" {
-            Add-Type -AssemblyName System.Windows.Forms
             $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
             $OpenFileDialog.Filter = "All Files (*.*)|*.*"
             $OpenFileDialog.Title = "Select a file to split"
-
-            if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            $OpenFileDialog.InitialDirectory = [Environment]::GetFolderPath('Desktop')
+            
+            if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
                 $FilePath = $OpenFileDialog.FileName
                 
                 $SizeUnit = Read-Host "Enter size unit (KB or MB)"
@@ -94,24 +106,25 @@ while ($true) {
             }
         }
         "2" {
-            Add-Type -AssemblyName System.Windows.Forms
             $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
             $OpenFileDialog.Filter = "Part Files (*.part*)|*.part*|All Files (*.*)|*.*"
             $OpenFileDialog.Title = "Select any part file"
+            $OpenFileDialog.InitialDirectory = [Environment]::GetFolderPath('Desktop')
 
-            if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
                 $FilePath = $OpenFileDialog.FileName
                 $BaseName = [System.IO.Path]::GetFileNameWithoutExtension($FilePath) -replace "\.part\d+$", ""
 
                 $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
                 $SaveFileDialog.Filter = "All Files (*.*)|*.*"
                 $SaveFileDialog.Title = "Save joined file as"
+                $SaveFileDialog.InitialDirectory = [System.IO.Path]::GetDirectoryName($FilePath)
 
-                if ($SaveFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+                if ($SaveFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
                     $OutputFile = $SaveFileDialog.FileName
 
                     # Ask for file type
-                    $FileType = Read-Host "Enter the file extension (e.g., txt, jpg, png, etc.) without the dot"
+                    $FileType = Read-Host "Enter the file extension/type (ex: txt/jpg/png/pdf, etc.) without the dot"
                     if ($FileType) {
                         $OutputFile = "$OutputFile.$FileType"
                     }
@@ -125,7 +138,8 @@ while ($true) {
             }
         }
         "3" {
-            Write-Output "Goodbye!"
+            Write-Output "Program Terminated."
+            $form.Close()
             break
         }
         default {
@@ -133,4 +147,3 @@ while ($true) {
         }
     }
 }
-# Backend 
