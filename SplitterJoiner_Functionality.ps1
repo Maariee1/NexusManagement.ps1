@@ -139,7 +139,7 @@ while ($true) {
         "3" {
             Write-Output "Program Terminated."
             $form.Close()
-            break
+            exit
         }
         default {
             Write-Output "Invalid choice. Please try again."
