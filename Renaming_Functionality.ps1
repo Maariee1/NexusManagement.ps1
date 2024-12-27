@@ -227,7 +227,7 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
 
 
 
-
+#WITH ENCRYPTION AND DECRYPTION BUT NOT YET DONEEEEEEEEEEEEEEEEEEEEEE!!!!
 # Add-Type -AssemblyName System.Windows.Forms
 
 # # Stack for undo and redo
@@ -454,6 +454,258 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
 #         return @()
 #     }
 # }
+
+
+
+
+# Add-Type -AssemblyName System.Windows.Forms
+
+# # Declare stacks for undo and redo operations
+# $undoStack = @()
+# $redoStack = @()
+
+# # Create an OpenFileDialog object
+# $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+# $OpenFileDialog.Multiselect = $true # Allows multiple file selection
+# $OpenFileDialog.Title = "Select Files to Rename, Encrypt, or Decrypt"
+# $OpenFileDialog.Filter = "All Files (*.*)|*.*" # For all file types
+
+# # Show the file dialog and check if files were selected
+# if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+#     # Get the selected files
+#     $selectedFiles = $OpenFileDialog.FileNames
+
+#     # Ask the user for renaming, encryption, or decryption option
+#     $actionOption = Read-Host "Enter '1' to rename files, '2' to add prefix/suffix, '3' to replace word pattern, '4' to encrypt files, or '5' to decrypt files"
+
+#     # Function to encrypt files
+#     function Encrypt-File {
+#         param (
+#             [string]$inputFilePath,
+#             [string]$outputFilePath,
+#             [string]$key,
+#             [string]$iv
+#         )
+
+#         # Ensure key and IV are 16 bytes long (128 bits)
+#         $key = $key.Substring(0, [Math]::Min($key.Length, 16)).PadRight(16, '0')
+#         $iv = $iv.Substring(0, [Math]::Min($iv.Length, 16)).PadRight(16, '0')
+
+#         $aes = [System.Security.Cryptography.Aes]::Create()
+#         $aes.Key = [System.Text.Encoding]::UTF8.GetBytes($key)
+#         $aes.IV = [System.Text.Encoding]::UTF8.GetBytes($iv)
+
+#         $encryptor = $aes.CreateEncryptor()
+
+#         $inputFileStream = [System.IO.File]::OpenRead($inputFilePath)
+#         $outputFileStream = [System.IO.File]::OpenWrite($outputFilePath)
+
+#         $cryptoStream = New-Object System.Security.Cryptography.CryptoStream($outputFileStream, $encryptor, [System.Security.Cryptography.CryptoStreamMode]::Write)
+#         $inputFileStream.CopyTo($cryptoStream)
+
+#         $cryptoStream.FlushFinalBlock()
+#         $inputFileStream.Close()
+#         $cryptoStream.Close()
+#         $outputFileStream.Close()
+#     }
+
+#     # Function to decrypt files
+#     function Decrypt-File {
+#         param (
+#             [string]$inputFilePath,
+#             [string]$outputFilePath,
+#             [string]$key,
+#             [string]$iv
+#         )
+
+#         # Ensure key and IV are 16 bytes long (128 bits)
+#         $key = $key.Substring(0, [Math]::Min($key.Length, 16)).PadRight(16, '0')
+#         $iv = $iv.Substring(0, [Math]::Min($iv.Length, 16)).PadRight(16, '0')
+
+#         $aes = [System.Security.Cryptography.Aes]::Create()
+#         $aes.Key = [System.Text.Encoding]::UTF8.GetBytes($key)
+#         $aes.IV = [System.Text.Encoding]::UTF8.GetBytes($iv)
+
+#         $decryptor = $aes.CreateDecryptor()
+
+#         $inputFileStream = [System.IO.File]::OpenRead($inputFilePath)
+#         $outputFileStream = [System.IO.File]::OpenWrite($outputFilePath)
+
+#         $cryptoStream = New-Object System.Security.Cryptography.CryptoStream($outputFileStream, $decryptor, [System.Security.Cryptography.CryptoStreamMode]::Write)
+#         $inputFileStream.CopyTo($cryptoStream)
+
+#         $cryptoStream.FlushFinalBlock()
+#         $inputFileStream.Close()
+#         $cryptoStream.Close()
+#         $outputFileStream.Close()
+#     }
+
+#     # Option 1: Renaming files
+#     if ($actionOption -eq '1') {
+#         # Ask the user for the base name for all files
+#         $baseName = Read-Host "Enter the base name for all selected files"
+
+#         $counter = 0
+#         foreach ($filePath in $selectedFiles) {
+#             $file = Get-Item -Path $filePath
+#             $folderPath = $file.DirectoryName
+#             $fileExtension = $file.Extension
+
+#             if ($counter -eq 0) {
+#                 $newFileName = "$baseName$fileExtension"
+#             } else {
+#                 $newFileName = "$baseName ($counter)$fileExtension"
+#             }
+
+#             $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+
+#             while (Test-Path -Path $newFilePath) {
+#                 $counter++
+#                 $newFileName = "$baseName ($counter)$fileExtension"
+#                 $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+#             }
+
+#             Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
+#             Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
+#             $counter++
+#         }
+#     } 
+#     # Option 2: Adding prefix and suffix
+#     elseif ($actionOption -eq '2') {
+#         do {
+#             $prefix = Read-Host "Enter the prefix to add"
+#             $suffix = Read-Host "Enter the suffix to add"
+#             if (-not $prefix -and -not $suffix) {
+#                 Write-Host "Error: Both prefix and suffix cannot be empty." -ForegroundColor Red
+#             }
+#         } while (-not $prefix -and -not $suffix)
+
+#         foreach ($filePath in $selectedFiles) {
+#             $file = Get-Item -Path $filePath
+#             $folderPath = $file.DirectoryName
+#             $fileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+#             $fileExtension = $file.Extension
+
+#             $newFileName = "$prefix$fileNameWithoutExtension$suffix$fileExtension"
+#             $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+
+#             $counter = 1
+#             while (Test-Path -Path $newFilePath) {
+#                 $newFileName = "$prefix$fileNameWithoutExtension$suffix ($counter)$fileExtension"
+#                 $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+#                 $counter++
+#             }
+
+#             Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
+#             Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
+#         }
+#     }
+#     # Option 3: Replacing word pattern
+#     elseif ($actionOption -eq '3') {
+#         $patternFound = $false
+#         do {
+#             $patternToFind = Read-Host "Enter the word pattern to find in file names"
+#             $replacementWord = Read-Host "Enter the word to replace the pattern with"
+#             if (-not $patternToFind -or -not $replacementWord) {
+#                 Write-Host "Error: Both the word pattern to find and the replacement word must be provided." -ForegroundColor Red
+#                 continue
+#             }
+
+#             foreach ($filePath in $selectedFiles) {
+#                 $file = Get-Item -Path $filePath
+#                 $folderPath = $file.DirectoryName
+#                 $fileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+#                 $fileExtension = $file.Extension
+
+#                 if ($fileNameWithoutExtension -match [regex]::Escape($patternToFind)) {
+#                     $patternFound = $True
+#                     $newFileNameWithoutExtension = $fileNameWithoutExtension -replace [regex]::Escape($patternToFind), $replacementWord
+#                     $newFileName = "$newFileNameWithoutExtension$fileExtension"
+#                     $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+
+#                     $counter = 1
+#                     while (Test-Path -Path $newFilePath) {
+#                         $newFileNameWithoutExtension = "$newFileNameWithoutExtension ($counter)"
+#                         $newFileName = "$newFileNameWithoutExtension$fileExtension"
+#                         $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+#                         $counter++
+#                     }
+
+#                     Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
+#                     Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
+#                 }
+#             }
+
+#             if (-not $patternFound) {
+#                 Write-Host "Error: The word pattern '$patternToFind' could not be found in any of the selected file names." -ForegroundColor Red
+#             }
+#         } while (-not $patternFound)
+#     }
+#     # Option 4: Encrypting files
+#     elseif ($actionOption -eq '4') {
+#         # Ask the user for encryption key and IV
+#         $key = Read-Host "Enter the encryption key (16 characters)"
+#         $iv = Read-Host "Enter the initialization vector (16 characters)"
+
+#         if ($key.Length -ne 16 -or $iv.Length -ne 16) {
+#             Write-Host "Error: Both key and IV must be exactly 16 characters long." -ForegroundColor Red
+#             exit
+#         }
+
+#         foreach ($filePath in $selectedFiles) {
+#             $file = Get-Item -Path $filePath
+#             $folderPath = $file.DirectoryName
+#             $fileName = $file.Name
+#             $encryptedFilePath = Join-Path -Path $folderPath -ChildPath "$fileName.enc"
+
+#             # Encrypt the file
+#             Encrypt-File -inputFilePath $filePath -outputFilePath $encryptedFilePath -key $key -iv $iv
+
+#             Write-Host "Encrypted '$fileName' to '$encryptedFilePath'" -ForegroundColor Green
+#         }
+
+#         Write-Host "Encryption completed for all selected files!" -ForegroundColor Cyan
+#     }
+#     # Option 5: Decrypting files
+#     elseif ($actionOption -eq '5') {
+#         # Ask the user for decryption key and IV
+#         $key = Read-Host "Enter the decryption key (16 characters)"
+#         $iv = Read-Host "Enter the initialization vector (16 characters)"
+
+#         if ($key.Length -ne 16 -or $iv.Length -ne 16) {
+#             Write-Host "Error: Both key and IV must be exactly 16 characters long." -ForegroundColor Red
+#             exit
+#         }
+
+#         foreach ($filePath in $selectedFiles) {
+#             # Ensure the file has the .enc extension for decryption
+#             if ($filePath -match "\.enc$") {
+#                 $file = Get-Item -Path $filePath
+#                 $folderPath = $file.DirectoryName
+#                 $fileName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+#                 $decryptedFilePath = Join-Path -Path $folderPath -ChildPath "$fileName.decrypted"
+
+#                 # Decrypt the file
+#                 Decrypt-File -inputFilePath $filePath -outputFilePath $decryptedFilePath -key $key -iv $iv
+
+#                 Write-Host "Decrypted '$fileName.enc' to '$decryptedFilePath'" -ForegroundColor Green
+#             } else {
+#                 Write-Host "Skipping '$($file.Name)': Not an encrypted file (.enc)" -ForegroundColor Yellow
+#             }
+#         }
+
+#         Write-Host "Decryption completed for all selected encrypted files!" -ForegroundColor Cyan
+#     } else {
+#         Write-Host "Invalid option selected. Exiting." -ForegroundColor Red
+#         exit
+#     }
+# } else {
+#     Write-Host "No files selected. Exiting." -ForegroundColor Yellow
+# }
+
+
+
+
 
 #NO NEEDDDDDDDDDDDDD
 # # Main Script Logic
