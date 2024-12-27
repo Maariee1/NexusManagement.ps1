@@ -15,47 +15,91 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
     # Get the selected files
     $selectedFiles = $OpenFileDialog.FileNames
 
-    # Ask the user for the base name for all files
-    $baseName = Read-Host "Enter the base name for all selected files"
+    # Ask the user for renaming option
+    $renameOption = Read-Host "Enter '1' to use a base name or '2' to add prefix and suffix"
 
     # Prepare to track the batch of operations for undo/redo
     $batchOperation = @()
 
-    # Process each selected file and rename them sequentially
-    $counter = 0
-    foreach ($filePath in $selectedFiles) {
-        # Get file information
-        $file = Get-Item -Path $filePath
-        $folderPath = $file.DirectoryName
-        $fileExtension = $file.Extension
+    if ($renameOption -eq '1') {
+        # Ask the user for the baase name for all files
+        $baseName = Read-Host "Enter the base name for all selected files"
 
-        # Construct the new name
-        if ($counter -eq 0) {
-            $newFileName = "$baseName$fileExtension"
-        } else {
-            $newFileName = "$baseName ($counter)$fileExtension"
-        }
+        # Process each selected file and rename them sequentially
+        $counter = 0
+        foreach ($filePath in $selectedFiles) {
+            # Get file information
+            $file = Get-Item -Path $filePath
+            $folderPath = $file.DirectoryName
+            $fileExtension = $file.Extension
+
+            # Construct the new name
+            if ($counter -eq 0) {
+                $newFileName = "$baseName$fileExtension"
+            } else {
+                $newFileName = "$baseName ($counter)$fileExtension"
+            }
         
-        $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
-
-        # Ensure no conflicts
-        while (Test-Path -Path $newFilePath) {
-            $counter++
-            $newFileName = "$baseName ($counter)$fileExtension"
             $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+
+            # Ensure no conflicts
+            while (Test-Path -Path $newFilePath) {
+                $counter++
+                $newFileName = "$baseName ($counter)$fileExtension"
+                $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+            }
+
+            # Rename the file
+            Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
+
+            #inii-store ang new and old names
+            $batchOperation += @{
+                OriginalPath = $filePath
+                NewPath = $newFilePath
+            }
+
+            Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
+            $counter++
         }
+    } elseif ($renameOption -eq '2') {
+        # Ask the user for prefix and suffix
+        $prefix = Read-Host "Enter the prefix to add"
+        $suffix = Read-Host "Enter the suffix to add"
 
-        # Rename the file
-        Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
+        # Process each selected file
+        foreach ($filePath in $selectedFiles) {
+            # Get file information
+            $file = Get-Item -Path $filePath
+            $folderPath = $file.DirectoryName
+            $fileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+            $fileExtension = $file.Extension
 
-        #inii-store ang new and old names
-        $batchOperation += @{
-            OriginalPath = $filePath
-            NewPath = $newFilePath
+            # Construct the new name
+            $newFileName = "$prefix$fileNameWithoutExtension$suffix$fileExtension"
+            $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+
+            # Ensure no conflicts
+            $counter = 1
+            while (Test-Path -Path $newFilePath) {
+                $newFileName = "$prefix$fileNameWithoutExtension$suffix ($counter)$fileExtension"
+                $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+                $counter++
+            }
+
+            # Rename the file
+            Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
+
+            # Store new and old names
+            $batchOperation += @{
+                OriginalPath = $filePath
+                NewPath = $newFilePath
+            }
+
+            Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
         }
-
-        Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
-        $counter++
+    } else {
+        Write-Host "Invalid option selected. Exiting." -ForegroundColor Red
+        exit
     }
 
     # Push the batch operation to the undo stack
