@@ -104,11 +104,18 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
 
             Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
         }
-
     } elseif ($renameOption -eq '3') {
-        # Ask the user for the pattern to find and the replacement word
-        $patternToFind = Read-Host "Enter the word pattern to find in file names"
-        $replacementWord = Read-Host "Enter the word to replace the pattern with"
+        $patternFound = $false
+        do {
+            # Ask the user for the pattern to find and the replacement word
+            $patternToFind = Read-Host "Enter the word pattern to find in file names"
+            $replacementWord = Read-Host "Enter the word to replace the pattern with"
+
+            # Check if either input is empty
+            if (-not $patternToFind -or -not $replacementWord) {
+                Write-Host "Error: Both the word pattern to find and the replacement word must be provided." -ForegroundColor Red
+                continue
+            }
 
         # Process each selected file
         foreach ($filePath in $selectedFiles) {
@@ -118,31 +125,39 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             $fileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
             $fileExtension = $file.Extension
 
-            # Replace the pattern in the file name
-            $newFileNameWithoutExtension = $fileNameWithoutExtension -replace [regex]::Escape($patternToFind), $replacementWord
-            $newFileName = "$newFileNameWithoutExtension$fileExtension"
-            $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
-
-            # Ensure no conflicts
-            $counter = 1
-            while (Test-Path -Path $newFilePath) {
-                $newFileNameWithoutExtension = "$newFileNameWithoutExtension ($counter)"
+            # Replace the pattern in the file name if it exists
+            if ($fileNameWithoutExtension -match [regex]::Escape($patternToFind)){
+                $patternFound = $True
+                $newFileNameWithoutExtension = $fileNameWithoutExtension -replace [regex]::Escape($patternToFind), $replacementWord
                 $newFileName = "$newFileNameWithoutExtension$fileExtension"
                 $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
-                $counter++
+
+                # Ensure no conflicts
+                $counter = 1
+                while (Test-Path -Path $newFilePath) {
+                    $newFileNameWithoutExtension = "$newFileNameWithoutExtension ($counter)"
+                    $newFileName = "$newFileNameWithoutExtension$fileExtension"
+                    $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+                    $counter++
+                }
+
+                # Rename the file
+                Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
+
+                # Store new and old names
+                $batchOperation += @{
+                    OriginalPath = $filePath
+                    NewPath = $newFilePath
+                }
+
+                    Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
+                }
             }
 
-            # Rename the file
-            Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
-
-            # Store new and old names
-            $batchOperation += @{
-                OriginalPath = $filePath
-                NewPath = $newFilePath
+            if (-not $patternFound) {
+                Write-Host "Error: The word pattern '$patternToFind' could not be found in any of the selected file names." -ForegroundColor Red
             }
-
-            Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
-        }
+        } while (-not $patternFound)
     } else {
         Write-Host "Invalid option selected. Exiting." -ForegroundColor Red
         exit
