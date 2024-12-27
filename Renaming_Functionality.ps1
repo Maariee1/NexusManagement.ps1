@@ -62,15 +62,16 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             $counter++
         }
     } elseif ($renameOption -eq '2') {
-        # Ask the user for prefix and suffix
-        $prefix = Read-Host "Enter the prefix to add"
-        $suffix = Read-Host "Enter the suffix to add"
+        do {
+            # Ask the user for prefix and suffix
+            $prefix = Read-Host "Enter the prefix to add"
+            $suffix = Read-Host "Enter the suffix to add"
 
-        # Check if both prefix and suffix are empty
-        if (-not $prefix -and -not $suffix) {
-            Write-Host "Error: Both prefix and suffix cannot be empty." -ForegroundColor Red
-            exit
-        }
+            # Check if both prefix and suffix are empty
+            if (-not $prefix -and -not $suffix) {
+                Write-Host "Error: Both prefix and suffix cannot be empty." -ForegroundColor Red
+            }
+        } while (-not $prefix -and -not $suffix)
 
         # Process each selected file
         foreach ($filePath in $selectedFiles) {
