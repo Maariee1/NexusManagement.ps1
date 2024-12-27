@@ -66,6 +66,12 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
         $prefix = Read-Host "Enter the prefix to add"
         $suffix = Read-Host "Enter the suffix to add"
 
+        # Check if both prefix and suffix are empty
+        if (-not $prefix -and -not $suffix) {
+            Write-Host "Error: Both prefix and suffix cannot be empty." -ForegroundColor Red
+            exit
+        }
+
         # Process each selected file
         foreach ($filePath in $selectedFiles) {
             # Get file information
