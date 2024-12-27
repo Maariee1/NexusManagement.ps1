@@ -16,7 +16,7 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
     $selectedFiles = $OpenFileDialog.FileNames
 
     # Ask the user for renaming option
-    $renameOption = Read-Host "Enter '1' to use a base name or '2' to add prefix and suffix"
+    $renameOption = Read-Host "Enter '1' to use a base name or '2' to add prefix and suffix or '3' to replace a word pattern"
 
     # Prepare to track the batch of operations for undo/redo
     $batchOperation = @()
@@ -89,6 +89,45 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             $counter = 1
             while (Test-Path -Path $newFilePath) {
                 $newFileName = "$prefix$fileNameWithoutExtension$suffix ($counter)$fileExtension"
+                $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+                $counter++
+            }
+
+            # Rename the file
+            Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
+
+            # Store new and old names
+            $batchOperation += @{
+                OriginalPath = $filePath
+                NewPath = $newFilePath
+            }
+
+            Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
+        }
+
+    } elseif ($renameOption -eq '3') {
+        # Ask the user for the pattern to find and the replacement word
+        $patternToFind = Read-Host "Enter the word pattern to find in file names"
+        $replacementWord = Read-Host "Enter the word to replace the pattern with"
+
+        # Process each selected file
+        foreach ($filePath in $selectedFiles) {
+            # Get file information
+            $file = Get-Item -Path $filePath
+            $folderPath = $file.DirectoryName
+            $fileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+            $fileExtension = $file.Extension
+
+            # Replace the pattern in the file name
+            $newFileNameWithoutExtension = $fileNameWithoutExtension -replace [regex]::Escape($patternToFind), $replacementWord
+            $newFileName = "$newFileNameWithoutExtension$fileExtension"
+            $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+
+            # Ensure no conflicts
+            $counter = 1
+            while (Test-Path -Path $newFilePath) {
+                $newFileNameWithoutExtension = "$newFileNameWithoutExtension ($counter)"
+                $newFileName = "$newFileNameWithoutExtension$fileExtension"
                 $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
                 $counter++
             }
