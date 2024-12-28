@@ -1,134 +1,140 @@
-#Load necessary assemblies for WPF
+# Load necessary components for WPF application
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName PresentationCore
 
-#XAML layout 
-$XAML = @"
-<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
-        Title="SHIFTIFY: Bulk Renaming Tool" Height="450" Width="700" WindowStartupLocation="CenterScreen" FontFamily="Segoe UI">
-    <Grid Background="#E3F2FD">
-        <!-- Title -->
-        <TextBlock Text="SHIFTIFY: " HorizontalAlignment="Center" VerticalAlignment="Top" 
-                   FontSize="26" FontWeight="Bold" Foreground="#1565C0" Margin="0,10,0,0"/>
+# Function to convert a hex color to a SolidColorBrush
+function ConvertTo-SolidColorBrush {
+    param ($hexColor)
+    $colorConverter = [System.Windows.Media.ColorConverter]::new()
+    $color = $colorConverter.ConvertFromString($hexColor)
+    return New-Object System.Windows.Media.SolidColorBrush $color
+}
 
-        <!-- Input Fields -->
-        <TextBlock Text="Folder Path:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,60,0,0" FontSize="14"/>
-        <Border BorderBrush="#1565C0" BorderThickness="2" CornerRadius="5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="100,60,0,0" Width="450" Height="30">
-            <TextBox Name="FolderPath" Width="448" Height="28" Background="White" Foreground="Black"/>
-        </Border>
-        <Button Name="BrowseButton" Content="Browse" Width="80" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="570,60,0,0" Background="#64B5F6" Foreground="White" BorderBrush="#1565C0" BorderThickness="2"/>
+# Create the main window
+$MainPageWindow = New-Object Windows.Window
+$MainPageWindow.Title = "SHIFTIFY: Main Page"
+$MainPageWindow.Height = 350
+$MainPageWindow.Width = 400
+$MainPageWindow.WindowStartupLocation = "CenterScreen"
+$MainPageWindow.FontFamily = "Segoe UI"
+$MainPageWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD") # Color - Baby blue bg
 
-        <!-- Buttons -->
-        <Button Name="PreviewButton" Content="Preview" Width="100" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="100,150,0,0" Background="#64B5F6" Foreground="White" BorderBrush="#1565C0" BorderThickness="2"/>
-        <Button Name="RenameButton" Content="Rename" Width="100" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="220,150,0,0" Background="#64B5F6" Foreground="White" BorderBrush="#1565C0" BorderThickness="2"/>
-        <Button Name="UndoButton" Content="Undo" Width="100" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="340,150,0,0" Background="#64B5F6" Foreground="White" BorderBrush="#1565C0" BorderThickness="2"/>
-        <Button Name="SuffixButton" Content="Add Suffix" Width="100" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="460,150,0,0" Background="#64B5F6" Foreground="White" BorderBrush="#1565C0" BorderThickness="2"/>
-        <Button Name="PrefixButton" Content="Add Prefix" Width="100" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="580,150,0,0" Background="#64B5F6" Foreground="White" BorderBrush="#1565C0" BorderThickness="2"/>
+# Default size of window
+$MainPageWindow.ResizeMode = "NoResize"
+$MainPageWindow.WindowStyle = "SingleBorderWindow"
 
-        <!-- Output Display -->
-        <TextBlock Text="Renaming files:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,220,0,0" FontSize="14"/>
-        <Border BorderBrush="#1565C0" BorderThickness="2" CornerRadius="5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,240,0,0" Width="640" Height="120">
-            <TextBox Name="OutputBox" Width="638" Height="118" Background="White" Foreground="Black" TextWrapping="Wrap" IsReadOnly="True"/>
-        </Border>
-    </Grid>
-</Window>
-"@
+# Create a Grid
+$Grid = New-Object Windows.Controls.Grid
 
+# Add rounded title "SHIFTIFY"
+$TitleBorder = New-Object Windows.Controls.Border
+$TitleBorder.Width = 350
+$TitleBorder.Height = 60
+$TitleBorder.HorizontalAlignment = "Center"
+$TitleBorder.VerticalAlignment = "Top"
+$TitleBorder.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
+$TitleBorder.Background = (ConvertTo-SolidColorBrush "#90CAF9") # Color - Lighter baby blue
+$TitleBorder.CornerRadius = [Windows.CornerRadius]::new(20) # Slight rounding for the title
+$TitleBorder.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4") # Steel blue border for the title outline
+$TitleBorder.BorderThickness = [Windows.Thickness]::new(3)      # Outline thickness for title
 
-#Parse the XAML
-[xml]$xamlObject = $XAML
-$reader = (New-Object System.Xml.XmlNodeReader $xamlObject)
-$Window = [Windows.Markup.XamlReader]::Load($reader)
+$TitleTextBlock = New-Object Windows.Controls.TextBlock
+$TitleTextBlock.Text = "SHIFTIFY"
+$TitleTextBlock.FontSize = 28
+$TitleTextBlock.FontWeight = "Bold"
+$TitleTextBlock.HorizontalAlignment = "Center"
+$TitleTextBlock.VerticalAlignment = "Center"
+$TitleTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1") # Navy blue text
 
-#Map UI elements to PowerShell variables
-$FolderPath = $Window.FindName("FolderPath")
-$BrowseButton = $Window.FindName("BrowseButton")
-$PreviewButton = $Window.FindName("PreviewButton")
-$RenameButton = $Window.FindName("RenameButton")
-$UndoButton = $Window.FindName("UndoButton")
-$SuffixButton = $Window.FindName("SuffixButton")
-$PrefixButton = $Window.FindName("PrefixButton")
-$OutputBox = $Window.FindName("OutputBox")
+$TitleBorder.Child = $TitleTextBlock
+$Grid.Children.Add($TitleBorder)
 
-#Global variables to track changes
-$FileBackup = @{}
+# Add subtitle below the title
+$SubTextBlock = New-Object Windows.Controls.TextBlock
+$SubTextBlock.Text = "Rename. Replace. Encrypt."
+$SubTextBlock.HorizontalAlignment = "Center"
+$SubTextBlock.VerticalAlignment = "Top"
+$SubTextBlock.FontSize = 16
+$SubTextBlock.FontStyle = "Italic"
+$SubTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1") # Navy blue text
+$SubTextBlock.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
 
-#Event Handlers
-$BrowseButton.Add_Click({
-    $folder = (New-Object -ComObject Shell.Application).BrowseForFolder(0, "Select Folder", 0).Self.Path
-    if ($folder) { $FolderPath.Text = $folder }
-})
+$Grid.Children.Add($SubTextBlock)
 
-$PreviewButton.Add_Click({
-    $path = $FolderPath.Text
-    if (-not (Test-Path $path)) {
-        $OutputBox.Text = "Error: Folder path is invalid."
-        return
+# Function to create buttons with rounded corners
+function Create-Button {
+    param ($Content, $TopMargin)
+
+    $Button = New-Object Windows.Controls.Button
+    $Button.Content = $Content
+    $Button.Width = 200
+    $Button.Height = 40
+    $Button.HorizontalAlignment = "Center"
+    $Button.VerticalAlignment = "Top"
+    $Button.Margin = [Windows.Thickness]::new(0, $TopMargin, 0, 0)
+    $Button.FontSize = 14
+    $Button.FontWeight = "Bold"
+    $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9") # Color - Baby blue
+    $Button.Foreground = (ConvertTo-SolidColorBrush "#0D47A1") # Color - Navy blue text
+    $Button.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1") # Color - Navy blue border
+    $Button.BorderThickness = [Windows.Thickness]::new(2)
+    $Button.Padding = [Windows.Thickness]::new(5)
+    $Button.Style = $null # Ensures no template overrides default style
+
+    # Set rounded corners on the button using BorderBrush and CornerRadius
+    $Button.Template = [Windows.ControlTemplate]::new()
+    $Button.Template.VisualTree = {
+        $ButtonBorder = New-Object Windows.Controls.Border
+        $ButtonBorder.Background = $Button.Background
+        $ButtonBorder.BorderBrush = $Button.BorderBrush
+        $ButtonBorder.BorderThickness = $Button.BorderThickness
+        $ButtonBorder.CornerRadius = [Windows.CornerRadius]::new(12)  # Apply rounded corners
+        $ButtonBorder.Child = $Button.Content
+
+        return $ButtonBorder
     }
-    $files = Get-ChildItem -Path $path -File
-    $output = "Renaming files:`n"
-    foreach ($file in $files) {
-        $output += "$($file.Name)`n"
-    }
-    $OutputBox.Text = $output
-})
 
-$RenameButton.Add_Click({
-    $path = $FolderPath.Text
-    if (-not (Test-Path $path)) {
-        $OutputBox.Text = "Error: Folder path is invalid."
-        return
-    }
-    $files = Get-ChildItem -Path $path -File
-    $FileBackup = @{ }
-    foreach ($file in $files) {
-        $newName = $file.Name
-        $FileBackup[$file.FullName] = $file.Name
-        Rename-Item -Path $file.FullName -NewName $newName
-    }
-    $OutputBox.Text = "Renaming completed!"
-})
+    # Add hover effects
+    $Button.MouseEnter.Add({
+        $Button.Background = (ConvertTo-SolidColorBrush "#64B5F6") # Color - Darker baby blue
+    })
+    $Button.MouseLeave.Add({
+        $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9") # Color - Original baby blue
+    })
 
-$UndoButton.Add_Click({
-    foreach ($file in $FileBackup.GetEnumerator()) {
-        Rename-Item -Path $file.Key -NewName $file.Value
-    }
-    $FileBackup.Clear()
-    $OutputBox.Text = "Undo completed!"
-})
+    return $Button
+}
 
-$SuffixButton.Add_Click({
-    $path = $FolderPath.Text
-    if (-not (Test-Path $path)) {
-        $OutputBox.Text = "Error: Folder path is invalid."
-        return
-    }
-    $files = Get-ChildItem -Path $path -File
-    $FileBackup = @{ }
-    foreach ($file in $files) {
-        $newName = "$($file.BaseName)_suffix$($file.Extension)"
-        $FileBackup[$file.FullName] = $file.Name
-        Rename-Item -Path $file.FullName -NewName $newName
-    }
-    $OutputBox.Text = "Suffix added to files!"
-})
+# Create Buttons 
+$BulkRenameButton = Create-Button -Content "Bulk Renaming" -TopMargin 140
+$ReplacingButton = Create-Button -Content "Replacing" -TopMargin 190
+$EncryptionButton = Create-Button -Content "Encryption" -TopMargin 240
 
-$PrefixButton.Add_Click({
-    $path = $FolderPath.Text
-    if (-not (Test-Path $path)) {
-        $OutputBox.Text = "Error: Folder path is invalid."
-        return
-    }
-    $files = Get-ChildItem -Path $path -File
-    $FileBackup = @{ }
-    foreach ($file in $files) {
-        $newName = "prefix_$($file.Name)"
-        $FileBackup[$file.FullName] = $file.Name
-        Rename-Item -Path $file.FullName -NewName $newName
-    }
-    $OutputBox.Text = "Prefix added to files!"
-})
+# Add buttons to Grid
+$Grid.Children.Add($BulkRenameButton)
+$Grid.Children.Add($ReplacingButton)
+$Grid.Children.Add($EncryptionButton)
 
-#Show the window
-$Window.ShowDialog() | Out-Null
+# Assign Grid to the main window content
+$MainPageWindow.Content = $Grid
+
+# Placeholder for future pages
+function Show-BulkRenamingPage {
+    [System.Windows.MessageBox]::Show("Bulk Renaming Page - To process hehe!", "SHIFTIFY")
+}
+
+function Show-ReplacingPage {
+    [System.Windows.MessageBox]::Show("Replacing Page - To process hehe!", "SHIFTIFY")
+}
+
+function Show-EncryptionPage {
+    [System.Windows.MessageBox]::Show("Encryption Page - To process hehe!", "SHIFTIFY")
+}
+
+# Add event handlers
+$BulkRenameButton.Add_Click({ Show-BulkRenamingPage })
+$ReplacingButton.Add_Click({ Show-ReplacingPage })
+$EncryptionButton.Add_Click({ Show-EncryptionPage })
+
+# Show the main page window
+$MainPageWindow.ShowDialog() | Out-Null
