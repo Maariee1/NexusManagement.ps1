@@ -341,7 +341,7 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
     $selectedFiles = $OpenFileDialog.FileNames
 
     while ($true) {
-        $renameOption = Read-Host "Enter '1' for base name, '2' for prefix/suffix, '3' for pattern replace, '4' to undo, '5' to redo, or 'exit' to quit"
+        $renameOption = Read-Host "Enter '1' for base name, '2' for prefix/suffix, '3' for pattern replace, '4' to undo, '5' to redo, '6' encryption, '7' decryption or 'exit' to quit"
 
         switch ($renameOption) {
             '1' {
