@@ -13,11 +13,11 @@ function ConvertTo-SolidColorBrush {
 # Create the main window for Main Page
 $MainPageWindow = New-Object Windows.Window
 $MainPageWindow.Title = "SHIFTIFY: Main Page"
-$MainPageWindow.Height = 350
+$MainPageWindow.Height = 500
 $MainPageWindow.Width = 400
 $MainPageWindow.WindowStartupLocation = "CenterScreen"
 $MainPageWindow.FontFamily = "Segoe UI"
-$MainPageWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD") # Color - Baby blue bg
+$MainPageWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD") # Baby blue bg
 
 # Default size of window
 $MainPageWindow.ResizeMode = "NoResize"
@@ -33,10 +33,10 @@ $TitleBorder.Height = 60
 $TitleBorder.HorizontalAlignment = "Center"
 $TitleBorder.VerticalAlignment = "Top"
 $TitleBorder.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
-$TitleBorder.Background = (ConvertTo-SolidColorBrush "#90CAF9") # Color - Lighter baby blue
-$TitleBorder.CornerRadius = [Windows.CornerRadius]::new(20) # Slight rounding for the title
-$TitleBorder.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4") # Steel blue border for the title outline
-$TitleBorder.BorderThickness = [Windows.Thickness]::new(3)      # Outline thickness for title
+$TitleBorder.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+$TitleBorder.CornerRadius = [Windows.CornerRadius]::new(20)
+$TitleBorder.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4")
+$TitleBorder.BorderThickness = [Windows.Thickness]::new(3)
 
 $TitleTextBlock = New-Object Windows.Controls.TextBlock
 $TitleTextBlock.Text = "SHIFTIFY"
@@ -44,7 +44,7 @@ $TitleTextBlock.FontSize = 28
 $TitleTextBlock.FontWeight = "Bold"
 $TitleTextBlock.HorizontalAlignment = "Center"
 $TitleTextBlock.VerticalAlignment = "Center"
-$TitleTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1") # Navy blue text
+$TitleTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
 
 $TitleBorder.Child = $TitleTextBlock
 $MainGrid.Children.Add($TitleBorder)
@@ -56,7 +56,7 @@ $SubTextBlock.HorizontalAlignment = "Center"
 $SubTextBlock.VerticalAlignment = "Top"
 $SubTextBlock.FontSize = 16
 $SubTextBlock.FontStyle = "Italic"
-$SubTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1") # Navy blue text
+$SubTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
 $SubTextBlock.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
 
 $MainGrid.Children.Add($SubTextBlock)
@@ -65,6 +65,7 @@ $MainGrid.Children.Add($SubTextBlock)
 function Create-Button {
     param ($Content, $TopMargin)
 
+    # Initialize the button
     $Button = New-Object Windows.Controls.Button
     $Button.Content = $Content
     $Button.Width = 200
@@ -74,18 +75,17 @@ function Create-Button {
     $Button.Margin = [Windows.Thickness]::new(0, $TopMargin, 0, 0)
     $Button.FontSize = 14
     $Button.FontWeight = "Bold"
-    $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9") # Color - Baby blue
-    $Button.Foreground = (ConvertTo-SolidColorBrush "#0D47A1") # Color - Navy blue text
-    $Button.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1") # Color - Navy blue border
+    $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+    $Button.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+    $Button.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $Button.BorderThickness = [Windows.Thickness]::new(2)
-    $Button.Padding = [Windows.Thickness]::new(5)
 
-    # Add hover effects
-    $Button.MouseEnter.Add({
-        $Button.Background = (ConvertTo-SolidColorBrush "#64B5F6") # Color - Darker baby blue
+    # Add hover effects **after** the button is fully initialized
+    $Button.Add_MouseEnter({
+        $Button.Background = (ConvertTo-SolidColorBrush "#64B5F6")
     })
-    $Button.MouseLeave.Add({
-        $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9") # Color - Original baby blue
+    $Button.Add_MouseLeave({
+        $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     })
 
     return $Button
@@ -107,11 +107,11 @@ $MainPageWindow.Content = $MainGrid
 # Create the Bulk Renaming window
 $BulkRenamingWindow = New-Object Windows.Window
 $BulkRenamingWindow.Title = "SHIFTIFY: Bulk Renaming"
-$BulkRenamingWindow.Height = 400
-$BulkRenamingWindow.Width = 500
+$BulkRenamingWindow.Height = 500
+$BulkRenamingWindow.Width = 400
 $BulkRenamingWindow.WindowStartupLocation = "CenterScreen"
 $BulkRenamingWindow.FontFamily = "Segoe UI"
-$BulkRenamingWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD") # Color - Baby blue bg
+$BulkRenamingWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
 
 $BulkRenamingWindow.ResizeMode = "NoResize"
 $BulkRenamingWindow.WindowStyle = "SingleBorderWindow"
@@ -121,7 +121,7 @@ $BulkGrid = New-Object Windows.Controls.Grid
 
 # Title for Bulk Renaming Page
 $BulkTitleBorder = New-Object Windows.Controls.Border
-$BulkTitleBorder.Width = 450
+$BulkTitleBorder.Width = 350
 $BulkTitleBorder.Height = 60
 $BulkTitleBorder.HorizontalAlignment = "Center"
 $BulkTitleBorder.VerticalAlignment = "Top"
@@ -142,18 +142,19 @@ $BulkTitleTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
 $BulkTitleBorder.Child = $BulkTitleTextBlock
 $BulkGrid.Children.Add($BulkTitleBorder)
 
-# File selection area
-$FileSelectionStackPanel = New-Object Windows.Controls.StackPanel
-$FileSelectionStackPanel.Orientation = "Vertical"
-$FileSelectionStackPanel.HorizontalAlignment = "Center"
-$FileSelectionStackPanel.VerticalAlignment = "Top"
-$FileSelectionStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
+# Center panel for actions and input
+$CenterStackPanel = New-Object Windows.Controls.StackPanel
+$CenterStackPanel.HorizontalAlignment = "Center"
+$CenterStackPanel.VerticalAlignment = "Top"
+$CenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
 
+# File selection button
 $SelectFilesButton = Create-Button -Content "Select Files" -TopMargin 0
-$SelectFilesButton.Width = 100
+$SelectFilesButton.Width = 150
 $SelectFilesButton.Height = 40
-$FileSelectionStackPanel.Children.Add($SelectFilesButton)
+$CenterStackPanel.Children.Add($SelectFilesButton)
 
+# File list box
 $FileListBox = New-Object Windows.Controls.ListBox
 $FileListBox.Width = 300
 $FileListBox.Height = 100
@@ -161,87 +162,95 @@ $FileListBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
 $FileListBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
 $FileListBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
 $FileListBox.BorderThickness = [Windows.Thickness]::new(2)
-$FileSelectionStackPanel.Children.Add($FileListBox)
+$CenterStackPanel.Children.Add($FileListBox)
 
-$BulkGrid.Children.Add($FileSelectionStackPanel)
+# Text box for base name
+$BaseNameLabel = New-Object Windows.Controls.TextBlock
+$BaseNameLabel.Text = "Enter Base Name:"
+$BaseNameLabel.FontSize = 14
+$BaseNameLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
+$BaseNameLabel.HorizontalAlignment = "Center"
+$CenterStackPanel.Children.Add($BaseNameLabel)
 
-# Buttons for Bulk Renaming actions
-$ActionsGrid = New-Object Windows.Controls.Grid
-$ActionsGrid.HorizontalAlignment = "Center"
-$ActionsGrid.VerticalAlignment = "Bottom"
-$ActionsGrid.Margin = [Windows.Thickness]::new(0, 0, 0, 30)
+$BaseNameTextBox = New-Object Windows.Controls.TextBox
+$BaseNameTextBox.Width = 200
+$BaseNameTextBox.FontSize = 14
+$BaseNameTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
+$CenterStackPanel.Children.Add($BaseNameTextBox)
 
-# Define 3x3 layout (di dikit-dikit)
-for ($row = 0; $row -lt 3; $row++) {
-    $RowDefinition = New-Object Windows.Controls.RowDefinition
-    $ActionsGrid.RowDefinitions.Add($RowDefinition)
+# Buttons for Preview, Rename, Undo, Back
+$ButtonGrid = New-Object Windows.Controls.Grid
+$ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
+
+for ($row = 0; $row -lt 2; $row++) {
+    $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
 }
-for ($col = 0; $col -lt 3; $col++) {
-    $ColDefinition = New-Object Windows.Controls.ColumnDefinition
-    $ActionsGrid.ColumnDefinitions.Add($ColDefinition)
+for ($col = 0; $col -lt 2; $col++) {
+    $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
 }
 
 function Create-SmallButton {
     param ($Content, $Row, $Column)
-
     $Button = New-Object Windows.Controls.Button
     $Button.Content = $Content
-    $Button.Width = 70
-    $Button.Height = 25
-    $Button.FontSize = 12
-    $Button.FontWeight = "Bold"
+    $Button.Width = 100
+    $Button.Height = 30
+    $Button.Margin = [Windows.Thickness]::new(5)
     $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $Button.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
-    $Button.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
-    $Button.BorderThickness = [Windows.Thickness]::new(2)
-    $Button.Margin = [Windows.Thickness]::new(5)
-
-    [Windows.Controls.Grid]::SetRow($Button, $Row)
-    [Windows.Controls.Grid]::SetColumn($Button, $Column)
-
+    $Button.FontSize = 12
+    $Button.FontWeight = "Bold"
+    $Button.SetValue([Windows.Controls.Grid]::RowProperty, $Row)
+    $Button.SetValue([Windows.Controls.Grid]::ColumnProperty, $Column)
     return $Button
 }
 
 $PreviewButton = Create-SmallButton -Content "Preview" -Row 0 -Column 0
 $RenameButton = Create-SmallButton -Content "Rename" -Row 0 -Column 1
-$UndoButton = Create-SmallButton -Content "Undo" -Row 0 -Column 2
-$AddPrefixButton = Create-SmallButton -Content "Add Prefix" -Row 1 -Column 0
-$AddSuffixButton = Create-SmallButton -Content "Add Suffix" -Row 1 -Column 1
-$BackButton = Create-SmallButton -Content "Back" -Row 1 -Column 2
+$UndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
+$BackButton = Create-SmallButton -Content "Back" -Row 1 -Column 1
 
-$ActionsGrid.Children.Add($PreviewButton)
-$ActionsGrid.Children.Add($RenameButton)
-$ActionsGrid.Children.Add($UndoButton)
-$ActionsGrid.Children.Add($AddPrefixButton)
-$ActionsGrid.Children.Add($AddSuffixButton)
-$ActionsGrid.Children.Add($BackButton)
+$ButtonGrid.Children.Add($PreviewButton)
+$ButtonGrid.Children.Add($RenameButton)
+$ButtonGrid.Children.Add($UndoButton)
+$ButtonGrid.Children.Add($BackButton)
 
-$BulkGrid.Children.Add($ActionsGrid)
+$CenterStackPanel.Children.Add($ButtonGrid)
 
-# Assign Bulk Grid to Bulk Renaming window content
+$BulkGrid.Children.Add($CenterStackPanel)
+
 $BulkRenamingWindow.Content = $BulkGrid
 
-# Placeholder for button actions
+# File Selection Button Logic
 $SelectFilesButton.Add_Click({
-    $FileDialog = New-Object Microsoft.Win32.OpenFileDialog
-    $FileDialog.Multiselect = $true
-    if ($FileDialog.ShowDialog()) {
+    # Open file dialog
+    $OpenFileDialog = New-Object Microsoft.Win32.OpenFileDialog
+    $OpenFileDialog.Multiselect = $true
+    $OpenFileDialog.Title = "Select Files"
+    
+    # Show the dialog and handle file selection
+    if ($OpenFileDialog.ShowDialog()) {
+        # Clear previous entries in the ListBox
         $FileListBox.Items.Clear()
-        foreach ($file in $FileDialog.FileNames) {
+
+        # Add selected file names to the ListBox
+        foreach ($file in $OpenFileDialog.FileNames) {
             $FileListBox.Items.Add($file)
         }
     }
 })
 
+# Back button logic for Bulk Renaming page
 $BackButton.Add_Click({
     $BulkRenamingWindow.Hide()
     $MainPageWindow.ShowDialog() | Out-Null
 })
 
+# Bulk Rename button logic for opening Bulk Renaming window
 $BulkRenameButton.Add_Click({
     $MainPageWindow.Hide()
     $BulkRenamingWindow.ShowDialog() | Out-Null
 })
 
-# Show the main page window
+# Show the main window
 $MainPageWindow.ShowDialog() | Out-Null
