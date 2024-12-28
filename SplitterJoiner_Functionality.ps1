@@ -114,7 +114,7 @@ function Encrypt-File {
     Write-Output "File is encrypted."
 }
 
-# Function to decrypt a file
+# Function to decrypt a file in place
 function Decrypt-File {
     param (
         [string]$InputFile,   # Path to the encrypted file
