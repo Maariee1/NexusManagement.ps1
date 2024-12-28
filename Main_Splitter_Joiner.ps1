@@ -16,8 +16,8 @@ function New-SolidColorBrush {
 function CreateSplitWindow {
     $splitWindow = New-Object System.Windows.Window
     $splitWindow.Title = "Split"
-    $splitWindow.Width = 500  # Keep original size
-    $splitWindow.Height = 350
+    $splitWindow.Width = 400 # Keep original size
+    $splitWindow.Height = 400
     $splitWindow.Background = New-SolidColorBrush -R 173 -G 216 -B 230  # Light Blue
     $splitWindow.WindowStartupLocation = "CenterScreen"
     $splitWindow.ResizeMode = "NoResize"  # Prevent resizing
@@ -46,7 +46,7 @@ function CreateSplitWindow {
     $titleBorder.HorizontalAlignment = "Stretch"
 
     $titleText = New-Object System.Windows.Controls.TextBlock
-    $titleText.Text = "File Split"
+    $titleText.Text = "Split Files"
     $titleText.FontSize = 24
     $titleText.FontWeight = "Bold"
     $titleText.FontFamily = New-Object System.Windows.Media.FontFamily("Arial")
@@ -168,82 +168,121 @@ function CreateSplitWindow {
     $splitWindow.ShowDialog()
 }
 
-
-
-
-# Function to create a Join Window (similar layout as Split Window)
 function CreateJoinWindow {
     $joinWindow = New-Object System.Windows.Window
     $joinWindow.Title = "Join"
-    $joinWindow.Width = 450
-    $joinWindow.Height = 400
-    $joinWindow.Background = New-SolidColorBrush -R 245 -G 245 -B 245  # Light Gray
+    $joinWindow.Width = 400# Match the main window width
+    $joinWindow.Height = 400  # Match the main window height
+    $joinWindow.Background = New-SolidColorBrush -R 173 -G 216 -B 230  # Light Blue
     $joinWindow.WindowStartupLocation = "CenterScreen"
 
     $grid = New-Object System.Windows.Controls.Grid
     $grid.Margin = "10"
 
-    # Title
+    # Define Rows and Columns
+    $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Title
+    $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Input File
+    $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Output File
+    $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Instructions
+    $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Buttons
+
+    $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "Auto" })) # Labels
+    $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "*" }))   # Textboxes expand
+
+    # Title with Container
+    $titleBorder = New-Object System.Windows.Controls.Border
+    $titleBorder.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
+    $titleBorder.CornerRadius = "5"
+    $titleBorder.Padding = "10"
+    $titleBorder.Margin = "0,0,0,20"
+    $titleBorder.HorizontalAlignment = "Stretch"
+
     $titleText = New-Object System.Windows.Controls.TextBlock
     $titleText.Text = "File Join"
     $titleText.FontSize = 24
     $titleText.FontWeight = "Bold"
-    $titleText.Foreground = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
+    $titleText.FontFamily = New-Object System.Windows.Media.FontFamily("Arial")
+    $titleText.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255  # White
     $titleText.HorizontalAlignment = "Center"
-    $titleText.Margin = "0,0,0,10"
-    $grid.Children.Add($titleText)
+
+    $titleBorder.Child = $titleText
+
+    [System.Windows.Controls.Grid]::SetColumnSpan($titleBorder, 2)
+    [System.Windows.Controls.Grid]::SetRow($titleBorder, 0)
+    $grid.Children.Add($titleBorder)
 
     # Input File
     $inputLabel = New-Object System.Windows.Controls.TextBlock
     $inputLabel.Text = "Input File:"
-    $inputLabel.Margin = "0,50,0,0"
+    $inputLabel.Margin = "0,10,10,10"
+    [System.Windows.Controls.Grid]::SetRow($inputLabel, 1)
+    [System.Windows.Controls.Grid]::SetColumn($inputLabel, 0)
     $grid.Children.Add($inputLabel)
 
     $inputBox = New-Object System.Windows.Controls.TextBox
-    $inputBox.Margin = "70,50,10,0"
+    $inputBox.Margin = "0,10,10,10"
     $inputBox.Height = 25
+    [System.Windows.Controls.Grid]::SetRow($inputBox, 1)
+    [System.Windows.Controls.Grid]::SetColumn($inputBox, 1)
     $grid.Children.Add($inputBox)
 
     # Output File
     $outputLabel = New-Object System.Windows.Controls.TextBlock
     $outputLabel.Text = "Output:"
-    $outputLabel.Margin = "0,100,0,0"
+    $outputLabel.Margin = "0,10,10,10"
+    [System.Windows.Controls.Grid]::SetRow($outputLabel, 2)
+    [System.Windows.Controls.Grid]::SetColumn($outputLabel, 0)
     $grid.Children.Add($outputLabel)
 
     $outputBox = New-Object System.Windows.Controls.TextBox
-    $outputBox.Margin = "70,100,10,0"
+    $outputBox.Margin = "0,10,10,10"
     $outputBox.Height = 25
+    [System.Windows.Controls.Grid]::SetRow($outputBox, 2)
+    [System.Windows.Controls.Grid]::SetColumn($outputBox, 1)
     $grid.Children.Add($outputBox)
 
     # Instructions
     $instructionText = New-Object System.Windows.Controls.TextBlock
-    $instructionText.Text = "To join a set of files, open the .001 file as input.\nThe output will be created in the specified output location."
-    $instructionText.Margin = "0,200,0,0"
-    $instructionText.HorizontalAlignment = "Center"
+    $instructionText.Text = "To join a set of files, open the file as input. The output will be created in the specified output location."
+    $instructionText.TextWrapping = "Wrap"
+    $instructionText.Margin = "0,20,0,10"
+    [System.Windows.Controls.Grid]::SetColumnSpan($instructionText, 2)
+    [System.Windows.Controls.Grid]::SetRow($instructionText, 3)
     $grid.Children.Add($instructionText)
 
     # Buttons
+    $buttonPanel = New-Object System.Windows.Controls.StackPanel
+    $buttonPanel.Orientation = "Horizontal"
+    $buttonPanel.HorizontalAlignment = "Center"
+    $buttonPanel.Margin = "0,10,0,0"
+    [System.Windows.Controls.Grid]::SetColumnSpan($buttonPanel, 2)
+    [System.Windows.Controls.Grid]::SetRow($buttonPanel, 4)
+
     $startButton = New-Object System.Windows.Controls.Button
     $startButton.Content = "Start"
     $startButton.Width = 80
-    $startButton.Height = 30
-    $startButton.Margin = "100,300,0,0"
-    $startButton.HorizontalAlignment = "Left"
+    $startButton.Margin = "10,0,10,0"
+    $startButton.FontWeight = "Bold"
+    $startButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
+    $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
     $startButton.Add_Click({
         [System.Windows.MessageBox]::Show("Join functionality not implemented yet!")
     })
-    $grid.Children.Add($startButton)
+    $buttonPanel.Children.Add($startButton)
 
     $closeButton = New-Object System.Windows.Controls.Button
     $closeButton.Content = "Close"
     $closeButton.Width = 80
-    $closeButton.Height = 30
-    $closeButton.Margin = "250,300,0,0"
-    $closeButton.HorizontalAlignment = "Left"
+    $closeButton.Margin = "10,0,10,0"
+    $closeButton.FontWeight = "Bold"
+    $closeButton.Background = New-SolidColorBrush -R 0 -G 0 -B 139  # Darker Blue
+    $closeButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
     $closeButton.Add_Click({
         $joinWindow.Close()
     })
-    $grid.Children.Add($closeButton)
+    $buttonPanel.Children.Add($closeButton)
+
+    $grid.Children.Add($buttonPanel)
 
     $joinWindow.Content = $grid
     $joinWindow.ShowDialog()
