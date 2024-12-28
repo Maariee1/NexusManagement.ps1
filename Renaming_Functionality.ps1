@@ -1,156 +1,105 @@
-# Function to encrypt files
-function Encrypt-File {
-    param (
-        [string]$inputFilePath,
-        [string]$key,
-        [string]$iv
-    )
+    function Encrypt-File {
+        param (
+            [string]$InputFile,   # Path to the file to encrypt
+            [string]$Password     # Password for encryption
+        )
 
-    # Ensure key and IV are 16 bytes long (128 bits)
-    $key = $key.Substring(0, [Math]::Min($key.Length, 16)).PadRight(16, '0')
-    $iv = $iv.Substring(0, [Math]::Min($iv.Length, 16)).PadRight(16, '0')
+        # Generate a 32-byte key and 16-byte IV from the password
+        $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
+        $IV = New-Object byte[] 16
+        [System.Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($IV)
 
-    $aes = [System.Security.Cryptography.Aes]::Create()
-    $aes.Key = [System.Text.Encoding]::UTF8.GetBytes($key)
-    $aes.IV = [System.Text.Encoding]::UTF8.GetBytes($iv)
+        # Initialize AES encryption
+        $Aes = [System.Security.Cryptography.Aes]::Create()
+        $Aes.Key = $Key
+        $Aes.IV = $IV
+        $Encryptor = $Aes.CreateEncryptor()
 
-    $encryptor = $aes.CreateEncryptor()
+        # Read the file content into memory
+        $FileContent = [System.IO.File]::ReadAllBytes($InputFile)
 
-    # Read the input file and encrypt it
-    $inputFileStream = [System.IO.File]::OpenRead($inputFilePath)
-    $memoryStream = New-Object System.IO.MemoryStream
-    $cryptoStream = New-Object System.Security.Cryptography.CryptoStream($memoryStream, $encryptor, [System.Security.Cryptography.CryptoStreamMode]::Write)
+        # Create a memory stream to hold the encrypted data
+        $EncryptedData = New-Object System.IO.MemoryStream
 
-    $inputFileStream.CopyTo($cryptoStream)
-    $cryptoStream.FlushFinalBlock()
+        # Write the custom header to the encrypted data
+        $Header = "ENCRYPTED_HEADER"
+        $HeaderBytes = [System.Text.Encoding]::UTF8.GetBytes($Header)
+        $EncryptedData.Write($HeaderBytes, 0, $HeaderBytes.Length)
 
-    $encryptedData = $memoryStream.ToArray()
+        # Write the IV to the encrypted data
+        $EncryptedData.Write($IV, 0, $IV.Length)
 
-    # Convert encrypted data to Base64
-    $base64Data = [Convert]::ToBase64String($encryptedData)
+        # Encrypt the file content and write to the memory stream
+        $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($EncryptedData, $Encryptor, [System.Security.Cryptography.CryptoStreamMode]::Write)
+        $CryptoStream.Write($FileContent, 0, $FileContent.Length)
+        $CryptoStream.Close()
 
-    # Create a new encrypted file with a .enc extension
-    $encryptedFilePath = "$inputFilePath.enc"
-    
-    try {
-        # Create or overwrite the encrypted file
-        [System.IO.File]::WriteAllText($encryptedFilePath, $base64Data)
-        Write-Host "Encrypted '$inputFilePath' and saved to '$encryptedFilePath'" -ForegroundColor Green
+        # Overwrite the original file with the encrypted data
+        [System.IO.File]::WriteAllBytes($InputFile, $EncryptedData.ToArray())
+        $EncryptedData.Close()
 
-        # Close all streams before attempting to delete the original file
-        $inputFileStream.Close()
-        $cryptoStream.Close()
-        $memoryStream.Close()
-
-        # Give it a small delay before deleting the original file
-        Start-Sleep -Seconds 1
-
-        # Remove the original file after encryption
-        Remove-Item -Path $inputFilePath -Force
-        Write-Host "Deleted original file '$inputFilePath' after encryption." -ForegroundColor Green
+        Write-Output "File is encrypted."
     }
-    catch {
-        Write-Host "Error: Unable to write to the file '$encryptedFilePath'. The file may be in use by another process." -ForegroundColor Red
-    }
-}
 
-# Function to decrypt files
-function Decrypt-File {
-    param (
-        [string]$inputFilePath,
-        [string]$key,
-        [string]$iv
-    )
+    function Decrypt-File {
+        param (
+            [string]$InputFile,   # Path to the encrypted file
+            [string]$Password     # Password for decryption
+        )
 
-    # Ensure key and IV are 16 bytes long (128 bits)
-    $key = $key.Substring(0, [Math]::Min($key.Length, 16)).PadRight(16, '0')
-    $iv = $iv.Substring(0, [Math]::Min($iv.Length, 16)).PadRight(16, '0')
+        # Open the input file for reading and writing
+        $FileStream = [System.IO.File]::Open($InputFile, 'Open', 'ReadWrite')
 
-    $aes = [System.Security.Cryptography.Aes]::Create()
-    $aes.Key = [System.Text.Encoding]::UTF8.GetBytes($key)
-    $aes.IV = [System.Text.Encoding]::UTF8.GetBytes($iv)
+        # Read the first bytes for the header
+        $HeaderBytes = New-Object byte[] 16
+        $FileStream.Read($HeaderBytes, 0, $HeaderBytes.Length) | Out-Null
 
-    $decryptor = $aes.CreateDecryptor()
-
-    # Read the Base64 data from the encrypted file
-    $base64Data = [System.IO.File]::ReadAllText($inputFilePath)
-    $encryptedData = [Convert]::FromBase64String($base64Data)
-
-    # Decrypt the data
-    $memoryStream = New-Object System.IO.MemoryStream
-    $memoryStream.Write($encryptedData, 0, $encryptedData.Length)
-    $memoryStream.Seek(0, [System.IO.SeekOrigin]::Begin)  # Reset position for reading
-
-    $cryptoStream = New-Object System.Security.Cryptography.CryptoStream($memoryStream, $decryptor, [System.Security.Cryptography.CryptoStreamMode]::Read)
-
-    # Generate the output file path by removing the .enc extension
-    $decryptedFilePath = $inputFilePath -replace '\.enc$', ''
-
-    try {
-        # Open the output file for writing
-        $outputFileStream = [System.IO.File]::OpenWrite($decryptedFilePath)
-
-        # Decrypt the data and write it to the output file
-        $cryptoStream.CopyTo($outputFileStream)
-        Write-Host "Decrypted '$inputFilePath' and saved to '$decryptedFilePath'" -ForegroundColor Green
-
-        # Close file streams
-        $outputFileStream.Close()
-        $cryptoStream.Close()
-        $memoryStream.Close()
-
-        # Optionally delete the .enc file after decryption
-        Remove-Item -Path $inputFilePath -Force
-        Write-Host "Deleted '$inputFilePath' (original encrypted file)." -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Error: Unable to write to the file '$decryptedFilePath'. The file may be in use by another process." -ForegroundColor Red
-    }
-}
-
-function Rename-WithBaseName {
-    param (
-        [array]$selectedFiles
-    )
-        $baseName = Read-Host "Enter the base name for all selected files"
-
-        # Process each selected file and rename them sequentially
-        $counter = 0
-        foreach ($filePath in $selectedFiles) {
-            # Get file information
-            $file = Get-Item -Path $filePath
-            $folderPath = $file.DirectoryName
-            $fileExtension = $file.Extension
-
-            # Construct the new name
-            if ($counter -eq 0) {
-                $newFileName = "$baseName$fileExtension"
-            } else {
-                $newFileName = "$baseName ($counter)$fileExtension"
-            }
-        
-            $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
-
-            # Ensure no conflicts
-            while (Test-Path -Path $newFilePath) {
-                $counter++
-                $newFileName = "$baseName ($counter)$fileExtension"
-                $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
-            }
-
-            # Rename the file
-            Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
-
-            #inii-store ang new and old names
-            $batchOperation += @{
-                OriginalPath = $filePath
-                NewPath = $newFilePath
-            }
-
-            Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
-            $counter++
+        # Convert the header bytes to a string and check if it matches the signature
+        $Header = [System.Text.Encoding]::UTF8.GetString($HeaderBytes)
+        if ($Header -ne "ENCRYPTED_HEADER") {
+            Write-Output "This file is not encrypted!"
+            $FileStream.Close()
+            return
         }
+
+        # Read the IV (next 16 bytes after the header)
+        $IV = New-Object byte[] 16
+        $FileStream.Read($IV, 0, $IV.Length) | Out-Null
+
+        # Generate the key from the password
+        $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
+
+        # Initialize AES decryption
+        $Aes = [System.Security.Cryptography.Aes]::Create()
+        $Aes.Key = $Key
+        $Aes.IV = $IV
+        $Decryptor = $Aes.CreateDecryptor()
+
+        # Move the file pointer to the position after the header and IV
+        $FileStream.Position = 32
+
+        # Create a CryptoStream for decryption
+        $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($FileStream, $Decryptor, [System.Security.Cryptography.CryptoStreamMode]::Read)
+
+        # Decrypt the file content
+        $DecryptedData = New-Object System.IO.MemoryStream
+        $Buffer = New-Object byte[] 4096
+
+        while (($BytesRead = $CryptoStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
+            $DecryptedData.Write($Buffer, 0, $BytesRead)
+        }
+
+        # Close the streams
+        $CryptoStream.Close()
+        $FileStream.Close()
+
+        # Overwrite the original file with decrypted content
+        [System.IO.File]::WriteAllBytes($InputFile, $DecryptedData.ToArray())
+        $DecryptedData.Close()
+
+        Write-Output "File is decrypted."
     }
+
 
     function Rename-WithPrefixSuffix {
         param (
@@ -324,7 +273,51 @@ function Rename-WithBaseName {
     
         return $undoStack, $redoStack
     }
-               
+    function Rename-WithBaseName {
+        param (
+            [array]$selectedFiles
+        )
+            $baseName = Read-Host "Enter the base name for all selected files"
+    
+            # Process each selected file and rename them sequentially
+            $counter = 0
+            foreach ($filePath in $selectedFiles) {
+                # Get file information
+                $file = Get-Item -Path $filePath
+                $folderPath = $file.DirectoryName
+                $fileExtension = $file.Extension
+    
+                # Construct the new name
+                if ($counter -eq 0) {
+                    $newFileName = "$baseName$fileExtension"
+                } else {
+                    $newFileName = "$baseName ($counter)$fileExtension"
+                }
+            
+                $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+    
+                # Ensure no conflicts
+                while (Test-Path -Path $newFilePath) {
+                    $counter++
+                    $newFileName = "$baseName ($counter)$fileExtension"
+                    $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+                }
+    
+                # Rename the file
+                Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
+    
+                #inii-store ang new and old names
+                $batchOperation += @{
+                    OriginalPath = $filePath
+                    NewPath = $newFilePath
+                }
+    
+                Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
+                $counter++
+            }
+        }
+    
+                   
 # Load the required assembly for OpenFileDialog
 Add-Type -AssemblyName System.Windows.Forms
 
@@ -365,12 +358,8 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             '5' {
                 $undoStack, $redoStack = Redo-Rename -redoStack $redoStack -undoStack $undoStack
             }
-            '6'{
-                $password = Read-Host "Enter password for encryption (16 characters)"       
-                if ($password.Length -ne 16) {
-                    Write-Host "Error: Password must be exactly 16 characters long." -ForegroundColor Red
-                    exit
-                }
+            '6' {
+                $password = Read-Host "Enter password for encryption (any length)"       
 
                 # Encrypt selected files
                 foreach ($filePath in $selectedFiles) {
@@ -379,40 +368,30 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
                     $fileName = $file.Name
 
                     # Encrypt the file and create a new .enc file
-                    Encrypt-File -inputFilePath $filePath -key $password -iv $password
+                    Encrypt-File -InputFile $filePath -Password $password
 
                     Write-Host "Encrypted '$fileName' and created new .enc file." -ForegroundColor Green
                 }
 
                 Write-Host "Encryption completed for all selected files!" -ForegroundColor Cyan
             }
-            '7'{
-                $password = Read-Host "Enter password for decryption (16 characters)"
-
-                if ($password.Length -ne 16) {
-                    Write-Host "Error: Password must be exactly 16 characters long." -ForegroundColor Red
-                    exit
-                }
+            '7' {
+                $password = Read-Host "Enter password for decryption (any length)"
 
                 # Decrypt selected files
                 foreach ($filePath in $selectedFiles) {
-                    # Check if the file has the .enc extension
-                    if ($filePath -match "\.enc$") {
-                        $file = Get-Item -Path $filePath
-                        $folderPath = $file.DirectoryName
-                        $fileName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+                    $file = Get-Item -Path $filePath
+                    $fileName = $file.Name
 
-                        # Decrypt the file and remove .enc extension
-                        Decrypt-File -inputFilePath $filePath -key $password -iv $password
+                    # Decrypt the file and overwrite it with decrypted content
+                    Decrypt-File -InputFile $filePath -Password $password
 
-                        Write-Host "Decrypted '$fileName.enc' and removed the encrypted file." -ForegroundColor Green
-                    } else {
-                        Write-Host "Skipping '$($file.Name)': Not an encrypted file (.enc)" -ForegroundColor Yellow
-                    }
+                    Write-Host "Decrypted '$fileName' and overwrote the original file." -ForegroundColor Green
                 }
 
-                Write-Host "Decryption completed for all selected encrypted files!" -ForegroundColor Cyan
+                Write-Host "Decryption completed for all selected files!" -ForegroundColor Cyan
             }
+
             'exit' {
                 Write-Host "Exiting the program. Goodbye!" -ForegroundColor Cyan
                 break
