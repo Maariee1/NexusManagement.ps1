@@ -1,70 +1,95 @@
+    # Load Windows Forms assembly
+    Add-Type -AssemblyName System.Windows.Forms
+
+    # Creates a form to host dialogs but make it invisible
+    $form = New-Object System.Windows.Forms.Form
+    $form.TopMost = $true
+    $form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+    $form.WindowState = [System.Windows.Forms.FormWindowState]::Minimized
+    $form.ShowInTaskbar = $false
+    $form.Opacity = 0
+    $form.Size = New-Object System.Drawing.Size(1,1)
+
+    # Show the form without making it visible (needed for dialog)
+    $form.Show()
+
     function Encrypt-File {
-        param (
-            [string]$InputFile,   # Path to the file to encrypt
-            [string]$Password     # Password for encryption
-        )
+    param (
+        [string]$InputFile,   # Path to the file to encrypt
+        [string]$Password     # Password for encryption
+    )
 
-        # Generate a 32-byte key and 16-byte IV from the password
-        $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
-        $IV = New-Object byte[] 16
-        [System.Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($IV)
+    # Generate a 32-byte key and 16-byte IV from the password
+    $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
+    $IV = New-Object byte[] 16
+    [System.Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($IV)
 
-        # Initialize AES encryption
-        $Aes = [System.Security.Cryptography.Aes]::Create()
-        $Aes.Key = $Key
-        $Aes.IV = $IV
-        $Encryptor = $Aes.CreateEncryptor()
+    # Initialize AES encryption
+    $Aes = [System.Security.Cryptography.Aes]::Create()
+    $Aes.Key = $Key
+    $Aes.IV = $IV
+    $Encryptor = $Aes.CreateEncryptor()
 
-        # Read the file content into memory
-        $FileContent = [System.IO.File]::ReadAllBytes($InputFile)
+    # Read the file content into memory
+    $FileContent = [System.IO.File]::ReadAllBytes($InputFile)
 
-        # Create a memory stream to hold the encrypted data
-        $EncryptedData = New-Object System.IO.MemoryStream
+    # Create a memory stream to hold the encrypted data
+    $EncryptedData = New-Object System.IO.MemoryStream
 
-        # Write the custom header to the encrypted data
-        $Header = "ENCRYPTED_HEADER"
-        $HeaderBytes = [System.Text.Encoding]::UTF8.GetBytes($Header)
-        $EncryptedData.Write($HeaderBytes, 0, $HeaderBytes.Length)
+    # Write the custom header to the encrypted data
+    $Header = "ENCRYPTED_HEADER"
+    $HeaderBytes = [System.Text.Encoding]::UTF8.GetBytes($Header)
+    $EncryptedData.Write($HeaderBytes, 0, $HeaderBytes.Length)
 
-        # Write the IV to the encrypted data
-        $EncryptedData.Write($IV, 0, $IV.Length)
+    # Write the IV to the encrypted data
+    $EncryptedData.Write($IV, 0, $IV.Length)
 
-        # Encrypt the file content and write to the memory stream
-        $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($EncryptedData, $Encryptor, [System.Security.Cryptography.CryptoStreamMode]::Write)
-        $CryptoStream.Write($FileContent, 0, $FileContent.Length)
-        $CryptoStream.Close()
+    # Encrypt the file content and write to the memory stream
+    $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($EncryptedData, $Encryptor, [System.Security.Cryptography.CryptoStreamMode]::Write)
+    $CryptoStream.Write($FileContent, 0, $FileContent.Length)
+    $CryptoStream.Close()
 
-        # Overwrite the original file with the encrypted data
-        [System.IO.File]::WriteAllBytes($InputFile, $EncryptedData.ToArray())
-        $EncryptedData.Close()
+    # Overwrite the original file with the encrypted data
+    [System.IO.File]::WriteAllBytes($InputFile, $EncryptedData.ToArray())
+    $EncryptedData.Close()
 
-        Write-Output "File is encrypted."
+    Write-Output "File is encrypted."
+}
+
+# Function to decrypt a file in place
+function Decrypt-File {
+    param (
+        [string]$InputFile,   # Path to the encrypted file
+        [string]$Password     # Password for decryption
+    )
+
+    # Open the input file for reading
+    $FileStream = [System.IO.File]::Open($InputFile, 'Open', 'Read')
+
+    # Read the first bytes for the header
+    $HeaderBytes = New-Object byte[] 16
+    $FileStream.Read($HeaderBytes, 0, $HeaderBytes.Length) | Out-Null
+
+    # Convert the header bytes to a string and check if it matches the signature
+    $Header = [System.Text.Encoding]::UTF8.GetString($HeaderBytes)
+    if ($Header -ne "ENCRYPTED_HEADER") {
+        Write-Output "This file is not encrypted!"
+        $FileStream.Close()
+        return
     }
 
-    function Decrypt-File {
-        param (
-            [string]$InputFile,   # Path to the encrypted file
-            [string]$Password     # Password for decryption
-        )
+    # Read the IV (next 16 bytes after the header)
+    $IV = New-Object byte[] 16
+    $FileStream.Read($IV, 0, $IV.Length) | Out-Null
 
-        # Open the input file for reading and writing
-        $FileStream = [System.IO.File]::Open($InputFile, 'Open', 'ReadWrite')
+    # Attempt decryption with up to 3 tries
+    $Attempts = 0
+    $MaxAttempts = 3
+    $DecryptedSuccessfully = $false
 
-        # Read the first bytes for the header
-        $HeaderBytes = New-Object byte[] 16
-        $FileStream.Read($HeaderBytes, 0, $HeaderBytes.Length) | Out-Null
-
-        # Convert the header bytes to a string and check if it matches the signature
-        $Header = [System.Text.Encoding]::UTF8.GetString($HeaderBytes)
-        if ($Header -ne "ENCRYPTED_HEADER") {
-            Write-Output "This file is not encrypted!"
-            $FileStream.Close()
-            return
-        }
-
-        # Read the IV (next 16 bytes after the header)
-        $IV = New-Object byte[] 16
-        $FileStream.Read($IV, 0, $IV.Length) | Out-Null
+    while ($Attempts -lt $MaxAttempts -and -not $DecryptedSuccessfully) {
+        # Increment the attempt counter
+        $Attempts++
 
         # Generate the key from the password
         $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
@@ -73,32 +98,50 @@
         $Aes = [System.Security.Cryptography.Aes]::Create()
         $Aes.Key = $Key
         $Aes.IV = $IV
-        $Decryptor = $Aes.CreateDecryptor()
 
-        # Move the file pointer to the position after the header and IV
-        $FileStream.Position = 32
+        try {
+            $Decryptor = $Aes.CreateDecryptor()
 
-        # Create a CryptoStream for decryption
-        $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($FileStream, $Decryptor, [System.Security.Cryptography.CryptoStreamMode]::Read)
+            # Move the file pointer to the position after the header and IV
+            $FileStream.Position = 32
 
-        # Decrypt the file content
-        $DecryptedData = New-Object System.IO.MemoryStream
-        $Buffer = New-Object byte[] 4096
+            # Create a CryptoStream for decryption
+            $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($FileStream, $Decryptor, [System.Security.Cryptography.CryptoStreamMode]::Read)
 
-        while (($BytesRead = $CryptoStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
-            $DecryptedData.Write($Buffer, 0, $BytesRead)
+            # Decrypt the file content into memory
+            $DecryptedData = New-Object System.IO.MemoryStream
+            $Buffer = New-Object byte[] 4096
+
+            while (($BytesRead = $CryptoStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
+                $DecryptedData.Write($Buffer, 0, $BytesRead)
+            }
+
+            # Close the streams
+            $CryptoStream.Close()
+            $FileStream.Close()
+
+            # Overwrite the original file with decrypted content
+            [System.IO.File]::WriteAllBytes($InputFile, $DecryptedData.ToArray())
+            $DecryptedData.Close()
+
+            Write-Output "File is decrypted."
+            $DecryptedSuccessfully = $true
+        } catch {
+            Write-Output "Incorrect password. Attempts remaining: $(($MaxAttempts - $Attempts))"
+
+            if ($Attempts -lt $MaxAttempts) {
+                $Password = Read-Host "Enter decryption password"
+            } else {
+                Write-Output "Maximum attempts reached. Decryption failed."
+            }
         }
-
-        # Close the streams
-        $CryptoStream.Close()
-        $FileStream.Close()
-
-        # Overwrite the original file with decrypted content
-        [System.IO.File]::WriteAllBytes($InputFile, $DecryptedData.ToArray())
-        $DecryptedData.Close()
-
-        Write-Output "File is decrypted."
     }
+
+    # Ensure the file stream is closed if still open
+    if ($FileStream -and $FileStream.CanRead) {
+        $FileStream.Close()
+    }
+}
 
     function Rename-WithPrefixSuffix {
         param (
@@ -219,15 +262,15 @@
         return $batchOperation
     }
     function Rename-WithBaseName {
-        param (
-            [array]$selectedFiles
-        )
+    param (
+        [array]$selectedFiles
+    )
     
         $baseName = Read-Host "Enter the base name for all selected files"
-        
+            
         # Initialize batchOperation to track changes for undo/redo
         $batchOperation = @()
-    
+        
         # Process each selected file and rename them sequentially
         $counter = 0
         foreach ($filePath in $selectedFiles) {
@@ -235,36 +278,36 @@
             $file = Get-Item -Path $filePath
             $folderPath = $file.DirectoryName
             $fileExtension = $file.Extension
-    
+        
             # Construct the new name
             if ($counter -eq 0) {
                 $newFileName = "$baseName$fileExtension"
             } else {
                 $newFileName = "$baseName ($counter)$fileExtension"
             }
-            
+                
             $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
-    
+        
             # Ensure no conflicts
             while (Test-Path -Path $newFilePath) {
                 $counter++
                 $newFileName = "$baseName ($counter)$fileExtension"
                 $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
             }
-    
+        
             # Rename the file
             Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
-    
+        
             # Store the original and new paths for batch undo/redo
             $batchOperation += @{
                 OriginalPath = $filePath
                 NewPath = $newFilePath
             }
-    
+        
             Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
             $counter++
         }
-    
+        
         return $batchOperation
     }
     
@@ -324,39 +367,61 @@
         return $undoStack, $redoStack
     }
          
-# Load the required assembly for OpenFileDialog
-Add-Type -AssemblyName System.Windows.Forms
-
 # Main Script Logic
 $undoStack = @()
 $redoStack = @()
 
-$OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
-$OpenFileDialog.Multiselect = $true
-$OpenFileDialog.Title = "Select Files to Rename"
-$OpenFileDialog.Filter = "All Files (*.*)|*.*"
+while($true){
+    Write-Output "Choose an option:"
+    Write-Output "1. BASE NAME"
+    Write-Output "2. PREFIX AND SUFFIX"
+    Write-Output "3. REPLACEMENT"
+    Write-Output "4. UNDO"
+    Write-Output "5. REDO"
+    Write-Output "6. ENCRYPTION "
+    Write-Output "7. DECRYPTION"
+    $Choice = Read-Host "Enter your choice"
 
-if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-    $selectedFiles = $OpenFileDialog.FileNames
-
-    while ($true) {
-        $renameOption = Read-Host "Enter '1' for base name, '2' for prefix/suffix, '3' for pattern replace, '4' to undo, '5' to redo, '6' encryption, '7' decryption or 'exit' to quit"
-
-        switch ($renameOption) {
-            '1' {
-                $batchOperation = Rename-WithBaseName -selectedFiles $selectedFiles
-                $undoStack += ,$batchOperation
-                $redoStack = @()
+        switch ($Choice) {
+            '1' {               
+                $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+                $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+                $OpenFileDialog.Title = "Select files to rename"
+                $OpenFileDialog.Multiselect = $true  # Allow multiple file selection
+                    
+                # Show the file dialog and get the selected files
+                if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+                    $selectedFiles = $OpenFileDialog.FileNames
+                    $batchOperation = Rename-WithBaseName -selectedFiles $selectedFiles
+                    $undoStack += ,$batchOperation
+                    $redoStack = @()
+                }
             }
             '2' {
-                $batchOperation = Rename-WithPrefixSuffix -selectedFiles $selectedFiles
-                $undoStack += ,$batchOperation
-                $redoStack = @()
+                $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+                $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+                $OpenFileDialog.Title = "Select files to rename"
+                $OpenFileDialog.Multiselect = $true  # Allow multiple file selection
+
+                if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+                    $selectedFiles = $OpenFileDialog.FileNames
+                    $batchOperation = Rename-WithPrefixSuffix -selectedFiles $selectedFiles
+                    $undoStack += ,$batchOperation
+                    $redoStack = @()
+                }
             }
             '3' {
-                $batchOperation = Rename-WithPatternReplacement -selectedFiles $selectedFiles
-                $undoStack += ,$batchOperation
-                $redoStack = @()
+                $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+                $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+                $OpenFileDialog.Title = "Select files to rename"
+                $OpenFileDialog.Multiselect = $true  # Allow multiple file selection
+                
+                if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+                    $selectedFiles = $OpenFileDialog.FileNames
+                    $batchOperation = Rename-WithPatternReplacement -selectedFiles $selectedFiles
+                    $undoStack += ,$batchOperation
+                    $redoStack = @()
+                }
             }
             '4' {
                 $undoStack, $redoStack = Undo-Rename -undoStack $undoStack -redoStack $redoStack
@@ -365,37 +430,59 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
                 $undoStack, $redoStack = Redo-Rename -redoStack $redoStack -undoStack $undoStack
             }
             '6' {
-                $password = Read-Host "Enter password for encryption (any length)"       
+                # Open file dialog to select multiple files for encryption
+                $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+                $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+                $OpenFileDialog.Title = "Select files to encrypt"
+                $OpenFileDialog.Multiselect = $true  # Allow multiple file selection
 
-                # Encrypt selected files
-                foreach ($filePath in $selectedFiles) {
-                    $file = Get-Item -Path $filePath
-                    $folderPath = $file.DirectoryName
-                    $fileName = $file.Name
-
-                    # Encrypt the file and create a new .enc file
-                    Encrypt-File -InputFile $filePath -Password $password
-
-                    Write-Host "Encrypted '$fileName' and created new .enc file." -ForegroundColor Green
+                if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
+                    $InputFiles = $OpenFileDialog.FileNames  # Get all selected files
+                    $Password = Read-Host "Enter encryption password"
+                    $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+                    $SaveFileDialog.Title = "Save encrypted file"
+                    
+                    foreach ($InputFile in $InputFiles) {
+                        # Prepare the output file name (add .ext or keep the original name)
+                        if ($FileType) {
+                            $OutputFile = "$InputFile.$FileType"
+                        } else {
+                            $OutputFile = "$InputFile.encrypted"  # Default output name
+                        }
+                        
+                        # Encrypt each selected file
+                        Encrypt-File -InputFile $InputFile -OutputFile $OutputFile -Password $Password
+                        Write-Host "Encrypted '$InputFile' to '$OutputFile'" -ForegroundColor Green
+                    }
                 }
-
-                Write-Host "Encryption completed for all selected files!" -ForegroundColor Cyan
             }
+
             '7' {
-                $password = Read-Host "Enter password for decryption (any length)"
+                # Open file dialog to select multiple files for decryption
+                $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+                $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+                $OpenFileDialog.Title = "Select files to decrypt"
+                $OpenFileDialog.Multiselect = $true  # Allow multiple file selection
 
-                # Decrypt selected files
-                foreach ($filePath in $selectedFiles) {
-                    $file = Get-Item -Path $filePath
-                    $fileName = $file.Name
+                if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
+                    $InputFiles = $OpenFileDialog.FileNames  # Get all selected files
+                    $Password = Read-Host "Enter decryption password"
+                    $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+                    $SaveFileDialog.Title = "Save decrypted file"
 
-                    # Decrypt the file and overwrite it with decrypted content
-                    Decrypt-File -InputFile $filePath -Password $password
+                    foreach ($InputFile in $InputFiles) {
+                        # Prepare the output file name (add .ext or keep the original name)
+                        if ($FileType) {
+                            $OutputFile = "$InputFile.$FileType"
+                        } else {
+                            $OutputFile = "$InputFile.decrypted"  # Default output name
+                        }
 
-                    Write-Host "Decrypted '$fileName' and overwrote the original file." -ForegroundColor Green
+                        # Decrypt each selected file
+                        Decrypt-File -InputFile $InputFile -OutputFile $OutputFile -Password $Password
+                        Write-Host "Decrypted '$InputFile' to '$OutputFile'" -ForegroundColor Green
+                    }
                 }
-
-                Write-Host "Decryption completed for all selected files!" -ForegroundColor Cyan
             }
 
             'exit' {
@@ -406,11 +493,7 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
                 Write-Host "Invalid option. Try again." -ForegroundColor Red
             }
         }
-
     }
-} else {
-    Write-Host "No files selected. Exiting." -ForegroundColor Yellow
-}
 
 
 
