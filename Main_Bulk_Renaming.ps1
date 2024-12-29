@@ -175,6 +175,8 @@ $CenterStackPanel.Children.Add($BaseNameLabel)
 $BaseNameTextBox = New-Object Windows.Controls.TextBox
 $BaseNameTextBox.Width = 200
 $BaseNameTextBox.FontSize = 14
+$BaseNameTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+$BaseNameTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
 $BaseNameTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
 $CenterStackPanel.Children.Add($BaseNameTextBox)
 
@@ -252,5 +254,181 @@ $BulkRenameButton.Add_Click({
     $BulkRenamingWindow.ShowDialog() | Out-Null
 })
 
+# Create the Replace window
+$ReplaceWindow = New-Object Windows.Window
+$ReplaceWindow.Title = "SHIFTIFY: Replace"
+$ReplaceWindow.Height = 500
+$ReplaceWindow.Width = 400
+$ReplaceWindow.WindowStartupLocation = "CenterScreen"
+$ReplaceWindow.FontFamily = "Segoe UI"
+$ReplaceWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
+
+$ReplaceWindow.ResizeMode = "NoResize"
+$ReplaceWindow.WindowStyle = "SingleBorderWindow"
+
+# Create a Grid for Replace Page
+$ReplaceGrid = New-Object Windows.Controls.Grid
+
+# Title for Replace Page
+$ReplaceTitleBorder = New-Object Windows.Controls.Border
+$ReplaceTitleBorder.Width = 350
+$ReplaceTitleBorder.Height = 60
+$ReplaceTitleBorder.HorizontalAlignment = "Center"
+$ReplaceTitleBorder.VerticalAlignment = "Top"
+$ReplaceTitleBorder.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
+$ReplaceTitleBorder.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+$ReplaceTitleBorder.CornerRadius = [Windows.CornerRadius]::new(20)
+$ReplaceTitleBorder.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4")
+$ReplaceTitleBorder.BorderThickness = [Windows.Thickness]::new(3)
+
+$ReplaceTitleTextBlock = New-Object Windows.Controls.TextBlock
+$ReplaceTitleTextBlock.Text = "Replace"
+$ReplaceTitleTextBlock.FontSize = 24
+$ReplaceTitleTextBlock.FontWeight = "Bold"
+$ReplaceTitleTextBlock.HorizontalAlignment = "Center"
+$ReplaceTitleTextBlock.VerticalAlignment = "Center"
+$ReplaceTitleTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+
+$ReplaceTitleBorder.Child = $ReplaceTitleTextBlock
+$ReplaceGrid.Children.Add($ReplaceTitleBorder)
+
+# Center panel for Replace actions
+$ReplaceCenterStackPanel = New-Object Windows.Controls.StackPanel
+$ReplaceCenterStackPanel.HorizontalAlignment = "Center"
+$ReplaceCenterStackPanel.VerticalAlignment = "Top"
+$ReplaceCenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
+
+# File selection button
+$ReplaceSelectFilesButton = Create-Button -Content "Select File" -TopMargin 0
+$ReplaceSelectFilesButton.Width = 150
+$ReplaceSelectFilesButton.Height = 40
+$ReplaceCenterStackPanel.Children.Add($ReplaceSelectFilesButton)
+
+# Add logic to the Replace Select File button
+$ReplaceSelectFilesButton.Add_Click({
+    # Open file dialog for single file selection
+    $OpenFileDialog = New-Object Microsoft.Win32.OpenFileDialog
+    $OpenFileDialog.Title = "Select a File"
+    
+    # Show the dialog and handle file selection
+    if ($OpenFileDialog.ShowDialog()) {
+        # Display the selected file in a TextBlock or ListBox
+        $FileListBox.Items.Clear() # Ensure the list is cleared first
+        $FileListBox.Items.Add($OpenFileDialog.FileName) # Add selected file
+    }
+})
+
+# Text box for "Replace" and "With"
+$ReplaceLabel = New-Object Windows.Controls.TextBlock
+$ReplaceLabel.Text = "Replace:"
+$ReplaceLabel.FontSize = 14
+$ReplaceLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
+$ReplaceLabel.HorizontalAlignment = "Center"
+$ReplaceCenterStackPanel.Children.Add($ReplaceLabel)
+
+$ReplaceTextBox = New-Object Windows.Controls.TextBox
+$ReplaceTextBox.Width = 200
+$ReplaceTextBox.FontSize = 14
+$ReplaceTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+$ReplaceTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+$ReplaceTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
+$ReplaceCenterStackPanel.Children.Add($ReplaceTextBox)
+
+$WithLabel = New-Object Windows.Controls.TextBlock
+$WithLabel.Text = "With:"
+$WithLabel.FontSize = 14
+$WithLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
+$WithLabel.HorizontalAlignment = "Center"
+$ReplaceCenterStackPanel.Children.Add($WithLabel)
+
+$WithTextBox = New-Object Windows.Controls.TextBox
+$WithTextBox.Width = 200
+$WithTextBox.FontSize = 14
+$WithTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+$WithTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+$WithTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
+$ReplaceCenterStackPanel.Children.Add($WithTextBox)
+
+# Preview display box
+$ReplacePreviewListBox = New-Object Windows.Controls.ListBox
+$ReplacePreviewListBox.Width = 300
+$ReplacePreviewListBox.Height = 100
+$ReplacePreviewListBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+$ReplacePreviewListBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+$ReplacePreviewListBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+$ReplacePreviewListBox.BorderThickness = [Windows.Thickness]::new(2)
+$ReplaceCenterStackPanel.Children.Add($ReplacePreviewListBox)
+
+$ReplaceApplyButton.Add_Click({
+    if (-not $FileListBox.SelectedItem) {
+        [System.Windows.MessageBox]::Show("Please select a file.", "Error")
+        return
+    }
+    if (-not $ReplaceTextBox.Text -or -not $WithTextBox.Text) {
+        [System.Windows.MessageBox]::Show("Please fill in both 'Replace' and 'With' fields.", "Error")
+        return
+    }
+
+    # Get the file path and the replace/with strings
+    $SelectedFilePath = $FileListBox.SelectedItem
+    $SelectedFileName = [System.IO.Path]::GetFileName($SelectedFilePath)
+    $ReplaceString = $ReplaceTextBox.Text
+    $WithString = $WithTextBox.Text
+
+    # Perform the replacement in the file name
+    if ($SelectedFileName -match [Regex]::Escape($ReplaceString)) {
+        $UpdatedFileName = $SelectedFileName -replace [Regex]::Escape($ReplaceString), $WithString
+        $NewFilePath = [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($SelectedFilePath), $UpdatedFileName)
+
+        try {
+            # Rename the file
+            Rename-Item -Path $SelectedFilePath -NewName $NewFilePath
+            [System.Windows.MessageBox]::Show("File renamed successfully!", "Success")
+        } catch {
+            [System.Windows.MessageBox]::Show("Error renaming file: $_", "Error")
+        }
+    } else {
+        [System.Windows.MessageBox]::Show("No match found for replacement.", "Error")
+    }
+})
+
+# Buttons for Preview, Replace, Back
+$ReplaceButtonGrid = New-Object Windows.Controls.Grid
+$ReplaceButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
+
+for ($row = 0; $row -lt 1; $row++) {
+    $ReplaceButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
+}
+for ($col = 0; $col -lt 3; $col++) {
+    $ReplaceButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
+}
+
+$ReplacePreviewButton = Create-SmallButton -Content "Preview" -Row 0 -Column 0
+$ReplaceApplyButton = Create-SmallButton -Content "Replace" -Row 0 -Column 1
+$ReplaceBackButton = Create-SmallButton -Content "Back" -Row 0 -Column 2
+
+$ReplaceButtonGrid.Children.Add($ReplacePreviewButton)
+$ReplaceButtonGrid.Children.Add($ReplaceApplyButton)
+$ReplaceButtonGrid.Children.Add($ReplaceBackButton)
+
+$ReplaceCenterStackPanel.Children.Add($ReplaceButtonGrid)
+
+$ReplaceGrid.Children.Add($ReplaceCenterStackPanel)
+
+$ReplaceWindow.Content = $ReplaceGrid
+
+# Replace Back button logic
+$ReplaceBackButton.Add_Click({
+    $ReplaceWindow.Hide()
+    $MainPageWindow.ShowDialog() | Out-Null
+})
+
+# Replace button logic for opening Replace window
+$ReplacingButton.Add_Click({
+    $MainPageWindow.Hide()
+    $ReplaceWindow.ShowDialog() | Out-Null
+})
+
 # Show the main window
 $MainPageWindow.ShowDialog() | Out-Null
+
