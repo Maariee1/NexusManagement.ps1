@@ -206,13 +206,18 @@ function CreateSplitWindow {
     [System.Windows.Controls.Grid]::SetRow($titleBorder, 0)
     $null = $grid.Children.Add($titleBorder)
 
-    # Input File
-    $inputLabel = New-Object System.Windows.Controls.TextBlock
-    $inputLabel.Text = "Input File:"
-    $inputLabel.Margin = "0,10,10,10"
-    [System.Windows.Controls.Grid]::SetRow($inputLabel, 1)
-    [System.Windows.Controls.Grid]::SetColumn($inputLabel, 0)
-    $null = $grid.Children.Add($inputLabel)
+    #select file button
+    $inputButton = New-Object System.Windows.Controls.Button
+    $inputButton.Content = "Select File"
+    $inputButton.Width = 80
+    $inputButton.Margin = "0,10,10,10"
+    $inputButton.FontWeight = "Bold"   
+    $inputButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
+    $inputButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
+    $inputButton.Add_Click({[System.Windows.MessageBox]::Show("Select input file!")})
+    [System.Windows.Controls.Grid]::SetRow($inputButton, 1)
+    [System.Windows.Controls.Grid]::SetColumn($inputButton, 0)
+    $null = $grid.Children.Add($inputButton)
 
     $inputBox = New-Object System.Windows.Controls.TextBox
     $inputBox.Margin = "0,10,10,10"
@@ -224,13 +229,18 @@ function CreateSplitWindow {
     [System.Windows.Controls.Grid]::SetColumnSpan($inputBox, 2)  # Ensure it spans across remaining space
     $null = $grid.Children.Add($inputBox)
 
-    # Output File
-    $outputLabel = New-Object System.Windows.Controls.TextBlock
-    $outputLabel.Text = "Output:"
-    $outputLabel.Margin = "0,10,10,10"
-    [System.Windows.Controls.Grid]::SetRow($outputLabel, 2)
-    [System.Windows.Controls.Grid]::SetColumn($outputLabel, 0)
-    $null = $grid.Children.Add($outputLabel)
+    #select folder button
+    $outputButton = New-Object System.Windows.Controls.Button
+    $outputButton.Content = "Select Folder"
+    $outputButton.Width = 80
+    $outputButton.Margin = "0,10,10,10"
+    $outputButton.FontWeight = "Bold"   
+    $outputButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
+    $outputButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
+    $outputButton.Add_Click({[System.Windows.MessageBox]::Show("Select output file!")})
+    [System.Windows.Controls.Grid]::SetRow($outputButton, 2)
+    [System.Windows.Controls.Grid]::SetColumn($outputButton, 0)
+    $null = $grid.Children.Add($outputButton)
 
     $outputBox = New-Object System.Windows.Controls.TextBox
     $outputBox.Margin = "0,10,10,10"
@@ -359,13 +369,19 @@ function CreateJoinWindow {
     [System.Windows.Controls.Grid]::SetRow($titleBorder, 0)
     $null = $grid.Children.Add($titleBorder)
 
-    # Input File
-    $inputLabel = New-Object System.Windows.Controls.TextBlock
-    $inputLabel.Text = "Input File:"
-    $inputLabel.Margin = "0,10,10,10"
-    [System.Windows.Controls.Grid]::SetRow($inputLabel, 1)
-    [System.Windows.Controls.Grid]::SetColumn($inputLabel, 0)
-    $null = $grid.Children.Add($inputLabel)
+    #select file button
+    $inputButton = New-Object System.Windows.Controls.Button
+    $inputButton.Content = "Select File"
+    $inputButton.Width = 80
+    $inputButton.Margin = "0,10,10,10"
+    $inputButton.FontWeight = "Bold"   
+    $inputButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
+    $inputButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
+    $inputButton.Add_Click({[System.Windows.MessageBox]::Show("Select input file!")})
+    [System.Windows.Controls.Grid]::SetRow($inputButton, 1)
+    [System.Windows.Controls.Grid]::SetColumn($inputButton, 0)
+    $null = $grid.Children.Add($inputButton)
+
 
     $inputBox = New-Object System.Windows.Controls.TextBox
     $inputBox.Margin = "0,10,10,10"
@@ -374,13 +390,18 @@ function CreateJoinWindow {
     [System.Windows.Controls.Grid]::SetColumn($inputBox, 1)
     $null = $grid.Children.Add($inputBox)
 
-    # Output File
-    $outputLabel = New-Object System.Windows.Controls.TextBlock
-    $outputLabel.Text = "Output:"
-    $outputLabel.Margin = "0,10,10,10"
-    [System.Windows.Controls.Grid]::SetRow($outputLabel, 2)
-    [System.Windows.Controls.Grid]::SetColumn($outputLabel, 0)
-    $null = $grid.Children.Add($outputLabel)
+    #select folder button
+    $outputButton = New-Object System.Windows.Controls.Button
+    $outputButton.Content = "Select Folder"
+    $outputButton.Width = 80
+    $outputButton.Margin = "0,10,10,10"
+    $outputButton.FontWeight = "Bold"   
+    $outputButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
+    $outputButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
+    $outputButton.Add_Click({[System.Windows.MessageBox]::Show("Select output file!")})
+    [System.Windows.Controls.Grid]::SetRow($outputButton, 2)
+    [System.Windows.Controls.Grid]::SetColumn($outputButton, 0)
+    $null = $grid.Children.Add($outputButton)
 
     $outputBox = New-Object System.Windows.Controls.TextBox
     $outputBox.Margin = "0,10,10,10"
