@@ -400,7 +400,7 @@ if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
 
             'exit' {
                 Write-Host "Exiting the program. Goodbye!" -ForegroundColor Cyan
-                break
+                exit
             }
             default {
                 Write-Host "Invalid option. Try again." -ForegroundColor Red
