@@ -100,7 +100,6 @@
         Write-Output "File is decrypted."
     }
 
-
     function Rename-WithPrefixSuffix {
         param (
             [array]$selectedFiles
@@ -219,6 +218,56 @@
     
         return $batchOperation
     }
+    function Rename-WithBaseName {
+        param (
+            [array]$selectedFiles
+        )
+    
+        $baseName = Read-Host "Enter the base name for all selected files"
+        
+        # Initialize batchOperation to track changes for undo/redo
+        $batchOperation = @()
+    
+        # Process each selected file and rename them sequentially
+        $counter = 0
+        foreach ($filePath in $selectedFiles) {
+            # Get file information
+            $file = Get-Item -Path $filePath
+            $folderPath = $file.DirectoryName
+            $fileExtension = $file.Extension
+    
+            # Construct the new name
+            if ($counter -eq 0) {
+                $newFileName = "$baseName$fileExtension"
+            } else {
+                $newFileName = "$baseName ($counter)$fileExtension"
+            }
+            
+            $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+    
+            # Ensure no conflicts
+            while (Test-Path -Path $newFilePath) {
+                $counter++
+                $newFileName = "$baseName ($counter)$fileExtension"
+                $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+            }
+    
+            # Rename the file
+            Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
+    
+            # Store the original and new paths for batch undo/redo
+            $batchOperation += @{
+                OriginalPath = $filePath
+                NewPath = $newFilePath
+            }
+    
+            Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
+            $counter++
+        }
+    
+        return $batchOperation
+    }
+    
     function Undo-Rename {
         param (
             [array]$undoStack,
@@ -246,6 +295,7 @@
     
         return $undoStack, $redoStack
     }
+    
     function Redo-Rename {
         param (
             [array]$redoStack,
@@ -273,51 +323,7 @@
     
         return $undoStack, $redoStack
     }
-    function Rename-WithBaseName {
-        param (
-            [array]$selectedFiles
-        )
-            $baseName = Read-Host "Enter the base name for all selected files"
-    
-            # Process each selected file and rename them sequentially
-            $counter = 0
-            foreach ($filePath in $selectedFiles) {
-                # Get file information
-                $file = Get-Item -Path $filePath
-                $folderPath = $file.DirectoryName
-                $fileExtension = $file.Extension
-    
-                # Construct the new name
-                if ($counter -eq 0) {
-                    $newFileName = "$baseName$fileExtension"
-                } else {
-                    $newFileName = "$baseName ($counter)$fileExtension"
-                }
-            
-                $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
-    
-                # Ensure no conflicts
-                while (Test-Path -Path $newFilePath) {
-                    $counter++
-                    $newFileName = "$baseName ($counter)$fileExtension"
-                    $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
-                }
-    
-                # Rename the file
-                Rename-Item -Path $filePath -NewName $newFileName -ErrorAction Stop
-    
-                #inii-store ang new and old names
-                $batchOperation += @{
-                    OriginalPath = $filePath
-                    NewPath = $newFilePath
-                }
-    
-                Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
-                $counter++
-            }
-        }
-    
-                   
+         
 # Load the required assembly for OpenFileDialog
 Add-Type -AssemblyName System.Windows.Forms
 
