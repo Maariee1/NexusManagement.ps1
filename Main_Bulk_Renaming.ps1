@@ -1,7 +1,9 @@
 # Load necessary components for WPF application
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName PresentationCore
+Add-Type -AssemblyName System.Windows.Forms
 
+. ./Rename.ps1
 # Function to convert a hex color to SolidColorBrush
 function ConvertTo-SolidColorBrush {
     param ($hexColor)
@@ -114,6 +116,23 @@ $ButtonStackPanel.Children.Add($ReplaceButton)
 $ButtonStackPanel.Children.Add($EncryptButton)
 
 $MainGrid.Children.Add($ButtonStackPanel)
+
+$BulkRenameButton.Add_Click({
+    $MainPageWindow.Hide()
+    $BulkRenamingWindow.ShowDialog() | Out-Null
+})
+
+# Replace button logic for opening Replace window
+$ReplaceButton.Add_Click({
+    $MainPageWindow.Hide()
+    $ReplaceWindow.ShowDialog() | Out-Null
+})
+
+# Encryption button logic for opening Encryption window
+$EncryptButton.Add_Click({
+    $MainPageWindow.Hide()
+    $EncryptionWindow.ShowDialog() | Out-Null
+})
 
 # Set Grid as content
 $MainPageWindow.Content = $MainGrid
@@ -236,42 +255,57 @@ $BulkGrid.Children.Add($CenterStackPanel)
 
 $BulkRenamingWindow.Content = $BulkGrid
 
-# File Selection Button Logic
-$SelectFilesButton.Add_Click({
-    $OpenFileDialog = New-Object Microsoft.Win32.OpenFileDialog
-    $OpenFileDialog.Multiselect = $true
-    $OpenFileDialog.Title = "Select Files"
-
-    if ($OpenFileDialog.ShowDialog()) {
-        $FileListBox.Items.Clear()
-        foreach ($file in $OpenFileDialog.FileNames) {
-            $FileListBox.Items.Add($file)
-        }
-    }
-})
-
 # Back button logic for Bulk Renaming page
 $BackButton.Add_Click({
     $BulkRenamingWindow.Hide()
     $MainPageWindow.ShowDialog() | Out-Null
 })
 
+$SelectFilesButton.Add_Click({
+    $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+    $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+    $OpenFileDialog.Title = "Select files to rename"
+    $OpenFileDialog.Multiselect = $true 
+
+    if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        $FileListBox.Items.Clear()  # Clear any existing items in the list box
+        foreach ($file in $OpenFileDialog.FileNames) {
+            $FileListBox.Items.Add($file)  # Add each selected file path to the list box
+        }
+    }
+})
+
 # Bulk Rename button logic for opening Bulk Renaming window
-$BulkRenameButton.Add_Click({
+$RenameButton.Add_Click({
     $MainPageWindow.Hide()
-    $BulkRenamingWindow.ShowDialog() | Out-Null
+    $BulkRenamingWindow.Show()
+
+    $baseName = $BaseNameTextBox.Text
+
+    # Check if any files have been selected
+    if ($FileListBox.Items.Count -eq 0) {
+        [System.Windows.Forms.MessageBox]::Show("Please select files before proceeding.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+        return
+    }
+
+    # Get selected files from the FileListBox
+    $selectedFiles = $FileListBox.Items
+
+    # Perform the batch renaming operation
+    $batchOperation = Rename-WithBaseName -selectedFiles $selectedFiles -baseName $baseName
+
+    # Add the operation to the undo stack (for potential undo functionality)
+    $undoStack += ,$batchOperation
+    $redoStack = @()  # Clear the redo stack since new operations are performed
 })
 
-# Replace button logic for opening Replace window
-$ReplaceButton.Add_Click({
+$PreviewButton.Add_Click({
     $MainPageWindow.Hide()
-    $ReplaceWindow.ShowDialog() | Out-Null
-})
+    $BulkRenamingWindow.Show()
 
-# Encryption button logic for opening Encryption window
-$EncryptButton.Add_Click({
-    $MainPageWindow.Hide()
-    $EncryptionWindow.ShowDialog() | Out-Null
+    $FileListBox.Items.Add("Old Path: $filePath -> New Path: $newFilePath")
+        $counter++
+    
 })
 
 # Show the Main Page window
