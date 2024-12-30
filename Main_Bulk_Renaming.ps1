@@ -212,7 +212,7 @@ $BaseNameTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
 $BaseNameTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
 $CenterStackPanel.Children.Add($BaseNameTextBox)
 
-# Buttons for Preview, Rename, Undo, Back
+# Buttons for Preview, Rename, Undo, Redo, Back
 $ButtonGrid = New-Object Windows.Controls.Grid
 $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
 
@@ -242,14 +242,26 @@ function Create-SmallButton {
 $PreviewButton = Create-SmallButton -Content "Preview" -Row 0 -Column 0
 $RenameButton = Create-SmallButton -Content "Rename" -Row 0 -Column 1
 $UndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
-$BackButton = Create-SmallButton -Content "Back" -Row 1 -Column 1
+$RedoButton = Create-SmallButton -Content "Redo" -Row 1 -Column 1
 
 $ButtonGrid.Children.Add($PreviewButton)
 $ButtonGrid.Children.Add($RenameButton)
 $ButtonGrid.Children.Add($UndoButton)
-$ButtonGrid.Children.Add($BackButton)
+$ButtonGrid.Children.Add($RedoButton)
 
 $CenterStackPanel.Children.Add($ButtonGrid)
+
+# Back button
+$BackButton = New-Object Windows.Controls.Button
+$BackButton.Content = "Back"
+$BackButton.Width = 100
+$BackButton.Height = 30
+$BackButton.Margin = [Windows.Thickness]::new(0, 3, 0, 0)
+$BackButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+$BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+$BackButton.FontSize = 12
+$BackButton.FontWeight = "Bold"
+$CenterStackPanel.Children.Add($BackButton)
 
 $BulkGrid.Children.Add($CenterStackPanel)
 
@@ -299,17 +311,33 @@ $RenameButton.Add_Click({
     $redoStack = @()  # Clear the redo stack since new operations are performed
 })
 
+# Redo button logic
+$RedoButton.Add_Click({
+    if ($redoStack.Count -gt 0) {
+        $operationToRedo = $redoStack[-1]
+        $redoStack = $redoStack[0..($redoStack.Count - 2)]
+
+        # Perform the redo operation
+        Perform-RedoOperation -operation $operationToRedo
+
+        # Add the operation back to the undo stack
+        $undoStack += ,$operationToRedo
+    } else {
+        [System.Windows.Forms.MessageBox]::Show("No actions to redo.", "Redo", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+    }
+})
+
+# Preview button logic
 $PreviewButton.Add_Click({
     $MainPageWindow.Hide()
     $BulkRenamingWindow.Show()
 
     $FileListBox.Items.Add("Old Path: $filePath -> New Path: $newFilePath")
-        $counter++
-    
 })
 
 # Show the Main Page window
 $MainPageWindow.ShowDialog() | Out-Null
+
 
 #------------------ REPLACE WINDOW ---------------------#
 
@@ -591,4 +619,4 @@ $BackButton.Add_Click({
 })
 
 # Show Encryption Window (for standalone testing)
-$EncryptionWindow.ShowDialog() | Out-Null
+$EncryptionWindow.ShowDialog() | Out-Null 
