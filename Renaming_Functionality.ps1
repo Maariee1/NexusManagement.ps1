@@ -13,11 +13,21 @@
     # Show the form without making it visible (needed for dialog)
     $form.Show()
 
-    function Encrypt-File {
+function Encrypt-File {
     param (
         [string]$InputFile,   # Path to the file to encrypt
         [string]$Password     # Password for encryption
     )
+
+    # Check if file is already encrypted
+    $Header = "ENCRYPTED_HEADER"
+    $HeaderBytes = [System.Text.Encoding]::UTF8.GetBytes($Header)
+    $FileContent = [System.IO.File]::ReadAllBytes($InputFile)
+
+    if ($FileContent.Length -ge $HeaderBytes.Length -and [System.Text.Encoding]::UTF8.GetString($FileContent[0..($HeaderBytes.Length-1)]) -eq $Header) {
+        Write-Host "File '$InputFile' is already encrypted." -ForegroundColor Yellow
+        return
+    }
 
     # Generate a 32-byte key and 16-byte IV from the password
     $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
@@ -30,15 +40,10 @@
     $Aes.IV = $IV
     $Encryptor = $Aes.CreateEncryptor()
 
-    # Read the file content into memory
-    $FileContent = [System.IO.File]::ReadAllBytes($InputFile)
-
     # Create a memory stream to hold the encrypted data
     $EncryptedData = New-Object System.IO.MemoryStream
 
     # Write the custom header to the encrypted data
-    $Header = "ENCRYPTED_HEADER"
-    $HeaderBytes = [System.Text.Encoding]::UTF8.GetBytes($Header)
     $EncryptedData.Write($HeaderBytes, 0, $HeaderBytes.Length)
 
     # Write the IV to the encrypted data
@@ -53,7 +58,7 @@
     [System.IO.File]::WriteAllBytes($InputFile, $EncryptedData.ToArray())
     $EncryptedData.Close()
 
-    Write-Output "File is encrypted."
+    Write-Host "File '$InputFile' is encrypted." -ForegroundColor Green
 }
 
 # Function to decrypt a file in place
