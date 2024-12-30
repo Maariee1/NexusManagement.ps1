@@ -412,61 +412,36 @@ while($true){
                 $undoStack, $redoStack = Redo-Rename -redoStack $redoStack -undoStack $undoStack
             }
             '6' {
-                # Open file dialog to select multiple files for encryption
                 $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
                 $OpenFileDialog.Filter = "All Files (*.*)|*.*"
                 $OpenFileDialog.Title = "Select files to encrypt"
-                $OpenFileDialog.Multiselect = $true  # Allow multiple file selection
+                $OpenFileDialog.Multiselect = $true
 
                 if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
-                    $InputFiles = $OpenFileDialog.FileNames  # Get all selected files
+                    $InputFiles = $OpenFileDialog.FileNames
                     $Password = Read-Host "Enter encryption password"
-                    $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
-                    $SaveFileDialog.Title = "Save encrypted file"
-                    
+
                     foreach ($InputFile in $InputFiles) {
-                        # Prepare the output file name (add .ext or keep the original name)
-                        if ($FileType) {
-                            $OutputFile = "$InputFile.$FileType"
-                        } else {
-                            $OutputFile = "$InputFile.encrypted"  # Default output name
-                        }
-                        
-                        # Encrypt each selected file
-                        Encrypt-File -InputFile $InputFile -OutputFile $OutputFile -Password $Password
-                        Write-Host "Encrypted '$InputFile' to '$OutputFile'" -ForegroundColor Green
+                        Encrypt-File -InputFile $InputFile -Password $Password
                     }
                 }
             }
 
             '7' {
-                # Open file dialog to select multiple files for decryption
                 $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
                 $OpenFileDialog.Filter = "All Files (*.*)|*.*"
                 $OpenFileDialog.Title = "Select files to decrypt"
-                $OpenFileDialog.Multiselect = $true  # Allow multiple file selection
+                $OpenFileDialog.Multiselect = $true
 
                 if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
-                    $InputFiles = $OpenFileDialog.FileNames  # Get all selected files
+                    $InputFiles = $OpenFileDialog.FileNames
                     $Password = Read-Host "Enter decryption password"
-                    $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
-                    $SaveFileDialog.Title = "Save decrypted file"
 
                     foreach ($InputFile in $InputFiles) {
-                        # Prepare the output file name (add .ext or keep the original name)
-                        if ($FileType) {
-                            $OutputFile = "$InputFile.$FileType"
-                        } else {
-                            $OutputFile = "$InputFile.decrypted"  # Default output name
-                        }
-
-                        # Decrypt each selected file
-                        Decrypt-File -InputFile $InputFile -OutputFile $OutputFile -Password $Password
-                        Write-Host "Decrypted '$InputFile' to '$OutputFile'" -ForegroundColor Green
+                        Decrypt-File -InputFile $InputFile -Password $Password
                     }
                 }
             }
-
             'exit' {
                 Write-Host "Exiting the program. Goodbye!" -ForegroundColor Cyan
                 exit
@@ -476,8 +451,6 @@ while($true){
             }
         }
     }
-
-
 
 
 
