@@ -19,16 +19,6 @@ function Encrypt-File {
         [string]$Password     # Password for encryption
     )
 
-    # Check if file is already encrypted
-    $Header = "ENCRYPTED_HEADER"
-    $HeaderBytes = [System.Text.Encoding]::UTF8.GetBytes($Header)
-    $FileContent = [System.IO.File]::ReadAllBytes($InputFile)
-
-    if ($FileContent.Length -ge $HeaderBytes.Length -and [System.Text.Encoding]::UTF8.GetString($FileContent[0..($HeaderBytes.Length-1)]) -eq $Header) {
-        Write-Host "File '$InputFile' is already encrypted." -ForegroundColor Yellow
-        return
-    }
-
     # Generate a 32-byte key and 16-byte IV from the password
     $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
     $IV = New-Object byte[] 16
@@ -40,10 +30,15 @@ function Encrypt-File {
     $Aes.IV = $IV
     $Encryptor = $Aes.CreateEncryptor()
 
+    # Read the file content into memory
+    $FileContent = [System.IO.File]::ReadAllBytes($InputFile)
+
     # Create a memory stream to hold the encrypted data
     $EncryptedData = New-Object System.IO.MemoryStream
 
     # Write the custom header to the encrypted data
+    $Header = "ENCRYPTED_HEADER"
+    $HeaderBytes = [System.Text.Encoding]::UTF8.GetBytes($Header)
     $EncryptedData.Write($HeaderBytes, 0, $HeaderBytes.Length)
 
     # Write the IV to the encrypted data
@@ -58,9 +53,10 @@ function Encrypt-File {
     [System.IO.File]::WriteAllBytes($InputFile, $EncryptedData.ToArray())
     $EncryptedData.Close()
 
-    Write-Host "File '$InputFile' is encrypted." -ForegroundColor Green
+    Write-Output "File is encrypted."
 }
 
+# Function to decrypt a file in place
 function Decrypt-File {
     param (
         [string]$InputFile,   # Path to the encrypted file
@@ -70,22 +66,30 @@ function Decrypt-File {
     # Open the input file for reading
     $FileStream = [System.IO.File]::Open($InputFile, 'Open', 'Read')
 
-   try {
-        # Read the first bytes for the header
-        $HeaderBytes = New-Object byte[] 16
-        $FileStream.Read($HeaderBytes, 0, $HeaderBytes.Length) | Out-Null
+    # Read the first bytes for the header
+    $HeaderBytes = New-Object byte[] 16
+    $FileStream.Read($HeaderBytes, 0, $HeaderBytes.Length) | Out-Null
 
-        # Convert the header bytes to a string and check if it matches the signature
-        $Header = [System.Text.Encoding]::UTF8.GetString($HeaderBytes)
-        if ($Header -ne "ENCRYPTED_HEADER") {
-            Write-Host "File '$InputFile' is not encrypted." -ForegroundColor Yellow
-            $FileStream.Close()
-            return
-        }
+    # Convert the header bytes to a string and check if it matches the signature
+    $Header = [System.Text.Encoding]::UTF8.GetString($HeaderBytes)
+    if ($Header -ne "ENCRYPTED_HEADER") {
+        Write-Output "This file is not encrypted!"
+        $FileStream.Close()
+        return
+    }
 
-        # Read the IV (next 16 bytes after the header)
-        $IV = New-Object byte[] 16
-        $FileStream.Read($IV, 0, $IV.Length) | Out-Null
+    # Read the IV (next 16 bytes after the header)
+    $IV = New-Object byte[] 16
+    $FileStream.Read($IV, 0, $IV.Length) | Out-Null
+
+    # Attempt decryption with up to 3 tries
+    $Attempts = 0
+    $MaxAttempts = 3
+    $DecryptedSuccessfully = $false
+
+    while ($Attempts -lt $MaxAttempts -and -not $DecryptedSuccessfully) {
+        # Increment the attempt counter
+        $Attempts++
 
         # Generate the key from the password
         $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
@@ -94,33 +98,47 @@ function Decrypt-File {
         $Aes = [System.Security.Cryptography.Aes]::Create()
         $Aes.Key = $Key
         $Aes.IV = $IV
-        $Decryptor = $Aes.CreateDecryptor()
 
-        # Move the file pointer to the position after the header and IV
-        $FileStream.Position = 32
+        try {
+            $Decryptor = $Aes.CreateDecryptor()
 
-        # Create a CryptoStream for decryption
-        $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($FileStream, $Decryptor, [System.Security.Cryptography.CryptoStreamMode]::Read)
+            # Move the file pointer to the position after the header and IV
+            $FileStream.Position = 32
 
-        # Decrypt the file content into memory
-        $DecryptedData = New-Object System.IO.MemoryStream
-        $Buffer = New-Object byte[] 4096
+            # Create a CryptoStream for decryption
+            $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($FileStream, $Decryptor, [System.Security.Cryptography.CryptoStreamMode]::Read)
 
-        while (($BytesRead = $CryptoStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
-            $DecryptedData.Write($Buffer, 0, $BytesRead)
+            # Decrypt the file content into memory
+            $DecryptedData = New-Object System.IO.MemoryStream
+            $Buffer = New-Object byte[] 4096
+
+            while (($BytesRead = $CryptoStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
+                $DecryptedData.Write($Buffer, 0, $BytesRead)
+            }
+
+            # Close the streams
+            $CryptoStream.Close()
+            $FileStream.Close()
+
+            # Overwrite the original file with decrypted content
+            [System.IO.File]::WriteAllBytes($InputFile, $DecryptedData.ToArray())
+            $DecryptedData.Close()
+
+            Write-Output "File is decrypted."
+            $DecryptedSuccessfully = $true
+        } catch {
+            Write-Output "Incorrect password. Attempts remaining: $(($MaxAttempts - $Attempts))"
+
+            if ($Attempts -lt $MaxAttempts) {
+                $Password = Read-Host "Enter decryption password"
+            } else {
+                Write-Output "Maximum attempts reached. Decryption failed."
+            }
         }
+    }
 
-        # Close the streams
-        $CryptoStream.Close()
-        $FileStream.Close()
-
-        # Overwrite the original file with decrypted content
-        [System.IO.File]::WriteAllBytes($InputFile, $DecryptedData.ToArray())
-        $DecryptedData.Close()
-
-        Write-Host "File '$InputFile' is decrypted." -ForegroundColor Green
-    } catch {
-        Write-Host "Decryption failed for file '$InputFile'." -ForegroundColor Red
+    # Ensure the file stream is closed if still open
+    if ($FileStream -and $FileStream.CanRead) {
         $FileStream.Close()
     }
 }
@@ -412,33 +430,56 @@ while($true){
                 $undoStack, $redoStack = Redo-Rename -redoStack $redoStack -undoStack $undoStack
             }
             '6' {
+                # Open file dialog to select multiple files for encryption
                 $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
                 $OpenFileDialog.Filter = "All Files (*.*)|*.*"
                 $OpenFileDialog.Title = "Select files to encrypt"
-                $OpenFileDialog.Multiselect = $true
+                $OpenFileDialog.Multiselect = $true  # Allow multiple file selection
 
                 if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
-                    $InputFiles = $OpenFileDialog.FileNames
+                    $InputFiles = $OpenFileDialog.FileNames  # Get all selected files
                     $Password = Read-Host "Enter encryption password"
-
+                    $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+                    $SaveFileDialog.Title = "Save encrypted file"
+                    
                     foreach ($InputFile in $InputFiles) {
-                        Encrypt-File -InputFile $InputFile -Password $Password
+                        # Prepare the output file name (add .ext or keep the original name)
+                        if ($FileType) {
+                            $OutputFile = "$InputFile.$FileType"
+                        } else {
+                            $OutputFile = "$InputFile.encrypted"  # Default output name
+                        }
+                        
+                        # Encrypt each selected file
+                        Encrypt-File -InputFile $InputFile -OutputFile $OutputFile -Password $Password
+                        Write-Host "Encrypted '$InputFile' to '$OutputFile'" -ForegroundColor Green
                     }
                 }
             }
-
             '7' {
+                # Open file dialog to select multiple files for decryption
                 $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
                 $OpenFileDialog.Filter = "All Files (*.*)|*.*"
                 $OpenFileDialog.Title = "Select files to decrypt"
-                $OpenFileDialog.Multiselect = $true
+                $OpenFileDialog.Multiselect = $true  # Allow multiple file selection
 
                 if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
-                    $InputFiles = $OpenFileDialog.FileNames
+                    $InputFiles = $OpenFileDialog.FileNames  # Get all selected files
                     $Password = Read-Host "Enter decryption password"
+                    $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+                    $SaveFileDialog.Title = "Save decrypted file"
 
                     foreach ($InputFile in $InputFiles) {
-                        Decrypt-File -InputFile $InputFile -Password $Password
+                        # Prepare the output file name (add .ext or keep the original name)
+                        if ($FileType) {
+                            $OutputFile = "$InputFile.$FileType"
+                        } else {
+                            $OutputFile = "$InputFile.decrypted"  # Default output name
+                        }
+
+                        # Decrypt each selected file
+                        Decrypt-File -InputFile $InputFile -OutputFile $OutputFile -Password $Password
+                        Write-Host "Decrypted '$InputFile' to '$OutputFile'" -ForegroundColor Green
                     }
                 }
             }
