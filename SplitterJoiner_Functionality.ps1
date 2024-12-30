@@ -121,8 +121,8 @@ function Decrypt-File {
         [string]$Password     # Password for decryption
     )
 
-    # Open the input file for reading and writing
-    $FileStream = [System.IO.File]::Open($InputFile, 'Open', 'ReadWrite')
+    # Open the input file for reading
+    $FileStream = [System.IO.File]::Open($InputFile, 'Open', 'Read')
 
     # Read the first bytes for the header
     $HeaderBytes = New-Object byte[] 16
@@ -140,39 +140,67 @@ function Decrypt-File {
     $IV = New-Object byte[] 16
     $FileStream.Read($IV, 0, $IV.Length) | Out-Null
 
-    # Generate the key from the password
-    $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
+    # Attempt decryption with up to 3 tries
+    $Attempts = 0
+    $MaxAttempts = 3
+    $DecryptedSuccessfully = $false
 
-    # Initialize AES decryption
-    $Aes = [System.Security.Cryptography.Aes]::Create()
-    $Aes.Key = $Key
-    $Aes.IV = $IV
-    $Decryptor = $Aes.CreateDecryptor()
+    while ($Attempts -lt $MaxAttempts -and -not $DecryptedSuccessfully) {
+        # Increment the attempt counter
+        $Attempts++
 
-    # Move the file pointer to the position after the header and IV
-    $FileStream.Position = 32
+        # Generate the key from the password
+        $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
 
-    # Create a CryptoStream for decryption
-    $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($FileStream, $Decryptor, [System.Security.Cryptography.CryptoStreamMode]::Read)
+        # Initialize AES decryption
+        $Aes = [System.Security.Cryptography.Aes]::Create()
+        $Aes.Key = $Key
+        $Aes.IV = $IV
 
-    # Decrypt the file content
-    $DecryptedData = New-Object System.IO.MemoryStream
-    $Buffer = New-Object byte[] 4096
+        try {
+            $Decryptor = $Aes.CreateDecryptor()
 
-    while (($BytesRead = $CryptoStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
-        $DecryptedData.Write($Buffer, 0, $BytesRead)
+            # Move the file pointer to the position after the header and IV
+            $FileStream.Position = 32
+
+            # Create a CryptoStream for decryption
+            $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($FileStream, $Decryptor, [System.Security.Cryptography.CryptoStreamMode]::Read)
+
+            # Decrypt the file content into memory
+            $DecryptedData = New-Object System.IO.MemoryStream
+            $Buffer = New-Object byte[] 4096
+
+            while (($BytesRead = $CryptoStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
+                $DecryptedData.Write($Buffer, 0, $BytesRead)
+            }
+
+            # Close the streams
+            $CryptoStream.Close()
+            $FileStream.Close()
+
+            # Overwrite the original file with decrypted content
+            [System.IO.File]::WriteAllBytes($InputFile, $DecryptedData.ToArray())
+            $DecryptedData.Close()
+
+            Write-Output "File is decrypted."
+            $DecryptedSuccessfully = $true
+        } catch {
+            Write-Output "Incorrect password. Attempts remaining: $(($MaxAttempts - $Attempts))"
+
+            if ($Attempts -lt $MaxAttempts) {
+                $Password = Read-Host "Enter decryption password"
+            } else {
+                Write-Output "Maximum attempts reached. Decryption failed."
+            }
+        }
     }
 
-    # Close the streams
-    $CryptoStream.Close()
-    $FileStream.Close()
-
-    # Overwrite the original file with decrypted content
-    [System.IO.File]::WriteAllBytes($InputFile, $DecryptedData.ToArray())
-    $DecryptedData.Close()
-
-    Write-Output "File is decrypted."
+    # Ensure the file stream is closed if still open
+    if ($FileStream -and $FileStream.CanRead) {
+        $FileStream.Close()
+    }
 }
+
 
 while ($true) {
     Write-Output "Choose an option:"
@@ -286,5 +314,3 @@ while ($true) {
         }
     }
 }
-
-
