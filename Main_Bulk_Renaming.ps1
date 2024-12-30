@@ -134,6 +134,12 @@ $EncryptButton.Add_Click({
     $EncryptionWindow.ShowDialog() | Out-Null
 })
 
+# Encryption button logic for opening Encryption window
+$PrefixSuffixButton.Add_Click({
+    $MainPageWindow.Hide()
+    $PrefixSuffixWindowWindow.ShowDialog() | Out-Null
+})
+
 # Set Grid as content
 $MainPageWindow.Content = $MainGrid
 
@@ -337,6 +343,164 @@ $PreviewButton.Add_Click({
 
 # Show the Main Page window
 $MainPageWindow.ShowDialog() | Out-Null
+
+#------------------PREFIX AND SUFFIX TOOL---------------------#
+
+# Create the Prefix-Suffix window
+$PrefixSuffixWindow = New-Object Windows.Window
+$PrefixSuffixWindow.Title = "SHIFTIFY: Prefix and Suffix Tool"
+$PrefixSuffixWindow.Height = 500
+$PrefixSuffixWindow.Width = 400
+$PrefixSuffixWindow.WindowStartupLocation = "CenterScreen"
+$PrefixSuffixWindow.FontFamily = "Segoe UI"
+$PrefixSuffixWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
+$PrefixSuffixWindow.ResizeMode = "NoResize"
+$PrefixSuffixWindow.WindowStyle = "SingleBorderWindow"
+
+# Create a Grid for Prefix-Suffix Page
+$PrefixSuffixGrid = New-Object Windows.Controls.Grid
+
+# Title for Prefix-Suffix Page
+$PrefixSuffixTitleBorder = New-Object Windows.Controls.Border
+$PrefixSuffixTitleBorder.Width = 350
+$PrefixSuffixTitleBorder.Height = 60
+$PrefixSuffixTitleBorder.HorizontalAlignment = "Center"
+$PrefixSuffixTitleBorder.VerticalAlignment = "Top"
+$PrefixSuffixTitleBorder.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
+$PrefixSuffixTitleBorder.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+$PrefixSuffixTitleBorder.CornerRadius = [Windows.CornerRadius]::new(20)
+$PrefixSuffixTitleBorder.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4")
+$PrefixSuffixTitleBorder.BorderThickness = [Windows.Thickness]::new(3)
+
+$PrefixSuffixTitleTextBlock = New-Object Windows.Controls.TextBlock
+$PrefixSuffixTitleTextBlock.Text = "Add Prefix and Suffix"
+$PrefixSuffixTitleTextBlock.FontSize = 24
+$PrefixSuffixTitleTextBlock.FontWeight = "Bold"
+$PrefixSuffixTitleTextBlock.HorizontalAlignment = "Center"
+$PrefixSuffixTitleTextBlock.VerticalAlignment = "Center"
+$PrefixSuffixTitleTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+
+$PrefixSuffixTitleBorder.Child = $PrefixSuffixTitleTextBlock
+$PrefixSuffixGrid.Children.Add($PrefixSuffixTitleBorder)
+
+# Center panel for actions and input
+$CenterStackPanel = New-Object Windows.Controls.StackPanel
+$CenterStackPanel.HorizontalAlignment = "Center"
+$CenterStackPanel.VerticalAlignment = "Top"
+$CenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
+
+# File selection button
+$SelectFileButton = Create-Button -Content "Select File" -Width 150 -Height 40
+$CenterStackPanel.Children.Add($SelectFileButton)
+
+# File list box
+$FileListBox = New-Object Windows.Controls.ListBox
+$FileListBox.Width = 300
+$FileListBox.Height = 100
+$FileListBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+$FileListBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+$FileListBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+$FileListBox.BorderThickness = [Windows.Thickness]::new(2)
+$CenterStackPanel.Children.Add($FileListBox)
+
+# Text box for prefix
+$PrefixLabel = New-Object Windows.Controls.TextBlock
+$PrefixLabel.Text = "Enter Prefix: "
+$PrefixLabel.FontSize = 14
+$PrefixLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
+$PrefixLabel.HorizontalAlignment = "Center"
+$CenterStackPanel.Children.Add($PrefixLabel)
+
+$PrefixTextBox = New-Object Windows.Controls.TextBox
+$PrefixTextBox.Width = 200
+$PrefixTextBox.FontSize = 14
+$PrefixTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+$PrefixTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+$PrefixTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
+$CenterStackPanel.Children.Add($PrefixTextBox)
+
+# Text box for suffix
+$SuffixLabel = New-Object Windows.Controls.TextBlock
+$SuffixLabel.Text = "Enter Suffix: "
+$SuffixLabel.FontSize = 14
+$SuffixLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
+$SuffixLabel.HorizontalAlignment = "Center"
+$CenterStackPanel.Children.Add($SuffixLabel)
+
+$SuffixTextBox = New-Object Windows.Controls.TextBox
+$SuffixTextBox.Width = 200
+$SuffixTextBox.FontSize = 14
+$SuffixTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+$SuffixTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+$SuffixTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
+$CenterStackPanel.Children.Add($SuffixTextBox)
+
+# Buttons for Preview, Rename, Undo, Redo, and Back
+$ButtonGrid = New-Object Windows.Controls.Grid
+$ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
+
+for ($row = 0; $row -lt 3; $row++) {
+    $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
+}
+for ($col = 0; $col -lt 2; $col++) {
+    $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
+}
+
+$PreviewButton = Create-Button -Content "Preview" -Width 80
+$PreviewButton.SetValue([Windows.Controls.Grid]::RowProperty, 0)
+$PreviewButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 0)
+$ButtonGrid.Children.Add($PreviewButton)
+
+$RenameButton = Create-Button -Content "Rename" -Width 80
+$RenameButton.SetValue([Windows.Controls.Grid]::RowProperty, 0)
+$RenameButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 1)
+$ButtonGrid.Children.Add($RenameButton)
+
+$UndoButton = Create-Button -Content "Undo" -Width 80
+$UndoButton.SetValue([Windows.Controls.Grid]::RowProperty, 1)
+$UndoButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 0)
+$ButtonGrid.Children.Add($UndoButton)
+
+$RedoButton = Create-Button -Content "Redo" -Width 80
+$RedoButton.SetValue([Windows.Controls.Grid]::RowProperty, 1)
+$RedoButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 1)
+$ButtonGrid.Children.Add($RedoButton)
+
+$BackButton = Create-Button -Content "Back" -Width 80
+$BackButton.SetValue([Windows.Controls.Grid]::RowProperty, 1)
+$BackButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 2)
+
+$BackButton.HorizontalAlignment = "Center"
+$ButtonGrid.Children.Add($BackButton)
+
+$CenterStackPanel.Children.Add($ButtonGrid)
+$PrefixSuffixGrid.Children.Add($CenterStackPanel)
+
+# Set Grid as content
+$PrefixSuffixWindow.Content = $PrefixSuffixGrid
+
+# File Selection Logic
+$SelectFileButton.Add_Click({
+    $OpenFileDialog = New-Object Microsoft.Win32.OpenFileDialog
+    $OpenFileDialog.Multiselect = $true
+    $OpenFileDialog.Title = "Select Files"
+
+    if ($OpenFileDialog.ShowDialog()) {
+        $FileListBox.Items.Clear()
+        foreach ($file in $OpenFileDialog.FileNames) {
+            $FileListBox.Items.Add($file)
+        }
+    }
+})
+
+# Back Button Logic
+$BackButton.Add_Click({
+    $PrefixSuffixWindow.Hide()
+    $MainPageWindow.ShowDialog() | Out-Null
+})
+
+# Show Prefix-Suffix Window (for standalone testing)
+$PrefixSuffixWindow.ShowDialog() | Out-Null
 
 
 #------------------ REPLACE WINDOW ---------------------#
