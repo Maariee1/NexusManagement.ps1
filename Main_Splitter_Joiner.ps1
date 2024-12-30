@@ -39,6 +39,7 @@ $titleBorder.BorderBrush = New-SolidColorBrush -R 0 -G 0 -B 0  # Black border
 $titleBorder.BorderThickness = [System.Windows.Thickness]::new(2)
 $titleBorder.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # SteelBlue background
 $titleBorder.Margin = "0,10,0,10"
+$titleBorder.CornerRadius = "5"  # Slightly rounded corners
 $titleBorder.SetValue([System.Windows.Controls.Grid]::RowProperty, 0)
 
 # Title TextBlock with styling
@@ -98,7 +99,7 @@ function HandleButtonClick {
             CreateEncryptionWindow -MainWindow $MainWindow
         }
         "Decrypt" {
-            [System.Windows.MessageBox]::Show("Decrypt functionality coming soon!")
+            CreateDecryptionWindow -MainWindow $MainWindow
         }
         "Exit" {
             if ($MainWindow -ne $null) {
@@ -123,28 +124,45 @@ $buttonColors = @(
 for ($i = 0; $i -lt $buttonNames.Length; $i++) {
     # Button container (Border for styling)
     $buttonBorder = New-Object System.Windows.Controls.Border
-    $buttonBorder.BorderThickness = [System.Windows.Thickness]::new(2)
+    $buttonBorder.Background = New-SolidColorBrush -R $buttonColors[$i].R -G $buttonColors[$i].G -B $buttonColors[$i].B
+    $buttonBorder.CornerRadius = "5"  # Slightly rounded corners
+    $buttonBorder.Padding = "2"
     $buttonBorder.Margin = "0,5,0,5"
-    $buttonBorder.HorizontalAlignment = "Center"
     $buttonBorder.Width = 130
     $buttonBorder.Height = 40
+    $buttonBorder.HorizontalAlignment = "Center"
 
+    # Button with custom TextBlock for drop shadow effect
     $button = New-Object System.Windows.Controls.Button
-    $button.Content = $buttonNames[$i]
-    $button.Width = 120
-    $button.Height = 30
-    $button.Margin = "0"
-    $button.FontSize = 16
-    $button.FontWeight = "Bold"
-    $button.FontFamily = New-Object System.Windows.Media.FontFamily("Arial")
-    $button.HorizontalAlignment = "Center"
-    $button.Background = New-SolidColorBrush -R $buttonColors[$i].R -G $buttonColors[$i].G -B $buttonColors[$i].B
-    $button.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White Text
+    $button.Width = 130
+    $button.Height = 40
+    $button.Background = [System.Windows.Media.Brushes]::Transparent  # Transparent to let Border handle design
+    $button.BorderThickness = "0"  # No border around the button itself
+    $button.Padding = "0"
+
+    $buttonText = New-Object System.Windows.Controls.TextBlock
+    $buttonText.Text = $buttonNames[$i]
+    $buttonText.FontSize = 14
+    $buttonText.FontWeight = "Bold"
+    $buttonText.FontFamily = New-Object System.Windows.Media.FontFamily("Arial")
+    $buttonText.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255  # White text
+    $buttonText.HorizontalAlignment = "Center"
+    $buttonText.VerticalAlignment = "Center"
+
+    # Adding a DropShadowEffect to the TextBlock
+    $buttonText.Effect = New-Object System.Windows.Media.Effects.DropShadowEffect -Property @{
+        BlurRadius = 4
+        ShadowDepth = 2
+        Color = [System.Windows.Media.Color]::FromArgb(255, 0, 0, 0)  # Black shadow
+        Opacity = 0.7
+    }
+
+    $button.Content = $buttonText
 
     # Add click event handler
     $button.Add_Click({
         param ($sender, $args)
-        HandleButtonClick -Action $sender.Content -MainWindow $MainWindow
+        HandleButtonClick -Action $sender.Content.Text -MainWindow $MainWindow
     })
 
     $buttonBorder.Child = $button
@@ -198,6 +216,7 @@ function CreateSplitWindow {
     [System.Windows.Controls.Grid]::SetColumnSpan($titleBorder, 3)
     [System.Windows.Controls.Grid]::SetRow($titleBorder, 0)
     $null = $grid.Children.Add($titleBorder)
+
 
     #select file button
     $inputButton = New-Object System.Windows.Controls.Button
@@ -452,7 +471,7 @@ function CreateJoinWindow {
     $joinWindow.Content = $grid
     $joinWindow.ShowDialog()
 }
-#Encryption window
+#Encryption window (3rd Window)
 function CreateEncryptionWindow { 
     $encryptionWindow = New-Object System.Windows.Window
     $encryptionWindow.Title = "Encryption"
@@ -577,6 +596,132 @@ function CreateEncryptionWindow {
 
     $encryptionWindow.Content = $grid
     $encryptionWindow.ShowDialog()
+}
+#Decryption Window ()
+function CreateDecryptionWindow { 
+    $decryptionWindow = New-Object System.Windows.Window
+    $decryptionWindow.Title = "Decryption"
+    $decryptionWindow.Width = 400  # Match the main window width
+    $decryptionWindow.Height = 400  # Match the main window height
+    $decryptionWindow.Background = New-SolidColorBrush -R 173 -G 216 -B 230  # Light Blue
+    $decryptionWindow.WindowStartupLocation = "CenterScreen"
+
+    $grid = New-Object System.Windows.Controls.Grid
+    $grid.Margin = "10"
+
+    # Define Rows and Columns
+    $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Title
+    $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Input File
+    $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Output File
+    $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Instructions
+    $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Buttons
+
+    $null = $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "Auto" })) # Labels
+    $null = $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "*" }))   # Textboxes expand
+
+    # Title with Container
+    $titleBorder = New-Object System.Windows.Controls.Border
+    $titleBorder.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
+    $titleBorder.CornerRadius = "5"
+    $titleBorder.Padding = "10"
+    $titleBorder.Margin = "0,0,0,20"
+    $titleBorder.HorizontalAlignment = "Stretch"
+
+    $titleText = New-Object System.Windows.Controls.TextBlock
+    $titleText.Text = "File Decryption"
+    $titleText.FontSize = 24
+    $titleText.FontWeight = "Bold"
+    $titleText.FontFamily = New-Object System.Windows.Media.FontFamily("Arial")
+    $titleText.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255  # White
+    $titleText.HorizontalAlignment = "Center"
+
+    $titleBorder.Child = $titleText
+
+    [System.Windows.Controls.Grid]::SetColumnSpan($titleBorder, 2)
+    [System.Windows.Controls.Grid]::SetRow($titleBorder, 0)
+    $null = $grid.Children.Add($titleBorder)
+
+    # Select File Button
+    $inputButton = New-Object System.Windows.Controls.Button
+    $inputButton.Content = "Select File"
+    $inputButton.Width = 80
+    $inputButton.Margin = "0,10,10,10"
+    $inputButton.FontWeight = "Bold"   
+    $inputButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
+    $inputButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
+    $inputButton.Add_Click({[System.Windows.MessageBox]::Show("Select input file!")})
+    [System.Windows.Controls.Grid]::SetRow($inputButton, 1)
+    [System.Windows.Controls.Grid]::SetColumn($inputButton, 0)
+    $null = $grid.Children.Add($inputButton)
+
+    $inputBox = New-Object System.Windows.Controls.TextBox
+    $inputBox.Margin = "0,10,10,10"
+    $inputBox.Height = 25
+    [System.Windows.Controls.Grid]::SetRow($inputBox, 1)
+    [System.Windows.Controls.Grid]::SetColumn($inputBox, 1)
+    $null = $grid.Children.Add($inputBox)
+
+    # Select Output Folder Button
+    $outputLabel = New-Object System.Windows.Controls.TextBlock
+    $outputLabel.Text = "Password Key:"
+    $outputLabel.Margin = "0,10,10,10"
+    [System.Windows.Controls.Grid]::SetRow($outputLabel, 2)
+    [System.Windows.Controls.Grid]::SetColumn($outputLabel, 0)
+    $null = $grid.Children.Add($outputLabel)
+
+
+    $outputBox = New-Object System.Windows.Controls.TextBox
+    $outputBox.Margin = "0,10,10,10"
+    $outputBox.Height = 25
+    [System.Windows.Controls.Grid]::SetRow($outputBox, 2)
+    [System.Windows.Controls.Grid]::SetColumn($outputBox, 1)
+    $null = $grid.Children.Add($outputBox)
+
+    # Instructions
+    $instructionText = New-Object System.Windows.Controls.TextBlock
+    $instructionText.Text = "To decrypt a file, select the input file and enter your chosen password key."
+    $instructionText.TextWrapping = "Wrap"
+    $instructionText.Margin = "0,20,0,10"
+    [System.Windows.Controls.Grid]::SetColumnSpan($instructionText, 2)
+    [System.Windows.Controls.Grid]::SetRow($instructionText, 3)
+    $null = $grid.Children.Add($instructionText)
+
+    # Buttons
+    $buttonPanel = New-Object System.Windows.Controls.StackPanel
+    $buttonPanel.Orientation = "Horizontal"
+    $buttonPanel.HorizontalAlignment = "Center"
+    $buttonPanel.Margin = "0,10,0,0"
+    [System.Windows.Controls.Grid]::SetColumnSpan($buttonPanel, 2)
+    [System.Windows.Controls.Grid]::SetRow($buttonPanel, 4)
+
+    $startButton = New-Object System.Windows.Controls.Button
+    $startButton.Content = "Decrypt"
+    $startButton.Width = 80
+    $startButton.Margin = "10,0,10,0"
+    $startButton.FontWeight = "Bold"
+    $startButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
+    $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
+    $startButton.Add_Click({
+        [System.Windows.MessageBox]::Show("Decryption functionality not implemented yet!")
+    })
+    $buttonPanel.Children.Add($startButton)
+
+    $closeButton = New-Object System.Windows.Controls.Button
+    $closeButton.Content = "Close"
+    $closeButton.Width = 80
+    $closeButton.Margin = "10,0,10,0"
+    $closeButton.FontWeight = "Bold"
+    $closeButton.Background = New-SolidColorBrush -R 0 -G 0 -B 139  # Darker Blue
+    $closeButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
+    $closeButton.Add_Click({
+        $decryptionWindow.Hide()
+    })
+    $buttonPanel.Children.Add($closeButton)
+
+    $null = $grid.Children.Add($buttonPanel)
+
+    $decryptionWindow.Content = $grid
+    $decryptionWindow.ShowDialog()
 }
 
 
