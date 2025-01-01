@@ -1187,4 +1187,4 @@ $MainWindow = $window
 $window.Content = $grid
 
 # Show the window
-$window.ShowDialog()
+$window.ShowDialog() | Out-Null
