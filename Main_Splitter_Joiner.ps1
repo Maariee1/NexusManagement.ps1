@@ -1,5 +1,315 @@
 # Add necessary .NET types
 Add-Type -AssemblyName PresentationFramework
+# Load Windows Forms assembly
+Add-Type -AssemblyName System.Windows.Forms
+
+# Creates a form to host dialogs but make it invisible
+$form = New-Object System.Windows.Forms.Form
+$form.TopMost = $true
+$form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+$form.WindowState = [System.Windows.Forms.FormWindowState]::Minimized
+$form.ShowInTaskbar = $false
+$form.Opacity = 0
+$form.Size = New-Object System.Drawing.Size(1, 1)
+
+# Function to split a file
+function Split-File {
+    param (
+        [string]$FilePath,
+        [int]$ChunkSize
+    )
+
+    if (-Not (Test-Path -Path $FilePath)) {
+        Write-Output "File not found!"
+        return
+    }
+
+    $BaseName = [System.IO.Path]::GetFileName($FilePath)
+    $FileDir = [System.IO.Path]::GetDirectoryName($FilePath)
+    $FileStream = [System.IO.File]::OpenRead($FilePath)
+    $Buffer = New-Object byte[] $ChunkSize
+    $ChunkNum = 0
+
+    while ($ReadBytes = $FileStream.Read($Buffer, 0, $Buffer.Length)) {
+        $ChunkFileName = "$FileDir\$BaseName.part$ChunkNum"
+        $ChunkStream = [System.IO.File]::OpenWrite($ChunkFileName)
+        $ChunkStream.Write($Buffer, 0, $ReadBytes)
+        $ChunkStream.Close()
+        $ChunkNum++
+    }
+
+    $FileStream.Close()
+    Write-Output "File split into $ChunkNum chunks."
+}
+
+# Function to join files
+function Join-Files {
+    param (
+        [string]$BaseName,
+        [string]$OutputFile
+    )
+
+    $FileDir = [System.IO.Path]::GetDirectoryName($OutputFile)
+    $PartFiles = Get-ChildItem -Path $FileDir -Filter "$BaseName.part*" | Sort-Object Name
+
+    if ($PartFiles.Count -eq 0) {
+        Write-Output "No part files found!"
+        return
+    }
+
+    $OutputStream = [System.IO.File]::OpenWrite($OutputFile)
+
+    foreach ($PartFile in $PartFiles) {
+        $PartStream = [System.IO.File]::OpenRead($PartFile.FullName)
+        $Buffer = New-Object byte[] $PartStream.Length
+        $ReadBytes = $PartStream.Read($Buffer, 0, $Buffer.Length)
+        $OutputStream.Write($Buffer, 0, $ReadBytes)
+        $PartStream.Close()
+    }
+
+    $OutputStream.Close()
+    Write-Output "Files joined into $OutputFile."
+}
+
+# Function to handle file splitting operation
+function Handle-SplitFile {
+    $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+    $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+    $OpenFileDialog.Title = "Select a file to split"
+    $OpenFileDialog.InitialDirectory = [Environment]::GetFolderPath('Desktop')
+    
+    if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
+        $FilePath = $OpenFileDialog.FileName
+        $SizeUnit = Read-Host "Enter size unit (KB or MB)"
+        $SizeValue = [int](Read-Host "Enter size in $SizeUnit")
+
+        $ChunkSize = if ($SizeUnit -eq "KB") {
+            $SizeValue * 1024
+        } elseif ($SizeUnit -eq "MB") {
+            $SizeValue * 1024 * 1024
+        } else {
+            Write-Output "Invalid size unit! Defaulting to bytes."
+            $SizeValue
+        }
+
+        Split-File -FilePath $FilePath -ChunkSize $ChunkSize
+    } else {
+        Write-Output "No file selected."
+    }
+}
+
+# Function to handle file joining operation
+function Handle-JoinFiles {
+    $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+    $OpenFileDialog.Filter = "Part Files (*.part*)|*.part*|All Files (*.*)|*.*"
+    $OpenFileDialog.Title = "Select any part file"
+    $OpenFileDialog.InitialDirectory = [Environment]::GetFolderPath('Desktop')
+
+    if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
+        $FilePath = $OpenFileDialog.FileName
+        $BaseName = [System.IO.Path]::GetFileNameWithoutExtension($FilePath) -replace "\.part\d+$", ""
+
+        $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+        $SaveFileDialog.Filter = "All Files (*.*)|*.*"
+        $SaveFileDialog.Title = "Save joined file as"
+        $SaveFileDialog.InitialDirectory = [System.IO.Path]::GetDirectoryName($FilePath)
+
+        if ($SaveFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
+            $OutputFile = $SaveFileDialog.FileName
+
+            # Ask for file type
+            $FileType = Read-Host "Enter the file extension/type (ex: txt/jpg/png/pdf, etc.) without the dot"
+            if ($FileType) {
+                $OutputFile = "$OutputFile.$FileType"
+            }
+
+            Join-Files -BaseName $BaseName -OutputFile $OutputFile
+        } else {
+            Write-Output "No output file specified."
+        }
+    } else {
+        Write-Output "No part file selected."
+    }
+}
+
+function Encrypt-File {
+    param (
+        [string]$InputFile,
+        [string]$Password
+    )
+
+    try {
+        if ([string]::IsNullOrWhiteSpace($Password)) {
+            throw "Password cannot be empty"
+        }
+
+    # Generate a 32-byte key and 16-byte IV from the password
+    $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
+    $IV = New-Object byte[] 16
+    [System.Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($IV)
+
+    # Initialize AES encryption
+    $Aes = [System.Security.Cryptography.Aes]::Create()
+    $Aes.Key = $Key
+    $Aes.IV = $IV
+    $Encryptor = $Aes.CreateEncryptor()
+
+    # Read the file content into memory
+    $FileContent = [System.IO.File]::ReadAllBytes($InputFile)
+
+    # Create a memory stream to hold the encrypted data
+    $EncryptedData = New-Object System.IO.MemoryStream
+
+    # Write the custom header to the encrypted data
+    $Header = "ENCRYPTED_HEADER"
+    $HeaderBytes = [System.Text.Encoding]::UTF8.GetBytes($Header)
+    $EncryptedData.Write($HeaderBytes, 0, $HeaderBytes.Length)
+
+    # Write the IV to the encrypted data
+    $EncryptedData.Write($IV, 0, $IV.Length)
+
+    # Encrypt the file content and write to the memory stream
+    $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($EncryptedData, $Encryptor, [System.Security.Cryptography.CryptoStreamMode]::Write)
+    $CryptoStream.Write($FileContent, 0, $FileContent.Length)
+    $CryptoStream.Close()
+
+    # Overwrite the original file with the encrypted data
+    [System.IO.File]::WriteAllBytes($InputFile, $EncryptedData.ToArray())
+    $EncryptedData.Close()
+
+    Write-Output "File is encrypted."
+    }
+    catch {
+        throw "Encryption failed: $($_.Exception.Message)"
+    }
+}
+
+# Function to decrypt a file in place
+function Decrypt-File {
+    param (
+        [string]$InputFile,
+        [string]$Password
+    )
+
+    try {
+        if ([string]::IsNullOrWhiteSpace($Password)) {
+            throw "Password cannot be empty"
+        }
+
+    # Open the input file for reading
+    $FileStream = [System.IO.File]::Open($InputFile, 'Open', 'Read')
+
+    # Read the first bytes for the header
+    $HeaderBytes = New-Object byte[] 16
+    $FileStream.Read($HeaderBytes, 0, $HeaderBytes.Length) | Out-Null
+
+    # Convert the header bytes to a string and check if it matches the signature
+    $Header = [System.Text.Encoding]::UTF8.GetString($HeaderBytes)
+    if ($Header -ne "ENCRYPTED_HEADER") {
+        Write-Output "This file is not encrypted!"
+        $FileStream.Close()
+        return
+    }
+
+    # Read the IV (next 16 bytes after the header)
+    $IV = New-Object byte[] 16
+    $FileStream.Read($IV, 0, $IV.Length) | Out-Null
+
+    # Attempt decryption with up to 3 tries
+    $Attempts = 0
+    $MaxAttempts = 3
+    $DecryptedSuccessfully = $false
+
+    while ($Attempts -lt $MaxAttempts -and -not $DecryptedSuccessfully) {
+        # Increment the attempt counter
+        $Attempts++
+
+        # Generate the key from the password
+        $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
+
+        # Initialize AES decryption
+        $Aes = [System.Security.Cryptography.Aes]::Create()
+        $Aes.Key = $Key
+        $Aes.IV = $IV
+
+        try {
+            $Decryptor = $Aes.CreateDecryptor()
+
+            # Move the file pointer to the position after the header and IV
+            $FileStream.Position = 32
+
+            # Create a CryptoStream for decryption
+            $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($FileStream, $Decryptor, [System.Security.Cryptography.CryptoStreamMode]::Read)
+
+            # Decrypt the file content into memory
+            $DecryptedData = New-Object System.IO.MemoryStream
+            $Buffer = New-Object byte[] 4096
+
+            while (($BytesRead = $CryptoStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
+                $DecryptedData.Write($Buffer, 0, $BytesRead)
+            }
+
+            # Close the streams
+            $CryptoStream.Close()
+            $FileStream.Close()
+
+            # Overwrite the original file with decrypted content
+            [System.IO.File]::WriteAllBytes($InputFile, $DecryptedData.ToArray())
+            $DecryptedData.Close()
+
+            Write-Output "File is decrypted."
+            $DecryptedSuccessfully = $true
+        } catch {
+            Write-Output "Incorrect password. Attempts remaining: $(($MaxAttempts - $Attempts))"
+
+            if ($Attempts -lt $MaxAttempts) {
+                $Password = Read-Host "Enter decryption password"
+            } else {
+                Write-Output "Maximum attempts reached. Decryption failed."
+            }
+        }
+    }
+
+    # Ensure the file stream is closed if still open
+    if ($FileStream -and $FileStream.CanRead) {
+        $FileStream.Close()
+    }
+    }
+    catch {
+        throw "Decryption failed: $($_.Exception.Message)"
+    }
+}
+
+function Handle-Encryption {
+    $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+    $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+    $OpenFileDialog.Title = "Select a file to encrypt"
+    
+    if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
+        $InputFile = $OpenFileDialog.FileName
+        $Password = Read-Host "Enter encryption password"
+        $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+        $SaveFileDialog.Title = "Save encrypted file"
+
+        Encrypt-File -InputFile $InputFile -Password $Password
+    }
+}
+
+# Function to handle decryption operation
+function Handle-Decryption {
+    $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+    $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+    $OpenFileDialog.Title = "Select a file to decrypt"
+    
+    if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
+        $InputFile = $OpenFileDialog.FileName
+        $Password = Read-Host "Enter decryption password"
+        $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+        $SaveFileDialog.Title = "Save decrypted file"
+
+        Decrypt-File -InputFile $InputFile -Password $Password
+    }
+}
 
 # Function to create a SolidColorBrush from RGB values
 function New-SolidColorBrush {
@@ -47,7 +357,7 @@ $titleText = New-Object System.Windows.Controls.TextBlock
 $titleText.Text = "File Splitter and Joiner"
 $titleText.FontSize = 24
 $titleText.FontWeight = "Bold"
-$titleText.FontFamily = New-Object System.Windows.Media.FontFamily("Arial")
+$titleText.FontFamily = New-Object System.Windows.Media.FontFamily("Monsterrat")
 $titleText.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255  # White text
 $titleText.TextAlignment = "Center"
 $titleText.VerticalAlignment = "Center"
@@ -158,7 +468,6 @@ for ($i = 0; $i -lt $buttonNames.Length; $i++) {
     }
 
     $button.Content = $buttonText
-
     # Add click event handler
     $button.Add_Click({
         param ($sender, $args)
@@ -217,7 +526,6 @@ function CreateSplitWindow {
     [System.Windows.Controls.Grid]::SetRow($titleBorder, 0)
     $null = $grid.Children.Add($titleBorder)
 
-
     #select file button
     $inputButton = New-Object System.Windows.Controls.Button
     $inputButton.Content = "Select File"
@@ -226,7 +534,17 @@ function CreateSplitWindow {
     $inputButton.FontWeight = "Bold"   
     $inputButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $inputButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
-    $inputButton.Add_Click({[System.Windows.MessageBox]::Show("Select input file!")})
+
+    $inputButton.Add_Click({
+        $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+        $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+        $OpenFileDialog.Title = "Select a file to split"
+        $OpenFileDialog.InitialDirectory = [Environment]::GetFolderPath('Desktop')
+        
+        if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            $inputBox.Text = $OpenFileDialog.FileName
+        }
+    })
     [System.Windows.Controls.Grid]::SetRow($inputButton, 1)
     [System.Windows.Controls.Grid]::SetColumn($inputButton, 0)
     $null = $grid.Children.Add($inputButton)
@@ -249,7 +567,15 @@ function CreateSplitWindow {
     $outputButton.FontWeight = "Bold"   
     $outputButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $outputButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
-    $outputButton.Add_Click({[System.Windows.MessageBox]::Show("Select output file!")})
+
+    $outputButton.Add_Click({
+        $FolderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
+        $FolderBrowser.Description = "Select output folder"
+        
+        if ($FolderBrowser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            $outputBox.Text = $FolderBrowser.SelectedPath
+        }
+    })
     [System.Windows.Controls.Grid]::SetRow($outputButton, 2)
     [System.Windows.Controls.Grid]::SetColumn($outputButton, 0)
     $null = $grid.Children.Add($outputButton)
@@ -317,8 +643,43 @@ function CreateSplitWindow {
     $startButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
     $startButton.Add_Click({
-        [System.Windows.MessageBox]::Show("Split functionality not implemented yet!")
-    return $null})
+        if (-not $inputBox.Text -or -not $outputBox.Text -or -not $splitSizeBox.Text) {
+            [System.Windows.MessageBox]::Show("Please fill in all fields!", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+            return
+        }
+
+        $size = [int]$splitSizeBox.Text
+        $unit = $unitBox.SelectedItem.ToString()
+        
+        $chunkSize = switch ($unit) {
+            "Kbytes" { $size * 1024 }
+            "Mbytes" { $size * 1024 * 1024 }
+        }
+
+        try {
+            $inputFile = $inputBox.Text
+            $baseName = [System.IO.Path]::GetFileName($inputFile)
+            $outputDir = $outputBox.Text
+
+            $fileStream = [System.IO.File]::OpenRead($inputFile)
+            $buffer = New-Object byte[] $chunkSize
+            $chunkNum = 0
+
+            while ($bytesRead = $fileStream.Read($buffer, 0, $buffer.Length)) {
+                $chunkPath = Join-Path $outputDir "$baseName.part$chunkNum"
+                $chunkStream = [System.IO.File]::OpenWrite($chunkPath)
+                $chunkStream.Write($buffer, 0, $bytesRead)
+                $chunkStream.Close()
+                $chunkNum++
+            }
+
+            $fileStream.Close()
+            [System.Windows.MessageBox]::Show("File successfully split into $chunkNum parts!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+        }
+        catch {
+            [System.Windows.MessageBox]::Show("Error splitting file: $_", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+        }
+    })
     $buttonPanel.Children.Add($startButton)
 
     #Close Button
@@ -392,11 +753,19 @@ function CreateJoinWindow {
     $inputButton.FontWeight = "Bold"   
     $inputButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $inputButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
-    $inputButton.Add_Click({[System.Windows.MessageBox]::Show("Select input file!")})
+    $inputButton.Add_Click({
+        $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+        $OpenFileDialog.Filter = "Part Files (*.part*)|*.part*|All Files (*.*)|*.*"
+        $OpenFileDialog.Title = "Select any part file"
+        $OpenFileDialog.InitialDirectory = [Environment]::GetFolderPath('Desktop')
+        
+        if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            $inputBox.Text = $OpenFileDialog.FileName
+        }
+    })
     [System.Windows.Controls.Grid]::SetRow($inputButton, 1)
     [System.Windows.Controls.Grid]::SetColumn($inputButton, 0)
     $null = $grid.Children.Add($inputButton)
-
 
     $inputBox = New-Object System.Windows.Controls.TextBox
     $inputBox.Margin = "0,10,10,10"
@@ -413,7 +782,14 @@ function CreateJoinWindow {
     $outputButton.FontWeight = "Bold"   
     $outputButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $outputButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
-    $outputButton.Add_Click({[System.Windows.MessageBox]::Show("Select output file!")})
+    $outputButton.Add_Click({
+        $FolderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
+        $FolderBrowser.Description = "Select output folder"
+        
+        if ($FolderBrowser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            $outputBox.Text = $FolderBrowser.SelectedPath
+        }
+    })
     [System.Windows.Controls.Grid]::SetRow($outputButton, 2)
     [System.Windows.Controls.Grid]::SetColumn($outputButton, 0)
     $null = $grid.Children.Add($outputButton)
@@ -450,8 +826,42 @@ function CreateJoinWindow {
     $startButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
     $startButton.Add_Click({
-        [System.Windows.MessageBox]::Show("Join functionality not implemented yet!")
-    return $null})
+        if (-not $inputBox.Text -or -not $outputBox.Text) {
+            [System.Windows.MessageBox]::Show("Please fill in all fields!", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+            return
+        }
+
+        try {
+            $inputFile = $inputBox.Text
+            $baseName = [System.IO.Path]::GetFileNameWithoutExtension($inputFile) -replace "\.part\d+$", ""
+            $outputDir = $outputBox.Text
+            
+            # Get all part files
+            $fileDir = [System.IO.Path]::GetDirectoryName($inputFile)
+            $partFiles = Get-ChildItem -Path $fileDir -Filter "$baseName.part*" | Sort-Object Name
+            
+            if ($partFiles.Count -eq 0) {
+                throw "No part files found!"
+            }
+
+            $outputPath = Join-Path $outputDir $baseName
+            $outputStream = [System.IO.File]::OpenWrite($outputPath)
+
+            foreach ($partFile in $partFiles) {
+                $partStream = [System.IO.File]::OpenRead($partFile.FullName)
+                $buffer = New-Object byte[] $partStream.Length
+                $bytesRead = $partStream.Read($buffer, 0, $buffer.Length)
+                $outputStream.Write($buffer, 0, $bytesRead)
+                $partStream.Close()
+            }
+
+            $outputStream.Close()
+            [System.Windows.MessageBox]::Show("Files successfully joined!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+        }
+        catch {
+            [System.Windows.MessageBox]::Show("Error joining files: $_", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+        }
+    })
     $buttonPanel.Children.Add($startButton)
     #Close Button
     $closeButton = New-Object System.Windows.Controls.Button
@@ -510,7 +920,6 @@ function CreateEncryptionWindow {
     $titleText.HorizontalAlignment = "Center"
 
     $titleBorder.Child = $titleText
-
     [System.Windows.Controls.Grid]::SetColumnSpan($titleBorder, 2)
     [System.Windows.Controls.Grid]::SetRow($titleBorder, 0)
     $null = $grid.Children.Add($titleBorder)
@@ -523,7 +932,13 @@ function CreateEncryptionWindow {
     $inputButton.FontWeight = "Bold"   
     $inputButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $inputButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
-    $inputButton.Add_Click({[System.Windows.MessageBox]::Show("Select input file!")})
+    $inputButton.Add_Click({
+        $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+        $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+        if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            $inputBox.Text = $OpenFileDialog.FileName
+        }
+    })
     [System.Windows.Controls.Grid]::SetRow($inputButton, 1)
     [System.Windows.Controls.Grid]::SetColumn($inputButton, 0)
     $null = $grid.Children.Add($inputButton)
@@ -543,13 +958,71 @@ function CreateEncryptionWindow {
     [System.Windows.Controls.Grid]::SetColumn($outputLabel, 0)
     $null = $grid.Children.Add($outputLabel)
 
-
     $outputBox = New-Object System.Windows.Controls.TextBox
     $outputBox.Margin = "0,10,10,10"
     $outputBox.Height = 25
     [System.Windows.Controls.Grid]::SetRow($outputBox, 2)
     [System.Windows.Controls.Grid]::SetColumn($outputBox, 1)
     $null = $grid.Children.Add($outputBox)
+
+    # Create a Grid for password input and toggle button
+    $passwordGrid = New-Object System.Windows.Controls.Grid
+    $null = $passwordGrid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "*" }))
+    $null = $passwordGrid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "Auto" }))
+
+    # Create password box
+    $outputBox = New-Object System.Windows.Controls.PasswordBox
+    $outputBox.Height = 25
+    $outputBox.Margin = "0,10,5,10"
+    [System.Windows.Controls.Grid]::SetColumn($outputBox, 0)
+    $null = $passwordGrid.Children.Add($outputBox)
+
+    # Create text box (initially hidden)
+    $outputTextBox = New-Object System.Windows.Controls.TextBox
+    $outputTextBox.Height = 25
+    $outputTextBox.Margin = "0,10,5,10"
+    $outputTextBox.Visibility = "Collapsed"
+    [System.Windows.Controls.Grid]::SetColumn($outputTextBox, 0)
+    $null = $passwordGrid.Children.Add($outputTextBox)
+
+    # Create toggle button with eye icon
+    $toggleButton = New-Object System.Windows.Controls.Button
+    $toggleButton.Width = 30
+    $toggleButton.Height = 25
+    $toggleButton.Margin = "0,10,10,10"
+    $toggleButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180
+    $toggleButton.BorderThickness = "0"
+
+    # Create eye icon
+    $eyePath = New-Object System.Windows.Shapes.Path
+    $eyePath.Data = [System.Windows.Media.Geometry]::Parse("M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z")
+    $eyePath.Fill = New-SolidColorBrush -R 255 -G 255 -B 255
+    $eyePath.Width = 16
+    $eyePath.Height = 16
+    $eyePath.Stretch = "Uniform"
+
+    $toggleButton.Content = $eyePath
+    [System.Windows.Controls.Grid]::SetColumn($toggleButton, 1)
+
+    # Add toggle functionality
+    $toggleButton.Add_Click({
+        if ($outputBox.Visibility -eq "Visible") {
+            $outputTextBox.Text = $outputBox.Password
+            $outputBox.Visibility = "Collapsed"
+            $outputTextBox.Visibility = "Visible"
+        } else {
+            $outputBox.Password = $outputTextBox.Text
+            $outputBox.Visibility = "Visible"
+            $outputTextBox.Visibility = "Collapsed"
+        }
+    })
+
+    $null = $passwordGrid.Children.Add($toggleButton)
+
+    # Add the password grid to the main grid
+    [System.Windows.Controls.Grid]::SetRow($passwordGrid, 2)
+    [System.Windows.Controls.Grid]::SetColumn($passwordGrid, 1)
+    $null = $grid.Children.Add($passwordGrid)
 
     # Instructions
     $instructionText = New-Object System.Windows.Controls.TextBlock
@@ -576,7 +1049,29 @@ function CreateEncryptionWindow {
     $startButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
     $startButton.Add_Click({
-        [System.Windows.MessageBox]::Show("Encryption functionality not implemented yet!")
+        $password = if ($outputBox.Visibility -eq "Visible") { $outputBox.Password } else { $outputTextBox.Text }
+
+        if ([string]::IsNullOrWhiteSpace($inputBox.Text)) {
+            [System.Windows.MessageBox]::Show("Please select a file to encrypt.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+            return
+        }
+        if ([string]::IsNullOrWhiteSpace($password)) {
+            [System.Windows.MessageBox]::Show("Please enter a password.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+            return
+        }
+        if (!(Test-Path $inputBox.Text)) {
+            [System.Windows.MessageBox]::Show("Selected file does not exist.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+            return
+        }
+        
+        try {
+            Encrypt-File -InputFile $inputBox.Text -Password $password
+            [System.Windows.MessageBox]::Show("File encrypted successfully!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+            $encryptionWindow.Close()
+        }
+        catch {
+            [System.Windows.MessageBox]::Show("Failed to encrypt file: $($_.Exception.Message)", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+        }
     })
     $buttonPanel.Children.Add($startButton)
 
@@ -590,10 +1085,9 @@ function CreateEncryptionWindow {
     $closeButton.Add_Click({
         $encryptionWindow.Hide()
     })
+
     $buttonPanel.Children.Add($closeButton)
-
     $null = $grid.Children.Add($buttonPanel)
-
     $encryptionWindow.Content = $grid
     $encryptionWindow.ShowDialog()
 }
@@ -615,7 +1109,6 @@ function CreateDecryptionWindow {
     $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Output File
     $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Instructions
     $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Buttons
-
     $null = $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "Auto" })) # Labels
     $null = $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "*" }))   # Textboxes expand
 
@@ -649,7 +1142,13 @@ function CreateDecryptionWindow {
     $inputButton.FontWeight = "Bold"   
     $inputButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $inputButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
-    $inputButton.Add_Click({[System.Windows.MessageBox]::Show("Select input file!")})
+    $inputButton.Add_Click({
+        $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+        $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+        if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            $inputBox.Text = $OpenFileDialog.FileName
+        }
+    })
     [System.Windows.Controls.Grid]::SetRow($inputButton, 1)
     [System.Windows.Controls.Grid]::SetColumn($inputButton, 0)
     $null = $grid.Children.Add($inputButton)
@@ -669,13 +1168,71 @@ function CreateDecryptionWindow {
     [System.Windows.Controls.Grid]::SetColumn($outputLabel, 0)
     $null = $grid.Children.Add($outputLabel)
 
-
     $outputBox = New-Object System.Windows.Controls.TextBox
     $outputBox.Margin = "0,10,10,10"
     $outputBox.Height = 25
     [System.Windows.Controls.Grid]::SetRow($outputBox, 2)
     [System.Windows.Controls.Grid]::SetColumn($outputBox, 1)
     $null = $grid.Children.Add($outputBox)
+
+    # Create a Grid for password input and toggle button
+    $passwordGrid = New-Object System.Windows.Controls.Grid
+    $null = $passwordGrid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "*" }))
+    $null = $passwordGrid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "Auto" }))
+
+    # Create password box
+    $outputBox = New-Object System.Windows.Controls.PasswordBox
+    $outputBox.Height = 25
+    $outputBox.Margin = "0,10,5,10"
+    [System.Windows.Controls.Grid]::SetColumn($outputBox, 0)
+    $null = $passwordGrid.Children.Add($outputBox)
+
+    # Create text box (initially hidden)
+    $outputTextBox = New-Object System.Windows.Controls.TextBox
+    $outputTextBox.Height = 25
+    $outputTextBox.Margin = "0,10,5,10"
+    $outputTextBox.Visibility = "Collapsed"
+    [System.Windows.Controls.Grid]::SetColumn($outputTextBox, 0)
+    $null = $passwordGrid.Children.Add($outputTextBox)
+
+    # Create toggle button with eye icon
+    $toggleButton = New-Object System.Windows.Controls.Button
+    $toggleButton.Width = 30
+    $toggleButton.Height = 25
+    $toggleButton.Margin = "0,10,10,10"
+    $toggleButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180
+    $toggleButton.BorderThickness = "0"
+
+    # Create eye icon
+    $eyePath = New-Object System.Windows.Shapes.Path
+    $eyePath.Data = [System.Windows.Media.Geometry]::Parse("M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z")
+    $eyePath.Fill = New-SolidColorBrush -R 255 -G 255 -B 255
+    $eyePath.Width = 16
+    $eyePath.Height = 16
+    $eyePath.Stretch = "Uniform"
+
+    $toggleButton.Content = $eyePath
+    [System.Windows.Controls.Grid]::SetColumn($toggleButton, 1)
+
+    # Add toggle functionality
+    $toggleButton.Add_Click({
+        if ($outputBox.Visibility -eq "Visible") {
+            $outputTextBox.Text = $outputBox.Password
+            $outputBox.Visibility = "Collapsed"
+            $outputTextBox.Visibility = "Visible"
+        } else {
+            $outputBox.Password = $outputTextBox.Text
+            $outputBox.Visibility = "Visible"
+            $outputTextBox.Visibility = "Collapsed"
+        }
+    })
+
+    $null = $passwordGrid.Children.Add($toggleButton)
+
+    # Add the password grid to the main grid
+    [System.Windows.Controls.Grid]::SetRow($passwordGrid, 2)
+    [System.Windows.Controls.Grid]::SetColumn($passwordGrid, 1)
+    $null = $grid.Children.Add($passwordGrid)
 
     # Instructions
     $instructionText = New-Object System.Windows.Controls.TextBlock
@@ -702,7 +1259,29 @@ function CreateDecryptionWindow {
     $startButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
     $startButton.Add_Click({
-        [System.Windows.MessageBox]::Show("Decryption functionality not implemented yet!")
+        $password = if ($outputBox.Visibility -eq "Visible") { $outputBox.Password } else { $outputTextBox.Text }
+
+        if ([string]::IsNullOrWhiteSpace($inputBox.Text)) {
+            [System.Windows.MessageBox]::Show("Please select a file to decrypt.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+            return
+        }
+        if ([string]::IsNullOrWhiteSpace($password)) {
+            [System.Windows.MessageBox]::Show("Please enter a password.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+            return
+        }
+        if (!(Test-Path $inputBox.Text)) {
+            [System.Windows.MessageBox]::Show("Selected file does not exist.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+            return
+        }
+    
+        try {
+            Decrypt-File -InputFile $inputBox.Text -Password $password
+            [System.Windows.MessageBox]::Show("File decrypted successfully!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+            $decryptionWindow.Close()
+        }
+        catch {
+            [System.Windows.MessageBox]::Show("Failed to decrypt file: $($_.Exception.Message)", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+        }
     })
     $buttonPanel.Children.Add($startButton)
 
@@ -716,14 +1295,12 @@ function CreateDecryptionWindow {
     $closeButton.Add_Click({
         $decryptionWindow.Hide()
     })
+
     $buttonPanel.Children.Add($closeButton)
-
     $null = $grid.Children.Add($buttonPanel)
-
     $decryptionWindow.Content = $grid
     $decryptionWindow.ShowDialog()
 }
-
 
 # Assign the main window
 $MainWindow = $window
@@ -732,8 +1309,4 @@ $MainWindow = $window
 $window.Content = $grid
 
 # Show the window
-$window.ShowDialog()
-
- 
-
- 
+$window.ShowDialog() | Out-Null
