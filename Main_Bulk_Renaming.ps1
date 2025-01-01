@@ -1,6 +1,9 @@
 # Load necessary components for WPF application
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName System.Windows.Forms
+
+. ./Rename.ps1
+
 # Function to convert a hex color to SolidColorBrush
 function ConvertTo-SolidColorBrush {
     param ($hexColor)
@@ -85,12 +88,8 @@ function Create-Button {
 function HandleBulkRenameClick {
     param()
     $MainPageWindow.Hide()  # Hide the MainPageWindow first
-
-    # Initialize stacks for undo/redo functionality
-    $global:undoStack = @()
-    $global:redoStack = @()
-
     #----------------BULK RENAMING WINDOW -----------------------#
+
     $BulkRenamingWindow = New-Object Windows.Window
     $BulkRenamingWindow.Title = "SHIFTIFY: Bulk Renaming"
     $BulkRenamingWindow.Height = 500
@@ -142,7 +141,7 @@ function HandleBulkRenameClick {
     # File list box
     $FileListBox = New-Object Windows.Controls.ListBox
     $FileListBox.Width = 300
-    $FileListBox.Height = 100
+    $FileListBox.Height = 60
     $FileListBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
     $FileListBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $FileListBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -158,12 +157,29 @@ function HandleBulkRenameClick {
     $CenterStackPanel.Children.Add($BaseNameLabel)
 
     $BaseNameTextBox = New-Object Windows.Controls.TextBox
-    $BaseNameTextBox.Width = 200
+    $BaseNameTextBox.Width = 100
     $BaseNameTextBox.FontSize = 14
     $BaseNameTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $BaseNameTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
     $BaseNameTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
     $CenterStackPanel.Children.Add($BaseNameTextBox)
+    
+    # Create the TextBox for output display
+    $OutputTextBox = New-Object Windows.Controls.TextBox
+    $OutputTextBox.Width = 200
+    $OutputTextBox.Height = 60
+    $OutputTextBox.FontSize = 12
+    $OutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+    $OutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+    $OutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $OutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
+
+    # Enable scrolling for the output box
+    $OutputTextBox.VerticalScrollBarVisibility = "Auto"
+    $OutputTextBox.HorizontalScrollBarVisibility = "Auto"
+
+    # Add the TextBox to the layout (e.g., StackPanel or Grid)
+    $CenterStackPanel.Children.Add($OutputTextBox)
 
     # Buttons for Preview, Rename, Undo, Redo, Back
     $ButtonGrid = New-Object Windows.Controls.Grid
@@ -176,12 +192,10 @@ function HandleBulkRenameClick {
         $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
     }
 
-    $PreviewButton = Create-SmallButton -Content "Preview" -Row 0 -Column 0
     $RenameButton = Create-SmallButton -Content "Rename" -Row 0 -Column 1
     $UndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
     $RedoButton = Create-SmallButton -Content "Redo" -Row 1 -Column 1
 
-    $ButtonGrid.Children.Add($PreviewButton)
     $ButtonGrid.Children.Add($RenameButton)
     $ButtonGrid.Children.Add($UndoButton)
     $ButtonGrid.Children.Add($RedoButton)
@@ -209,7 +223,6 @@ function HandleBulkRenameClick {
         $BulkRenamingWindow.Hide()
         $MainPageWindow.ShowDialog() | Out-Null
     })
-
     # File selection logic
     $SelectFilesButton.Add_Click({
         $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
@@ -219,64 +232,89 @@ function HandleBulkRenameClick {
 
         if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             $FileListBox.Items.Clear()  # Clear any existing items in the list box
+    
+            # Loop through selected files
             foreach ($file in $OpenFileDialog.FileNames) {
                 $FileListBox.Items.Add($file)  # Add each selected file path to the list box
+                # Add each selected file path to the OutputTextBox
             }
         }
     })
-
     # Rename button logic
     $RenameButton.Add_Click({
         $MainPageWindow.Hide()
         $BulkRenamingWindow.Show()
-
+    
         $baseName = $BaseNameTextBox.Text
-
+    
         # Check if any files have been selected
         if ($FileListBox.Items.Count -eq 0) {
             [System.Windows.Forms.MessageBox]::Show("Please select files before proceeding.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
-
+    
         # Get selected files from the FileListBox
         $selectedFiles = $FileListBox.Items
-
+    
         # Perform the batch renaming operation
         $batchOperation = Rename-WithBaseName -selectedFiles $selectedFiles -baseName $baseName
-
+    
         # Add the operation to the undo stack (for potential undo functionality)
         $undoStack += ,$batchOperation
         $redoStack = @()  # Clear the redo stack since new operations are performed
+    
+        # Display the renamed files in the OutputTextBox
+        $OutputTextBox.Text = ""  # Clear previous output
+    
+        foreach ($operation in $batchOperation) {
+            # Extract the file name part only (not the full path)
+            $originalFileName = [System.IO.Path]::GetFileName($operation.OriginalPath)
+            $newFileName = [System.IO.Path]::GetFileName($operation.NewPath)
+    
+            # Display the renaming result in the OutputTextBox
+            $OutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
+        }
     })
-
     # Redo button logic
     $RedoButton.Add_Click({
         if ($redoStack.Count -gt 0) {
+            # Get the last operation from the redo stack
             $operationToRedo = $redoStack[-1]
-            $redoStack = $redoStack[0..($redoStack.Count - 2)]
+            $redoStack = $redoStack[0..($redoStack.Count - 2)]  # Remove last operation from redo stack
 
-            # Perform the redo operation
-            Perform-RedoOperation -operation $operationToRedo
+            # Perform the redo operation (reapply the renaming)
+            foreach ($action in $operationToRedo) {
+                Rename-Item -Path $action.OriginalPath -NewName (Split-Path -Leaf $action.NewPath) -ErrorAction Stop
+                Write-Host "Redo: Renamed '$($action.OriginalPath)' back to '$($action.NewPath)'" -ForegroundColor Cyan
+            }
 
-            # Add the operation back to the undo stack
+            # Push the operation back to the undo stack
             $undoStack += ,$operationToRedo
+            Write-Host "Redo completed." -ForegroundColor Cyan
         } else {
             [System.Windows.Forms.MessageBox]::Show("No actions to redo.", "Redo", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
         }
     })
+    # Undo button logic
+    $UndoButton.Add_Click({
+        if ($undoStack.Count -gt 0) {
+            # Get the last operation from the undo stack
+            $lastBatch = $undoStack[-1]
+            $undoStack = $undoStack[0..($undoStack.Count - 2)]  # Remove last operation from undo stack
 
-    # Preview button logic
-    $PreviewButton.Add_Click({
-        $MainPageWindow.Hide()
-        $BulkRenamingWindow.Show()
+            # Undo each rename in reverse order (restore original file names)
+            foreach ($action in $lastBatch) {
+                Rename-Item -Path $action.NewPath -NewName (Split-Path -Leaf $action.OriginalPath) -ErrorAction Stop
+                Write-Host "Undo: Renamed '$($action.NewPath)' back to '$($action.OriginalPath)'" -ForegroundColor Cyan
+            }
 
-        # Display file paths in the preview list
-        $FileListBox.Items.Clear()
-        foreach ($file in $selectedFiles) {
-            $FileListBox.Items.Add("Old Path: $file -> New Path: $newFilePath")
+            # Push the operation to the redo stack
+            $redoStack += ,$lastBatch
+            Write-Host "Undo completed." -ForegroundColor Cyan
+        } else {
+            [System.Windows.Forms.MessageBox]::Show("Nothing to undo.", "Undo", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
         }
     })
-
     # Show the Bulk Renaming window modally
     $BulkRenamingWindow.ShowDialog() | Out-Null
 }
@@ -355,6 +393,31 @@ function Show-ReplaceWindow {
     $ReplaceWithPanel.HorizontalAlignment = "Center"
     $ReplaceWithPanel.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
 
+    # Create the StackPanel to hold the output textbox
+    $CenterStackPanel = New-Object Windows.Controls.StackPanel
+    $CenterStackPanel.Orientation = "Vertical"
+    $CenterStackPanel.HorizontalAlignment = "Center"
+
+    # Create the output TextBox for displaying the renaming results
+    $ReplaceOutputTextBox = New-Object Windows.Controls.TextBox
+    $ReplaceOutputTextBox.Width = 200
+    $ReplaceOutputTextBox.Height = 60
+    $ReplaceOutputTextBox.FontSize = 12
+    $ReplaceOutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+    $ReplaceOutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+    $ReplaceOutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $ReplaceOutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
+
+    # Enable scrolling for the output box
+    $ReplaceOutputTextBox.VerticalScrollBarVisibility = "Auto"
+    $ReplaceOutputTextBox.HorizontalScrollBarVisibility = "Auto"
+
+    # Add the TextBox to the layout (e.g., StackPanel or Grid)
+    $CenterStackPanel.Children.Add($ReplaceOutputTextBox)
+
+    # Add the StackPanel to your main layout container (e.g., $ReplaceCenterStackPanel)
+    $ReplaceCenterStackPanel.Children.Add($CenterStackPanel)
+
     # Text box and label for "Replace"
     $ReplaceLabel = New-Object Windows.Controls.TextBlock
     $ReplaceLabel.Text = "Replace:"
@@ -386,6 +449,27 @@ function Show-ReplaceWindow {
 
     $ReplaceCenterStackPanel.Children.Add($ReplaceWithPanel)
 
+    $CenterStackPanel = New-Object Windows.Controls.StackPanel
+    $CenterStackPanel.Orientation = "Vertical"
+    $CenterStackPanel.HorizontalAlignment = "Center"
+
+    # Create the output TextBox for displaying the renaming results
+    $ReplaceOutputTextBox = New-Object Windows.Controls.TextBox
+    $ReplaceOutputTextBox.Width = 200
+    $ReplaceOutputTextBox.Height = 60
+    $ReplaceOutputTextBox.FontSize = 12
+    $ReplaceOutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+    $ReplaceOutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+    $ReplaceOutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $ReplaceOutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
+
+    # Enable scrolling for the output box
+    $ReplaceOutputTextBox.VerticalScrollBarVisibility = "Auto"
+    $ReplaceOutputTextBox.HorizontalScrollBarVisibility = "Auto"
+
+    # Add the TextBox to the layout (e.g., StackPanel or Grid)
+    $CenterStackPanel.Children.Add($ReplaceOutputTextBox)
+
     # Buttons for Apply, Replace, Undo, Redo
     $ReplaceButtonGrid = New-Object Windows.Controls.Grid
     $ReplaceButtonGrid.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
@@ -398,12 +482,10 @@ function Show-ReplaceWindow {
     }
 
     $ReplaceApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
-    $ReplaceReplaceButton = Create-SmallButton -Content "Substitute" -Row 0 -Column 1
     $ReplaceUndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
     $ReplaceRedoButton = Create-SmallButton -Content "Redo" -Row 1 -Column 1
 
     $ReplaceButtonGrid.Children.Add($ReplaceApplyButton)
-    $ReplaceButtonGrid.Children.Add($ReplaceReplaceButton)
     $ReplaceButtonGrid.Children.Add($ReplaceUndoButton)
     $ReplaceButtonGrid.Children.Add($ReplaceRedoButton)
 
@@ -427,8 +509,57 @@ function Show-ReplaceWindow {
 
     $ReplaceGrid.Children.Add($ReplaceCenterStackPanel)
 
+    $ReplaceSelectFileButton.Add_Click({
+        $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+        $OpenFileDialog.Filter = "All Files (*.*)|*.*"
+        $OpenFileDialog.Title = "Select files to rename"
+        $OpenFileDialog.Multiselect = $true 
+
+        if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            $ReplaceFileListBox.Items.Clear()  # Clear any existing items in the list box
+    
+            # Loop through selected files
+            foreach ($file in $OpenFileDialog.FileNames) {
+                $ReplaceFileListBox.Items.Add($file)  # Add each selected file path to the list box
+                # Add each selected file path to the OutputTextBox
+            }
+        }
+    })
+
+    $ReplaceApplyButton.Add_Click({
+        $patternToFind = $ReplaceTextBox.Text
+        $replacementWord = $SubstituteWithTextBox.Text
+
+        if (-not $patternToFind -or -not $replacementWord) {
+            Write-Host "Error: Both 'Replace' and 'With' fields must be filled." -ForegroundColor Red
+            return
+        }
+
+        # Assume $selectedFiles is an array of selected files
+        $selectedFiles = $ReplaceFileListBox.Items
+
+        # Call Rename-WithPatternReplacement with the values from the GUI
+        $batchOperation = Rename-WithPatternReplacement -selectedFiles $selectedFiles -patternToFind $patternToFind -replacementWord $replacementWord
+
+        $undoStack += ,$batchOperation
+        $redoStack = @()  # Clear the redo stack since new operations are performed
+    
+        # Display the renamed files in the OutputTextBox
+        $ReplaceOutputTextBox.Text = ""  # Clear previous output
+    
+        foreach ($operation in $batchOperation) {
+            # Extract the file name part only (not the full path)
+            $originalFileName = [System.IO.Path]::GetFileName($operation.OriginalPath)
+            $newFileName = [System.IO.Path]::GetFileName($operation.NewPath)
+    
+            # Display the renaming result in the OutputTextBox
+            $ReplaceOutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
+        }
+    })
+
     $ReplaceWindow.Content = $ReplaceGrid
     $ReplaceWindow.ShowDialog() | Out-Null
+  
 }
 
 function ShowPrefixsuffixWindow {
@@ -438,7 +569,7 @@ function ShowPrefixsuffixWindow {
     # Create the Prefix-Suffix window
     $PrefixSuffixWindow = New-Object Windows.Window
     $PrefixSuffixWindow.Title = "SHIFTIFY: Prefix and Suffix Tool"
-    $PrefixSuffixWindow.Height = 500
+    $PrefixSuffixWindow.Height = 700
     $PrefixSuffixWindow.Width = 400
     $PrefixSuffixWindow.WindowStartupLocation = "CenterScreen"
     $PrefixSuffixWindow.FontFamily = "Segoe UI"
@@ -479,22 +610,21 @@ function ShowPrefixsuffixWindow {
     $PrefixSuffixCenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
 
     # File selection button
-    $SelectFileButton = New-Object Windows.Controls.Button
-    $SelectFileButton.Content = "Select File"
-    $SelectFileButton.Width = 150
-    $SelectFileButton.Height = 40
-    $SelectFileButton.Margin = [Windows.Thickness]::new(0, 10, 0, 10)
-    $SelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
-    $SelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
-    $SelectFileButton.FontSize = 12
-    $SelectFileButton.FontWeight = "Bold"
-    $SelectFileButton.Add_Click({
+    $PrefixSuffixSelectFileButton = New-Object Windows.Controls.Button
+    $PrefixSuffixSelectFileButton.Content = "Select File"
+    $PrefixSuffixSelectFileButton.Width = 150
+    $PrefixSuffixSelectFileButton.Height = 40
+    $PrefixSuffixSelectFileButton.Margin = [Windows.Thickness]::new(0, 10, 0, 10)
+    $PrefixSuffixSelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+    $PrefixSuffixSelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+    $PrefixSuffixSelectFileButton.FontSize = 12
+    $PrefixSuffixSelectFileButton.Add_Click({
         $dialog = New-Object Windows.Forms.OpenFileDialog
         $dialog.Multiselect = $true
         $dialog.ShowDialog() | Out-Null
         $dialog.FileNames | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
     })
-    $PrefixSuffixCenterStackPanel.Children.Add($SelectFileButton)
+    $PrefixSuffixCenterStackPanel.Children.Add($PrefixSuffixSelectFileButton)
 
     # File list box
     $PrefixSuffixFileListBox = New-Object Windows.Controls.ListBox
@@ -505,6 +635,23 @@ function ShowPrefixsuffixWindow {
     $PrefixSuffixFileListBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
     $PrefixSuffixFileListBox.BorderThickness = [Windows.Thickness]::new(2)
     $PrefixSuffixCenterStackPanel.Children.Add($PrefixSuffixFileListBox)
+
+    # Create the output TextBox for displaying the renaming results
+    $SuffixPrefixOutputTextBox = New-Object Windows.Controls.TextBox
+    $SuffixPrefixOutputTextBox.Width = 200
+    $SuffixPrefixOutputTextBox.Height = 60
+    $SuffixPrefixOutputTextBox.FontSize = 12
+    $SuffixPrefixOutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+    $SuffixPrefixOutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+    $SuffixPrefixOutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $SuffixPrefixOutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
+
+    # Enable scrolling for the output box
+    $SuffixPrefixOutputTextBox.VerticalScrollBarVisibility = "Auto"
+    $SuffixPrefixOutputTextBox.HorizontalScrollBarVisibility = "Auto"
+
+    # Add the TextBox to the layout (e.g., StackPanel or Grid)
+    $PrefixSuffixCenterStackPanel.Children.Add($SuffixPrefixOutputTextBox)
 
     # Text box for prefix
     $PrefixLabel = New-Object Windows.Controls.TextBlock
@@ -538,7 +685,7 @@ function ShowPrefixsuffixWindow {
     $SuffixTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
     $PrefixSuffixCenterStackPanel.Children.Add($SuffixTextBox)
 
-    # Buttons for Apply, Preview, Undo, Redo, and Back
+    # Buttons for Apply, Undo, Redo, and Back
     $ButtonGrid = New-Object Windows.Controls.Grid
     $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
 
@@ -550,13 +697,11 @@ function ShowPrefixsuffixWindow {
     }
 
     $ApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
-    $PreviewButton = Create-SmallButton -Content "Preview" -Row 0 -Column 1
-    $UndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
-    $RedoButton = Create-SmallButton -Content "Redo" -Row 1 -Column 1
-    $BackButton = Create-SmallButton -Content "Back" -Row 0 -Column 2
+    $UndoButton = Create-SmallButton -Content "Undo" -Row 0 -Column 1
+    $RedoButton = Create-SmallButton -Content "Redo" -Row 0 -Column 2
+    $BackButton = Create-SmallButton -Content "Back" -Row 1 -Column 1
 
     $ButtonGrid.Children.Add($ApplyButton)
-    $ButtonGrid.Children.Add($PreviewButton)
     $ButtonGrid.Children.Add($UndoButton)
     $ButtonGrid.Children.Add($RedoButton)
     $ButtonGrid.Children.Add($BackButton)
@@ -572,80 +717,82 @@ function ShowPrefixsuffixWindow {
     $redoStack = New-Object System.Collections.Stack
 
     # Function to store current state to the undo stack
-    function Save-CurrentState {
-        $currentState = @{
-            prefix = $PrefixTextBox.Text
-            suffix = $SuffixTextBox.Text
-            files = @($PrefixSuffixFileListBox.Items)
-        }
-        $undoStack.Push($currentState)
-        $redoStack.Clear()  # Clear redo stack whenever a new state is saved
-    }
+    # function Save-CurrentState {
+    #     $currentState = @{
+    #         prefix = $PrefixTextBox.Text
+    #         suffix = $SuffixTextBox.Text
+    #         files = @($PrefixSuffixFileListBox.Items)
+    #     }
+    #     $undoStack.Push($currentState)
+    #     $redoStack.Clear()  # Clear redo stack whenever a new state is saved
+    # }
 
-    # Function to undo the last action
-    function Undo-Action {
-        if ($undoStack.Count -gt 0) {
-            $lastState = $undoStack.Pop()
-            $PrefixTextBox.Text = $lastState.prefix
-            $SuffixTextBox.Text = $lastState.suffix
-            $PrefixSuffixFileListBox.Items.Clear()
-            $lastState.files | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
-            $redoStack.Push($lastState)  # Push to redo stack
-        }
-    }
+    # # Function to undo the last action
+    # function Undo-Action {
+    #     if ($undoStack.Count -gt 0) {
+    #         $lastState = $undoStack.Pop()
+    #         $PrefixTextBox.Text = $lastState.prefix
+    #         $SuffixTextBox.Text = $lastState.suffix
+    #         $PrefixSuffixFileListBox.Items.Clear()
+    #         $lastState.files | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
+    #         $redoStack.Push($lastState)  # Push to redo stack
+    #     }
+    # }
 
-    # Function to redo the last undone action
-    function Redo-Action {
-        if ($redoStack.Count -gt 0) {
-            $lastUndoneState = $redoStack.Pop()
-            $PrefixTextBox.Text = $lastUndoneState.prefix
-            $SuffixTextBox.Text = $lastUndoneState.suffix
-            $PrefixSuffixFileListBox.Items.Clear()
-            $lastUndoneState.files | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
-            $undoStack.Push($lastUndoneState)  # Push to undo stack
-        }
-    }
+    # # Function to redo the last undone action
+    # function Redo-Action {
+    #     if ($redoStack.Count -gt 0) {
+    #         $lastUndoneState = $redoStack.Pop()
+    #         $PrefixTextBox.Text = $lastUndoneState.prefix
+    #         $SuffixTextBox.Text = $lastUndoneState.suffix
+    #         $PrefixSuffixFileListBox.Items.Clear()
+    #         $lastUndoneState.files | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
+    #         $undoStack.Push($lastUndoneState)  # Push to undo stack
+    #     }
+    # }
 
-    # Apply Button Logic
     $ApplyButton.Add_Click({
-        Save-CurrentState
-
-        # Logic for applying prefix and suffix to selected files
-        $newFiles = @()
-        foreach ($file in $PrefixSuffixFileListBox.Items) {
-            $fileName = [System.IO.Path]::GetFileNameWithoutExtension($file)
-            $fileExtension = [System.IO.Path]::GetExtension($file)
-            $newFileName = $PrefixTextBox.Text + $fileName + $SuffixTextBox.Text + $fileExtension
-            $newFiles += [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($file), $newFileName)
+        # Get the prefix and suffix values from the textboxes
+        $prefix = $PrefixTextBox.Text
+        $suffix = $SuffixTextBox.Text
+        
+        # Ensure both prefix and suffix are entered
+        if (-not $prefix -and -not $suffix) {
+            Write-Host "Error: Both prefix and suffix cannot be empty." -ForegroundColor Red
+            return
         }
-
-        # Update the file list with new names
-        $PrefixSuffixFileListBox.Items.Clear()
-        $newFiles | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
-    })
-
-    # Preview Button Logic
-    $PreviewButton.Add_Click({
-        # Preview logic here
-        $newFiles = @()
+    
+        # Get the list of selected files
+        $selectedFiles = @()
         foreach ($file in $PrefixSuffixFileListBox.Items) {
-            $fileName = [System.IO.Path]::GetFileNameWithoutExtension($file)
-            $fileExtension = [System.IO.Path]::GetExtension($file)
-            $newFileName = $PrefixTextBox.Text + $fileName + $SuffixTextBox.Text + $fileExtension
-            $newFiles += $newFileName
+            $selectedFiles += $file
         }
-        [System.Windows.MessageBox]::Show("Preview changes: " + ($newFiles -join ", "))
+    
+        # Call the Rename-WithPrefixSuffix function to rename the files
+        $batchOperation = Rename-WithPrefixSuffix -selectedFiles $selectedFiles -prefix $prefix -suffix $suffix
+        
+        # Clear the output TextBox (but not the list box)
+        $SuffixPrefixOutputTextBox.Clear()
+    
+        # Process each operation in batch
+        foreach ($operation in $batchOperation) {
+            # Format the renaming message
+            $renamingMessage = "Renamed '$($operation.OriginalPath)' to '$($operation.NewPath)'"
+            
+            # Display the message in the output TextBox, appending to existing content
+            $SuffixPrefixOutputTextBox.AppendText($renamingMessage + "`r`n")
+        }
     })
 
     # Undo Button Logic
-    $UndoButton.Add_Click({
-        Undo-Action
-    })
+    # $UndoButton.Add_Click({
+    #     Undo-Action
+    # })
 
-    # Redo Button Logic
-    $RedoButton.Add_Click({
-        Redo-Action
-    })
+    # # Redo Button Logic
+    # $RedoButton.Add_Click({
+    #     Redo-Action
+    # })
 
     # Back Button Logic (close the current window and show the MainPageWindow)
     $BackButton.Add_Click({
