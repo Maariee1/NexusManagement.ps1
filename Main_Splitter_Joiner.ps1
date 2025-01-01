@@ -965,6 +965,65 @@ function CreateEncryptionWindow {
     [System.Windows.Controls.Grid]::SetColumn($outputBox, 1)
     $null = $grid.Children.Add($outputBox)
 
+    # Create a Grid for password input and toggle button
+    $passwordGrid = New-Object System.Windows.Controls.Grid
+    $null = $passwordGrid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "*" }))
+    $null = $passwordGrid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "Auto" }))
+
+    # Create password box
+    $outputBox = New-Object System.Windows.Controls.PasswordBox
+    $outputBox.Height = 25
+    $outputBox.Margin = "0,10,5,10"
+    [System.Windows.Controls.Grid]::SetColumn($outputBox, 0)
+    $null = $passwordGrid.Children.Add($outputBox)
+
+    # Create text box (initially hidden)
+    $outputTextBox = New-Object System.Windows.Controls.TextBox
+    $outputTextBox.Height = 25
+    $outputTextBox.Margin = "0,10,5,10"
+    $outputTextBox.Visibility = "Collapsed"
+    [System.Windows.Controls.Grid]::SetColumn($outputTextBox, 0)
+    $null = $passwordGrid.Children.Add($outputTextBox)
+
+    # Create toggle button with eye icon
+    $toggleButton = New-Object System.Windows.Controls.Button
+    $toggleButton.Width = 30
+    $toggleButton.Height = 25
+    $toggleButton.Margin = "0,10,10,10"
+    $toggleButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180
+    $toggleButton.BorderThickness = "0"
+
+    # Create eye icon
+    $eyePath = New-Object System.Windows.Shapes.Path
+    $eyePath.Data = [System.Windows.Media.Geometry]::Parse("M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z")
+    $eyePath.Fill = New-SolidColorBrush -R 255 -G 255 -B 255
+    $eyePath.Width = 16
+    $eyePath.Height = 16
+    $eyePath.Stretch = "Uniform"
+
+    $toggleButton.Content = $eyePath
+    [System.Windows.Controls.Grid]::SetColumn($toggleButton, 1)
+
+    # Add toggle functionality
+    $toggleButton.Add_Click({
+        if ($outputBox.Visibility -eq "Visible") {
+            $outputTextBox.Text = $outputBox.Password
+            $outputBox.Visibility = "Collapsed"
+            $outputTextBox.Visibility = "Visible"
+        } else {
+            $outputBox.Password = $outputTextBox.Text
+            $outputBox.Visibility = "Visible"
+            $outputTextBox.Visibility = "Collapsed"
+        }
+    })
+
+    $null = $passwordGrid.Children.Add($toggleButton)
+
+    # Add the password grid to the main grid
+    [System.Windows.Controls.Grid]::SetRow($passwordGrid, 2)
+    [System.Windows.Controls.Grid]::SetColumn($passwordGrid, 1)
+    $null = $grid.Children.Add($passwordGrid)
+
     # Instructions
     $instructionText = New-Object System.Windows.Controls.TextBlock
     $instructionText.Text = "To encrypt a file, select the input file and enter your chosen password key."
@@ -990,11 +1049,13 @@ function CreateEncryptionWindow {
     $startButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
     $startButton.Add_Click({
+        $password = if ($outputBox.Visibility -eq "Visible") { $outputBox.Password } else { $outputTextBox.Text }
+
         if ([string]::IsNullOrWhiteSpace($inputBox.Text)) {
             [System.Windows.MessageBox]::Show("Please select a file to encrypt.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
-        if ([string]::IsNullOrWhiteSpace($outputBox.Text)) {
+        if ([string]::IsNullOrWhiteSpace($password)) {
             [System.Windows.MessageBox]::Show("Please enter a password.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
@@ -1004,7 +1065,7 @@ function CreateEncryptionWindow {
         }
         
         try {
-            Encrypt-File -InputFile $inputBox.Text -Password $outputBox.Text
+            Encrypt-File -InputFile $inputBox.Text -Password $password
             [System.Windows.MessageBox]::Show("File encrypted successfully!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
             $encryptionWindow.Close()
         }
@@ -1114,6 +1175,65 @@ function CreateDecryptionWindow {
     [System.Windows.Controls.Grid]::SetColumn($outputBox, 1)
     $null = $grid.Children.Add($outputBox)
 
+    # Create a Grid for password input and toggle button
+    $passwordGrid = New-Object System.Windows.Controls.Grid
+    $null = $passwordGrid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "*" }))
+    $null = $passwordGrid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = "Auto" }))
+
+    # Create password box
+    $outputBox = New-Object System.Windows.Controls.PasswordBox
+    $outputBox.Height = 25
+    $outputBox.Margin = "0,10,5,10"
+    [System.Windows.Controls.Grid]::SetColumn($outputBox, 0)
+    $null = $passwordGrid.Children.Add($outputBox)
+
+    # Create text box (initially hidden)
+    $outputTextBox = New-Object System.Windows.Controls.TextBox
+    $outputTextBox.Height = 25
+    $outputTextBox.Margin = "0,10,5,10"
+    $outputTextBox.Visibility = "Collapsed"
+    [System.Windows.Controls.Grid]::SetColumn($outputTextBox, 0)
+    $null = $passwordGrid.Children.Add($outputTextBox)
+
+    # Create toggle button with eye icon
+    $toggleButton = New-Object System.Windows.Controls.Button
+    $toggleButton.Width = 30
+    $toggleButton.Height = 25
+    $toggleButton.Margin = "0,10,10,10"
+    $toggleButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180
+    $toggleButton.BorderThickness = "0"
+
+    # Create eye icon
+    $eyePath = New-Object System.Windows.Shapes.Path
+    $eyePath.Data = [System.Windows.Media.Geometry]::Parse("M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z")
+    $eyePath.Fill = New-SolidColorBrush -R 255 -G 255 -B 255
+    $eyePath.Width = 16
+    $eyePath.Height = 16
+    $eyePath.Stretch = "Uniform"
+
+    $toggleButton.Content = $eyePath
+    [System.Windows.Controls.Grid]::SetColumn($toggleButton, 1)
+
+    # Add toggle functionality
+    $toggleButton.Add_Click({
+        if ($outputBox.Visibility -eq "Visible") {
+            $outputTextBox.Text = $outputBox.Password
+            $outputBox.Visibility = "Collapsed"
+            $outputTextBox.Visibility = "Visible"
+        } else {
+            $outputBox.Password = $outputTextBox.Text
+            $outputBox.Visibility = "Visible"
+            $outputTextBox.Visibility = "Collapsed"
+        }
+    })
+
+    $null = $passwordGrid.Children.Add($toggleButton)
+
+    # Add the password grid to the main grid
+    [System.Windows.Controls.Grid]::SetRow($passwordGrid, 2)
+    [System.Windows.Controls.Grid]::SetColumn($passwordGrid, 1)
+    $null = $grid.Children.Add($passwordGrid)
+
     # Instructions
     $instructionText = New-Object System.Windows.Controls.TextBlock
     $instructionText.Text = "To decrypt a file, select the input file and enter your chosen password key."
@@ -1139,11 +1259,13 @@ function CreateDecryptionWindow {
     $startButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
     $startButton.Add_Click({
+        $password = if ($outputBox.Visibility -eq "Visible") { $outputBox.Password } else { $outputTextBox.Text }
+
         if ([string]::IsNullOrWhiteSpace($inputBox.Text)) {
             [System.Windows.MessageBox]::Show("Please select a file to decrypt.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
-        if ([string]::IsNullOrWhiteSpace($outputBox.Text)) {
+        if ([string]::IsNullOrWhiteSpace($password)) {
             [System.Windows.MessageBox]::Show("Please enter a password.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
@@ -1153,7 +1275,7 @@ function CreateDecryptionWindow {
         }
     
         try {
-            Decrypt-File -InputFile $inputBox.Text -Password $outputBox.Text
+            Decrypt-File -InputFile $inputBox.Text -Password $password
             [System.Windows.MessageBox]::Show("File decrypted successfully!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
             $decryptionWindow.Close()
         }
