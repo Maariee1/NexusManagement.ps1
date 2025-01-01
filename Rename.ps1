@@ -131,20 +131,11 @@ function Decrypt-File {
 
     function Rename-WithPrefixSuffix {
         param (
-            [array]$selectedFiles
+            [array]$selectedFiles,
+            [string]$prefix,         
+            [string]$suffix   
         )
-    
-        do {
-            # Ask the user for prefix and suffix
-            $prefix = Read-Host "Enter the prefix to add"
-            $suffix = Read-Host "Enter the suffix to add"
-    
-            # Check if both prefix and suffix are empty
-            if (-not $prefix -and -not $suffix) {
-                Write-Host "Error: Both prefix and suffix cannot be empty." -ForegroundColor Red
-            }
-        } while (-not $prefix -and -not $suffix)
-    
+   
         # Initialize batchOperation to track changes for undo/redo
         $batchOperation = @()
     
@@ -177,20 +168,16 @@ function Decrypt-File {
                 NewPath = $newFilePath
             }
     
-            Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green
+            Write-Host "Renamed '$($file.Name)' to '$newFileName'" -ForegroundColor Green        
         }
-    
         return $batchOperation
     }
     function Rename-WithPatternReplacement {
         param (
-            [array]$selectedFiles
+            [array]$selectedFiles,
+            [string]$patternToFind,
+            [string]$replacementWord
         )
-    
-        do {
-            # Ask the user for the pattern to find and the replacement word
-            $patternToFind = Read-Host "Enter the word pattern to find in file names"
-            $replacementWord = Read-Host "Enter the word to replace the pattern with"
     
             # Check if either input is empty
             if (-not $patternToFind -or -not $replacementWord) {
@@ -242,8 +229,6 @@ function Decrypt-File {
             if (-not $patternFound) {
                 Write-Host "Error: The word pattern '$patternToFind' could not be found in any of the selected file names." -ForegroundColor Red
             }
-    
-        } while (-not $patternFound)
     
         return $batchOperation
     }
