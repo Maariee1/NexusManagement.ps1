@@ -1,9 +1,6 @@
 # Load necessary components for WPF application
 Add-Type -AssemblyName PresentationFramework
-Add-Type -AssemblyName PresentationCore
-Add-Type -AssemblyName System.Windows.Forms
 
-. ./Rename.ps1
 # Function to convert a hex color to SolidColorBrush
 function ConvertTo-SolidColorBrush {
     param ($hexColor)
@@ -109,10 +106,9 @@ $PrefixSuffixButton = Create-Button -Content "Prefix and Suffix" -TopMargin 10
 $ReplaceButton = Create-Button -Content "Replacing" -TopMargin 10
 $EncryptButton = Create-Button -Content "Encryption" -TopMargin 10
 
-
 $ButtonStackPanel.Children.Add($BulkRenameButton)
-$ButtonStackPanel.Children.Add($PrefixSuffixButton)
 $ButtonStackPanel.Children.Add($ReplaceButton)
+$ButtonStackPanel.Children.Add($PrefixSuffixButton)
 $ButtonStackPanel.Children.Add($EncryptButton)
 
 $MainGrid.Children.Add($ButtonStackPanel)
@@ -129,16 +125,17 @@ $ReplaceButton.Add_Click({
 })
 
 # Encryption button logic for opening Encryption window
+$PrefixSuffixButton.Add_Click({
+    $MainPageWindow.Hide()
+    $PrefixSuffixWindow.ShowDialog() | Out-Null
+})
+
+# Encryption button logic for opening Encryption window
 $EncryptButton.Add_Click({
     $MainPageWindow.Hide()
     $EncryptionWindow.ShowDialog() | Out-Null
 })
 
-# Encryption button logic for opening Encryption window
-$PrefixSuffixButton.Add_Click({
-    $MainPageWindow.Hide()
-    $PrefixSuffixWindowWindow.ShowDialog() | Out-Null
-})
 
 # Set Grid as content
 $MainPageWindow.Content = $MainGrid
@@ -344,6 +341,158 @@ $PreviewButton.Add_Click({
 # Show the Main Page window
 $MainPageWindow.ShowDialog() | Out-Null
 
+#----------------REPLACE WINDOW -----------------------#
+
+function Show-ReplaceWindow {
+    # Create the Replace window
+    $ReplaceWindow = New-Object Windows.Window
+    $ReplaceWindow.Title = "SHIFTIFY: Text Substitution Tool"
+    $ReplaceWindow.Height = 500
+    $ReplaceWindow.Width = 400
+    $ReplaceWindow.WindowStartupLocation = "CenterScreen"
+    $ReplaceWindow.FontFamily = "Segoe UI"
+    $ReplaceWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
+    $ReplaceWindow.ResizeMode = "NoResize"
+    $ReplaceWindow.WindowStyle = "SingleBorderWindow"
+
+    # Create a Grid for Replace Page
+    $ReplaceGrid = New-Object Windows.Controls.Grid
+
+    # Title for Replace Page
+    $ReplaceTitleBorder = New-Object Windows.Controls.Border
+    $ReplaceTitleBorder.Width = 350
+    $ReplaceTitleBorder.Height = 60
+    $ReplaceTitleBorder.HorizontalAlignment = "Center"
+    $ReplaceTitleBorder.VerticalAlignment = "Top"
+    $ReplaceTitleBorder.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
+    $ReplaceTitleBorder.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+    $ReplaceTitleBorder.CornerRadius = [Windows.CornerRadius]::new(20)
+    $ReplaceTitleBorder.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4")
+    $ReplaceTitleBorder.BorderThickness = [Windows.Thickness]::new(3)
+
+    $ReplaceTitleTextBlock = New-Object Windows.Controls.TextBlock
+    $ReplaceTitleTextBlock.Text = "Replacing Word"
+    $ReplaceTitleTextBlock.FontSize = 24
+    $ReplaceTitleTextBlock.FontWeight = "Bold"
+    $ReplaceTitleTextBlock.HorizontalAlignment = "Center"
+    $ReplaceTitleTextBlock.VerticalAlignment = "Center"
+    $ReplaceTitleTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+
+    $ReplaceTitleBorder.Child = $ReplaceTitleTextBlock
+    $ReplaceGrid.Children.Add($ReplaceTitleBorder)
+
+    # Center panel for actions and input
+    $ReplaceCenterStackPanel = New-Object Windows.Controls.StackPanel
+    $ReplaceCenterStackPanel.HorizontalAlignment = "Center"
+    $ReplaceCenterStackPanel.VerticalAlignment = "Top"
+    $ReplaceCenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
+
+    # File selection button
+    $ReplaceSelectFileButton = New-Object Windows.Controls.Button
+    $ReplaceSelectFileButton.Content = "Select File"
+    $ReplaceSelectFileButton.Width = 130
+    $ReplaceSelectFileButton.Height = 35
+    $ReplaceSelectFileButton.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $ReplaceSelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+    $ReplaceSelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+    $ReplaceSelectFileButton.FontSize = 14
+    $ReplaceSelectFileButton.FontWeight = "Bold"
+    $ReplaceCenterStackPanel.Children.Add($ReplaceSelectFileButton)
+
+    # File list box
+    $ReplaceFileListBox = New-Object Windows.Controls.ListBox
+    $ReplaceFileListBox.Width = 300
+    $ReplaceFileListBox.Height = 100
+    $ReplaceFileListBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $ReplaceFileListBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+    $ReplaceFileListBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+    $ReplaceFileListBox.BorderThickness = [Windows.Thickness]::new(2)
+    $ReplaceCenterStackPanel.Children.Add($ReplaceFileListBox)
+
+    # Create a horizontal StackPanel for Replace/With inputs
+    $ReplaceWithPanel = New-Object Windows.Controls.StackPanel
+    $ReplaceWithPanel.Orientation = "Horizontal"
+    $ReplaceWithPanel.HorizontalAlignment = "Center"
+    $ReplaceWithPanel.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+
+    # Text box and label for "Replace"
+    $ReplaceLabel = New-Object Windows.Controls.TextBlock
+    $ReplaceLabel.Text = "Replace:"
+    $ReplaceLabel.FontSize = 14
+    $ReplaceLabel.Margin = [Windows.Thickness]::new(0, 0, 5, 0)
+    $ReplaceWithPanel.Children.Add($ReplaceLabel)
+
+    $ReplaceTextBox = New-Object Windows.Controls.TextBox
+    $ReplaceTextBox.Width = 100
+    $ReplaceTextBox.FontSize = 14
+    $ReplaceTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+    $ReplaceTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+    $ReplaceTextBox.Margin = [Windows.Thickness]::new(0, 0, 10, 0)
+    $ReplaceWithPanel.Children.Add($ReplaceTextBox)
+
+    # Text box and label for "With"
+    $SubstituteWithLabel = New-Object Windows.Controls.TextBlock
+    $SubstituteWithLabel.Text = "With:"
+    $SubstituteWithLabel.FontSize = 14
+    $SubstituteWithLabel.Margin = [Windows.Thickness]::new(0, 0, 5, 0)
+    $ReplaceWithPanel.Children.Add($SubstituteWithLabel)
+
+    $SubstituteWithTextBox = New-Object Windows.Controls.TextBox
+    $SubstituteWithTextBox.Width = 100
+    $SubstituteWithTextBox.FontSize = 14
+    $SubstituteWithTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+    $SubstituteWithTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+    $ReplaceWithPanel.Children.Add($SubstituteWithTextBox)
+
+    $ReplaceCenterStackPanel.Children.Add($ReplaceWithPanel)
+
+    # Buttons for Apply, Replace, Undo, Redo
+    $ReplaceButtonGrid = New-Object Windows.Controls.Grid
+    $ReplaceButtonGrid.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+
+    for ($row = 0; $row -lt 2; $row++) {
+        $ReplaceButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
+    }
+    for ($col = 0; $col -lt 2; $col++) {
+        $ReplaceButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
+    }
+
+    $ReplaceApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
+    $ReplaceReplaceButton = Create-SmallButton -Content "Substitute" -Row 0 -Column 1
+    $ReplaceUndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
+    $ReplaceRedoButton = Create-SmallButton -Content "Redo" -Row 1 -Column 1
+
+    $ReplaceButtonGrid.Children.Add($ReplaceApplyButton)
+    $ReplaceButtonGrid.Children.Add($ReplaceReplaceButton)
+    $ReplaceButtonGrid.Children.Add($ReplaceUndoButton)
+    $ReplaceButtonGrid.Children.Add($ReplaceRedoButton)
+
+    $ReplaceCenterStackPanel.Children.Add($ReplaceButtonGrid)
+
+    # Back button below the other buttons
+    $ReplaceBackButton = New-Object Windows.Controls.Button
+    $ReplaceBackButton.Content = "Back"
+    $ReplaceBackButton.Width = 90
+    $ReplaceBackButton.Height = 30
+    $ReplaceBackButton.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+    $ReplaceBackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+    $ReplaceBackButton.FontSize = 12
+    $ReplaceBackButton.FontWeight = "Bold"
+    $ReplaceBackButton.Add_Click({
+        $ReplaceWindow.Close()  # Close the current Replace window
+        Show-MainWindow         # Open the main window
+    })
+    $ReplaceCenterStackPanel.Children.Add($ReplaceBackButton)
+
+    $ReplaceGrid.Children.Add($ReplaceCenterStackPanel)
+
+    $ReplaceWindow.Content = $ReplaceGrid
+    $ReplaceWindow.ShowDialog() | Out-Null
+}
+# Open the Replace Window
+Show-ReplaceWindow
+
 #------------------PREFIX AND SUFFIX TOOL---------------------#
 
 # Create the Prefix-Suffix window
@@ -384,24 +533,32 @@ $PrefixSuffixTitleBorder.Child = $PrefixSuffixTitleTextBlock
 $PrefixSuffixGrid.Children.Add($PrefixSuffixTitleBorder)
 
 # Center panel for actions and input
-$CenterStackPanel = New-Object Windows.Controls.StackPanel
-$CenterStackPanel.HorizontalAlignment = "Center"
-$CenterStackPanel.VerticalAlignment = "Top"
-$CenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
+$PrefixSuffixCenterStackPanel = New-Object Windows.Controls.StackPanel
+$PrefixSuffixCenterStackPanel.HorizontalAlignment = "Center"
+$PrefixSuffixCenterStackPanel.VerticalAlignment = "Top"
+$PrefixSuffixCenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
 
 # File selection button
-$SelectFileButton = Create-Button -Content "Select File" -Width 150 -Height 40
-$CenterStackPanel.Children.Add($SelectFileButton)
+$SelectFileButton = New-Object Windows.Controls.Button
+$SelectFileButton.Content = "Select File"
+$SelectFileButton.Width = 150
+$SelectFileButton.Height = 40
+$SelectFileButton.Margin = [Windows.Thickness]::new(0, 10, 0, 10)
+$SelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+$SelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+$SelectFileButton.FontSize = 12
+$SelectFileButton.FontWeight = "Bold"
+$PrefixSuffixCenterStackPanel.Children.Add($SelectFileButton)
 
 # File list box
-$FileListBox = New-Object Windows.Controls.ListBox
-$FileListBox.Width = 300
-$FileListBox.Height = 100
-$FileListBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
-$FileListBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
-$FileListBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
-$FileListBox.BorderThickness = [Windows.Thickness]::new(2)
-$CenterStackPanel.Children.Add($FileListBox)
+$PrefixSuffixFileListBox = New-Object Windows.Controls.ListBox
+$PrefixSuffixFileListBox.Width = 300
+$PrefixSuffixFileListBox.Height = 100
+$PrefixSuffixFileListBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+$PrefixSuffixFileListBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+$PrefixSuffixFileListBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+$PrefixSuffixFileListBox.BorderThickness = [Windows.Thickness]::new(2)
+$PrefixSuffixCenterStackPanel.Children.Add($PrefixSuffixFileListBox)
 
 # Text box for prefix
 $PrefixLabel = New-Object Windows.Controls.TextBlock
@@ -409,7 +566,7 @@ $PrefixLabel.Text = "Enter Prefix: "
 $PrefixLabel.FontSize = 14
 $PrefixLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
 $PrefixLabel.HorizontalAlignment = "Center"
-$CenterStackPanel.Children.Add($PrefixLabel)
+$PrefixSuffixCenterStackPanel.Children.Add($PrefixLabel)
 
 $PrefixTextBox = New-Object Windows.Controls.TextBox
 $PrefixTextBox.Width = 200
@@ -417,7 +574,7 @@ $PrefixTextBox.FontSize = 14
 $PrefixTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
 $PrefixTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
 $PrefixTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
-$CenterStackPanel.Children.Add($PrefixTextBox)
+$PrefixSuffixCenterStackPanel.Children.Add($PrefixTextBox)
 
 # Text box for suffix
 $SuffixLabel = New-Object Windows.Controls.TextBlock
@@ -425,7 +582,7 @@ $SuffixLabel.Text = "Enter Suffix: "
 $SuffixLabel.FontSize = 14
 $SuffixLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
 $SuffixLabel.HorizontalAlignment = "Center"
-$CenterStackPanel.Children.Add($SuffixLabel)
+$PrefixSuffixCenterStackPanel.Children.Add($SuffixLabel)
 
 $SuffixTextBox = New-Object Windows.Controls.TextBox
 $SuffixTextBox.Width = 200
@@ -433,221 +590,169 @@ $SuffixTextBox.FontSize = 14
 $SuffixTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
 $SuffixTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
 $SuffixTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
-$CenterStackPanel.Children.Add($SuffixTextBox)
+$PrefixSuffixCenterStackPanel.Children.Add($SuffixTextBox)
 
-# Buttons for Preview, Rename, Undo, Redo, and Back
+# Buttons for Apply, Preview, Undo, Redo, and Back
 $ButtonGrid = New-Object Windows.Controls.Grid
 $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
 
-for ($row = 0; $row -lt 3; $row++) {
-    $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
-}
-for ($col = 0; $col -lt 2; $col++) {
-    $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
-}
-
-$PreviewButton = Create-Button -Content "Preview" -Width 80
-$PreviewButton.SetValue([Windows.Controls.Grid]::RowProperty, 0)
-$PreviewButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 0)
-$ButtonGrid.Children.Add($PreviewButton)
-
-$RenameButton = Create-Button -Content "Rename" -Width 80
-$RenameButton.SetValue([Windows.Controls.Grid]::RowProperty, 0)
-$RenameButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 1)
-$ButtonGrid.Children.Add($RenameButton)
-
-$UndoButton = Create-Button -Content "Undo" -Width 80
-$UndoButton.SetValue([Windows.Controls.Grid]::RowProperty, 1)
-$UndoButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 0)
-$ButtonGrid.Children.Add($UndoButton)
-
-$RedoButton = Create-Button -Content "Redo" -Width 80
-$RedoButton.SetValue([Windows.Controls.Grid]::RowProperty, 1)
-$RedoButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 1)
-$ButtonGrid.Children.Add($RedoButton)
-
-$BackButton = Create-Button -Content "Back" -Width 80
-$BackButton.SetValue([Windows.Controls.Grid]::RowProperty, 1)
-$BackButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 2)
-
-$BackButton.HorizontalAlignment = "Center"
-$ButtonGrid.Children.Add($BackButton)
-
-$CenterStackPanel.Children.Add($ButtonGrid)
-$PrefixSuffixGrid.Children.Add($CenterStackPanel)
-
-# Set Grid as content
-$PrefixSuffixWindow.Content = $PrefixSuffixGrid
-
-# File Selection Logic
-$SelectFileButton.Add_Click({
-    $OpenFileDialog = New-Object Microsoft.Win32.OpenFileDialog
-    $OpenFileDialog.Multiselect = $true
-    $OpenFileDialog.Title = "Select Files"
-
-    if ($OpenFileDialog.ShowDialog()) {
-        $FileListBox.Items.Clear()
-        foreach ($file in $OpenFileDialog.FileNames) {
-            $FileListBox.Items.Add($file)
-        }
-    }
-})
-
-# Back Button Logic
-$BackButton.Add_Click({
-    $PrefixSuffixWindow.Hide()
-    $MainPageWindow.ShowDialog() | Out-Null
-})
-
-# Show Prefix-Suffix Window (for standalone testing)
-$PrefixSuffixWindow.ShowDialog() | Out-Null
-
-
-#------------------ REPLACE WINDOW ---------------------#
-
-# Create the Replace window
-$ReplaceWindow = New-Object Windows.Window
-$ReplaceWindow.Title = "SHIFTIFY: Text Substitution Tool"
-$ReplaceWindow.Height = 500
-$ReplaceWindow.Width = 400
-$ReplaceWindow.WindowStartupLocation = "CenterScreen"
-$ReplaceWindow.FontFamily = "Segoe UI"
-$ReplaceWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
-$ReplaceWindow.ResizeMode = "NoResize"
-$ReplaceWindow.WindowStyle = "SingleBorderWindow"
-
-# Create a Grid for Replace Page
-$ReplaceGrid = New-Object Windows.Controls.Grid
-
-# Title for Replace Page
-$ReplaceTitleBorder = New-Object Windows.Controls.Border
-$ReplaceTitleBorder.Width = 350
-$ReplaceTitleBorder.Height = 60
-$ReplaceTitleBorder.HorizontalAlignment = "Center"
-$ReplaceTitleBorder.VerticalAlignment = "Top"
-$ReplaceTitleBorder.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
-$ReplaceTitleBorder.Background = (ConvertTo-SolidColorBrush "#90CAF9")
-$ReplaceTitleBorder.CornerRadius = [Windows.CornerRadius]::new(20)
-$ReplaceTitleBorder.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4")
-$ReplaceTitleBorder.BorderThickness = [Windows.Thickness]::new(3)
-
-$ReplaceTitleTextBlock = New-Object Windows.Controls.TextBlock
-$ReplaceTitleTextBlock.Text = "Replacing Word"
-$ReplaceTitleTextBlock.FontSize = 24
-$ReplaceTitleTextBlock.FontWeight = "Bold"
-$ReplaceTitleTextBlock.HorizontalAlignment = "Center"
-$ReplaceTitleTextBlock.VerticalAlignment = "Center"
-$ReplaceTitleTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
-
-$ReplaceTitleBorder.Child = $ReplaceTitleTextBlock
-$ReplaceGrid.Children.Add($ReplaceTitleBorder)
-
-# Center panel for actions and input
-$CenterStackPanel = New-Object Windows.Controls.StackPanel
-$CenterStackPanel.HorizontalAlignment = "Center"
-$CenterStackPanel.VerticalAlignment = "Top"
-$CenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
-
-# File selection button
-$SelectFileButton = Create-Button -Content "Select File" -Width 150 -Height 40
-$CenterStackPanel.Children.Add($SelectFileButton)
-
-# File list box
-$FileListBox = New-Object Windows.Controls.ListBox
-$FileListBox.Width = 300
-$FileListBox.Height = 100
-$FileListBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
-$FileListBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
-$FileListBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
-$FileListBox.BorderThickness = [Windows.Thickness]::new(2)
-$CenterStackPanel.Children.Add($FileListBox)
-
-# Text box for "Find"
-$FindLabel = New-Object Windows.Controls.TextBlock
-$FindLabel.Text = "Find:"
-$FindLabel.FontSize = 14
-$FindLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
-$FindLabel.HorizontalAlignment = "Center"
-$CenterStackPanel.Children.Add($FindLabel)
-
-$FindTextBox = New-Object Windows.Controls.TextBox
-$FindTextBox.Width = 200
-$FindTextBox.FontSize = 14
-$FindTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
-$FindTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
-$FindTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
-$CenterStackPanel.Children.Add($FindTextBox)
-
-# Text box for "Substitute With"
-$SubstituteWithLabel = New-Object Windows.Controls.TextBlock
-$SubstituteWithLabel.Text = "Substitute With:"
-$SubstituteWithLabel.FontSize = 14
-$SubstituteWithLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
-$SubstituteWithLabel.HorizontalAlignment = "Center"
-$CenterStackPanel.Children.Add($SubstituteWithLabel)
-
-$SubstituteWithTextBox = New-Object Windows.Controls.TextBox
-$SubstituteWithTextBox.Width = 200
-$SubstituteWithTextBox.FontSize = 14
-$SubstituteWithTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
-$SubstituteWithTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
-$SubstituteWithTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
-$CenterStackPanel.Children.Add($SubstituteWithTextBox)
-
-# Buttons for Apply, Replace, and Back
-$ButtonGrid = New-Object Windows.Controls.Grid
-$ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
-
-for ($row = 0; $row -lt 1; $row++) {
+for ($row = 0; $row -lt 2; $row++) {
     $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
 }
 for ($col = 0; $col -lt 3; $col++) {
     $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
 }
 
-$ApplyButton = Create-Button -Content "Apply" -Width 100
-$ApplyButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 0)
+function Create-SmallButton {
+    param ($Content, $Row, $Column)
+    $Button = New-Object Windows.Controls.Button
+    $Button.Content = $Content
+    $Button.Width = 90   # Adjusted smaller width
+    $Button.Height = 25  # Adjusted smaller height
+    $Button.Margin = [Windows.Thickness]::new(5)
+    $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+    $Button.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+    $Button.FontSize = 12
+    $Button.FontWeight = "Bold"
+    $Button.SetValue([Windows.Controls.Grid]::RowProperty, $Row)
+    $Button.SetValue([Windows.Controls.Grid]::ColumnProperty, $Column)
+    return $Button
+}
+
+$ApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
+$PreviewButton = Create-SmallButton -Content "Preview" -Row 0 -Column 1
+$UndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
+$RedoButton = Create-SmallButton -Content "Redo" -Row 1 -Column 1
+$BackButton = Create-SmallButton -Content "Back" -Row 0 -Column 2
+
 $ButtonGrid.Children.Add($ApplyButton)
-
-$ReplaceButton = Create-Button -Content "Substitute" -Width 100
-$ReplaceButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 1)
-$ButtonGrid.Children.Add($ReplaceButton)
-
-$BackButton = Create-Button -Content "Back" -Width 100
-$BackButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 3)
+$ButtonGrid.Children.Add($PreviewButton)
+$ButtonGrid.Children.Add($UndoButton)
+$ButtonGrid.Children.Add($RedoButton)
 $ButtonGrid.Children.Add($BackButton)
 
-
-$CenterStackPanel.Children.Add($ButtonGrid)
-$ReplaceGrid.Children.Add($CenterStackPanel)
+$PrefixSuffixCenterStackPanel.Children.Add($ButtonGrid)
+$PrefixSuffixGrid.Children.Add($PrefixSuffixCenterStackPanel)
 
 # Set Grid as content
-$ReplaceWindow.Content = $ReplaceGrid
+$PrefixSuffixWindow.Content = $PrefixSuffixGrid
 
-# File Selection Logic
-$SelectFileButton.Add_Click({
-    $OpenFileDialog = New-Object Microsoft.Win32.OpenFileDialog
-    $OpenFileDialog.Multiselect = $true
-    $OpenFileDialog.Title = "Select Files"
+# Create undo and redo stacks
+$undoStack = New-Object System.Collections.Stack
+$redoStack = New-Object System.Collections.Stack
 
-    if ($OpenFileDialog.ShowDialog()) {
-        $FileListBox.Items.Clear()
-        foreach ($file in $OpenFileDialog.FileNames) {
-            $FileListBox.Items.Add($file)
-        }
+# Function to store current state to the undo stack
+function Save-CurrentState {
+    $currentState = @{
+        prefix = $PrefixTextBox.Text
+        suffix = $SuffixTextBox.Text
+        files = @($PrefixSuffixFileListBox.Items)
     }
+    $undoStack.Push($currentState)
+    $redoStack.Clear()  # Clear redo stack whenever a new state is saved
+}
+
+# Function to undo the last action
+function Undo-Action {
+    if ($undoStack.Count -gt 0) {
+        $lastState = $undoStack.Pop()
+        $PrefixTextBox.Text = $lastState.prefix
+        $SuffixTextBox.Text = $lastState.suffix
+        $PrefixSuffixFileListBox.Items.Clear()
+        $lastState.files | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
+        $redoStack.Push($lastState)  # Push to redo stack
+    }
+}
+
+# Function to redo the last undone action
+function Redo-Action {
+    if ($redoStack.Count -gt 0) {
+        $lastUndoneState = $redoStack.Pop()
+        $PrefixTextBox.Text = $lastUndoneState.prefix
+        $SuffixTextBox.Text = $lastUndoneState.suffix
+        $PrefixSuffixFileListBox.Items.Clear()
+        $lastUndoneState.files | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
+        $undoStack.Push($lastUndoneState)  # Push to undo stack
+    }
+}
+
+# Apply Button Logic (Modify to save the current state before applying changes)
+$ApplyButton.Add_Click({
+    Save-CurrentState
+
+    # Logic for applying prefix and suffix to selected files
+    $newFiles = @()
+    foreach ($file in $PrefixSuffixFileListBox.Items) {
+        $fileName = [System.IO.Path]::GetFileNameWithoutExtension($file)
+        $fileExtension = [System.IO.Path]::GetExtension($file)
+        $newFileName = $PrefixTextBox.Text + $fileName + $SuffixTextBox.Text + $fileExtension
+        $newFiles += [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($file), $newFileName)
+    }
+
+    # Update the file list with new names
+    $PrefixSuffixFileListBox.Items.Clear()
+    $newFiles | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
 })
 
-# Back button logic for Replace page
+# Preview Button Logic (Logic to preview changes before applying them can go here)
+$PreviewButton.Add_Click({
+    # Preview logic here (for now, this is just a placeholder)
+    [System.Windows.MessageBox]::Show("Preview function is not yet implemented.")
+})
+
+# Undo Button Logic
+$UndoButton.Add_Click({
+    Undo-Action
+})
+
+# Redo Button Logic
+$RedoButton.Add_Click({
+    Redo-Action
+})
+
+# Back Button Logic (close the current window)
 $BackButton.Add_Click({
-    $ReplaceWindow.Hide()
-    $MainPageWindow.ShowDialog() | Out-Null
+    $PrefixSuffixWindow.Close()
 })
 
-# Show Replace Window (for standalone testing)
-$ReplaceWindow.ShowDialog() | Out-Null  
+# Show the Prefix-Suffix window
+$PrefixSuffixWindow.ShowDialog()
 
 #------------------ENCRYPTION AND DECRYPTION---------------------#
+
+# Function to convert Hex color to SolidColorBrush
+function ConvertTo-SolidColorBrush {
+    param ($HexColor)
+    $Brush = New-Object Windows.Media.SolidColorBrush
+    $Brush.Color = [Windows.Media.Color]::FromArgb(
+        255,
+        [Convert]::ToByte($HexColor.Substring(1, 2), 16),
+        [Convert]::ToByte($HexColor.Substring(3, 2), 16),
+        [Convert]::ToByte($HexColor.Substring(5, 2), 16)
+    )
+    return $Brush
+}
+
+# Function to create styled buttons
+function Create-StyledButton {
+    param (
+        [string]$Content,
+        [int]$Row,
+        [int]$Column
+    )
+    $Button = New-Object Windows.Controls.Button
+    $Button.Content = $Content
+    $Button.Width = 100
+    $Button.Height = 30
+    $Button.Margin = [Windows.Thickness]::new(5)
+    $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+    $Button.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+    $Button.FontSize = 12
+    $Button.FontWeight = "Bold"
+    $Button.SetValue([Windows.Controls.Grid]::RowProperty, $Row)
+    $Button.SetValue([Windows.Controls.Grid]::ColumnProperty, $Column)
+    return $Button
+}
 
 # Create the Encryption window
 $EncryptionWindow = New-Object Windows.Window
@@ -687,24 +792,30 @@ $EncryptionTitleBorder.Child = $EncryptionTitleTextBlock
 $EncryptionGrid.Children.Add($EncryptionTitleBorder)
 
 # Center panel for actions and input
-$CenterStackPanel = New-Object Windows.Controls.StackPanel
-$CenterStackPanel.HorizontalAlignment = "Center"
-$CenterStackPanel.VerticalAlignment = "Top"
-$CenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
+$EncryptionCenterStackPanel = New-Object Windows.Controls.StackPanel
+$EncryptionCenterStackPanel.HorizontalAlignment = "Center"
+$EncryptionCenterStackPanel.VerticalAlignment = "Top"
+$EncryptionCenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
 
 # File selection button
-$SelectFileButton = Create-Button -Content "Select File" -Width 150 -Height 40
-$CenterStackPanel.Children.Add($SelectFileButton)
+$SelectFileButton = New-Object Windows.Controls.Button
+$SelectFileButton.Content = "Select File"
+$SelectFileButton.Width = 150
+$SelectFileButton.Height = 40
+$SelectFileButton.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
+$SelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+$SelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+$EncryptionCenterStackPanel.Children.Add($SelectFileButton)
 
 # File list box
-$FileListBox = New-Object Windows.Controls.ListBox
-$FileListBox.Width = 300
-$FileListBox.Height = 100
-$FileListBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
-$FileListBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
-$FileListBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
-$FileListBox.BorderThickness = [Windows.Thickness]::new(2)
-$CenterStackPanel.Children.Add($FileListBox)
+$EncryptionFileListBox = New-Object Windows.Controls.ListBox
+$EncryptionFileListBox.Width = 300
+$EncryptionFileListBox.Height = 100
+$EncryptionFileListBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+$EncryptionFileListBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+$EncryptionFileListBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+$EncryptionFileListBox.BorderThickness = [Windows.Thickness]::new(2)
+$EncryptionCenterStackPanel.Children.Add($EncryptionFileListBox)
 
 # Text box for "Enter secret key"
 $FindLabel = New-Object Windows.Controls.TextBlock
@@ -712,7 +823,7 @@ $FindLabel.Text = "Enter secret key: "
 $FindLabel.FontSize = 14
 $FindLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
 $FindLabel.HorizontalAlignment = "Center"
-$CenterStackPanel.Children.Add($FindLabel)
+$EncryptionCenterStackPanel.Children.Add($FindLabel)
 
 $FindTextBox = New-Object Windows.Controls.TextBox
 $FindTextBox.Width = 200
@@ -720,33 +831,33 @@ $FindTextBox.FontSize = 14
 $FindTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
 $FindTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
 $FindTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
-$CenterStackPanel.Children.Add($FindTextBox)
+$EncryptionCenterStackPanel.Children.Add($FindTextBox)
 
-# Buttons for Apply, Encrypt, and Back
+# Buttons for Encrypt, Decrypt, Reset, and Back
 $ButtonGrid = New-Object Windows.Controls.Grid
 $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
+$ButtonGrid.HorizontalAlignment = "Center"
+$ButtonGrid.VerticalAlignment = "Center"
 
-for ($row = 0; $row -lt 1; $row++) {
+for ($row = 0; $row -lt 2; $row++) {
     $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
 }
 for ($col = 0; $col -lt 3; $col++) {
     $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
 }
 
-$ApplyButton = Create-Button -Content "Apply" -Width 100
-$ApplyButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 0)
-$ButtonGrid.Children.Add($ApplyButton)
+$EncryptButton = Create-StyledButton -Content "Encrypt" -Row 0 -Column 0
+$DecryptButton = Create-StyledButton -Content "Decrypt" -Row 0 -Column 1
+$ResetButton = Create-StyledButton -Content "Reset" -Row 1 -Column 0
+$BackButton = Create-StyledButton -Content "Back" -Row 1 -Column 1
 
-$EncryptButton = Create-Button -Content "Substitute" -Width 100
-$EncryptButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 1)
 $ButtonGrid.Children.Add($EncryptButton)
-
-$BackButton = Create-Button -Content "Back" -Width 100
-$BackButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 3)
+$ButtonGrid.Children.Add($DecryptButton)
+$ButtonGrid.Children.Add($ResetButton)
 $ButtonGrid.Children.Add($BackButton)
 
-$CenterStackPanel.Children.Add($ButtonGrid)
-$EncryptionGrid.Children.Add($CenterStackPanel)
+$EncryptionCenterStackPanel.Children.Add($ButtonGrid)
+$EncryptionGrid.Children.Add($EncryptionCenterStackPanel)
 
 # Set Grid as content
 $EncryptionWindow.Content = $EncryptionGrid
@@ -758,29 +869,28 @@ $SelectFileButton.Add_Click({
     $OpenFileDialog.Title = "Select Files"
 
     if ($OpenFileDialog.ShowDialog()) {
-        $FileListBox.Items.Clear()
+        $EncryptionFileListBox.Items.Clear()
         foreach ($file in $OpenFileDialog.FileNames) {
-            $FileListBox.Items.Add($file)
+            $EncryptionFileListBox.Items.Add($file)
         }
     }
+})
+
+# Reset Button Logic
+$ResetButton.Add_Click({
+    $EncryptionFileListBox.Items.Clear()
+    $FindTextBox.Clear()
 })
 
 # Back Button Logic
 $BackButton.Add_Click({
     if ($null -eq $MainPageWindow) {
-        # Handle the null case if $MainPageWindow is not initialized
         [System.Windows.MessageBox]::Show("Main Page is not available.", "Error", "OK", "Error")
     } else {
-        $EncryptionWindow.Hide() # Adjusted to the updated variable name
+        $EncryptionWindow.Hide()
         $MainPageWindow.ShowDialog() | Out-Null
     }
 })
 
-# Back button logic for Encryption page
-$BackButton.Add_Click({
-    $EncryptionWindow.Hide()
-    $MainPageWindow.ShowDialog() | Out-Null
-})
-
 # Show Encryption Window (for standalone testing)
-$EncryptionWindow.ShowDialog() | Out-Null 
+$EncryptionWindow.ShowDialog() | Out-Null
