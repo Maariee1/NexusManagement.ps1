@@ -92,7 +92,7 @@ function HandleBulkRenameClick {
 
     $BulkRenamingWindow = New-Object Windows.Window
     $BulkRenamingWindow.Title = "SHIFTIFY: Bulk Renaming"
-    $BulkRenamingWindow.Height = 600
+    $BulkRenamingWindow.Height = 650
     $BulkRenamingWindow.Width = 400
     $BulkRenamingWindow.WindowStartupLocation = "CenterScreen"
     $BulkRenamingWindow.FontFamily = "Segoe UI"
@@ -131,11 +131,17 @@ function HandleBulkRenameClick {
     $CenterStackPanel.HorizontalAlignment = "Center"
     $CenterStackPanel.VerticalAlignment = "Top"
     $CenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
-
+    
     # File selection button
-    $SelectFilesButton = Create-Button -Content "Select a File" -TopMargin 0
-    $SelectFilesButton.Width = 150
-    $SelectFilesButton.Height = 40
+    $SelectFilesButton = New-Object Windows.Controls.Button
+    $SelectFilesButton.Content = "Select File"
+    $SelectFilesButton.Width = 130
+    $SelectFilesButton.Height = 35
+    $SelectFilesButton.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $SelectFilesButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+    $SelectFilesButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+    $SelectFilesButton.FontSize = 14
+    $SelectFilesButton.FontWeight = "Bold"
     $CenterStackPanel.Children.Add($SelectFilesButton)
 
     # File list box
@@ -351,7 +357,7 @@ function Show-ReplaceWindow {
     # Create the Replace window
     $ReplaceWindow = New-Object Windows.Window
     $ReplaceWindow.Title = "SHIFTIFY: Text Substitution Tool"
-    $ReplaceWindow.Height = 600
+    $ReplaceWindow.Height = 650
     $ReplaceWindow.Width = 400
     $ReplaceWindow.WindowStartupLocation = "CenterScreen"
     $ReplaceWindow.FontFamily = "Segoe UI"
@@ -551,7 +557,6 @@ function Show-ReplaceWindow {
         }
 
         $selectedFiles = $ReplaceFileListBox.Items
-
         $batchOperation = Rename-WithPatternReplacement -selectedFiles $selectedFiles -patternToFind $patternToFind -replacementWord $replacementWord
 
         $undoStack += ,$batchOperation
@@ -580,7 +585,7 @@ function ShowPrefixsuffixWindow {
     # Create the Prefix-Suffix window
     $PrefixSuffixWindow = New-Object Windows.Window
     $PrefixSuffixWindow.Title = "SHIFTIFY: Prefix and Suffix Tool"
-    $PrefixSuffixWindow.Height = 700
+    $PrefixSuffixWindow.Height = 650
     $PrefixSuffixWindow.Width = 400
     $PrefixSuffixWindow.WindowStartupLocation = "CenterScreen"
     $PrefixSuffixWindow.FontFamily = "Segoe UI"
@@ -623,12 +628,13 @@ function ShowPrefixsuffixWindow {
     # File selection button
     $PrefixSuffixSelectFileButton = New-Object Windows.Controls.Button
     $PrefixSuffixSelectFileButton.Content = "Select File"
-    $PrefixSuffixSelectFileButton.Width = 150
-    $PrefixSuffixSelectFileButton.Height = 40
+    $PrefixSuffixSelectFileButton.Width = 130
+    $PrefixSuffixSelectFileButton.Height = 35
     $PrefixSuffixSelectFileButton.Margin = [Windows.Thickness]::new(0, 10, 0, 10)
     $PrefixSuffixSelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $PrefixSuffixSelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
-    $PrefixSuffixSelectFileButton.FontSize = 12
+    $PrefixSuffixSelectFileButton.FontSize = 14
+    $PrefixSuffixSelectFileButton.FontWeight = "Bold"
     $PrefixSuffixSelectFileButton.Add_Click({
         $dialog = New-Object Windows.Forms.OpenFileDialog
         $dialog.Multiselect = $true
@@ -647,69 +653,62 @@ function ShowPrefixsuffixWindow {
     $PrefixSuffixFileListBox.BorderThickness = [Windows.Thickness]::new(2)
     $PrefixSuffixCenterStackPanel.Children.Add($PrefixSuffixFileListBox)
 
-    # Create the output TextBox for displaying the renaming results
-    $SuffixPrefixOutputTextBox = New-Object Windows.Controls.TextBox
-    $SuffixPrefixOutputTextBox.Width = 200
-    $SuffixPrefixOutputTextBox.Height = 60
-    $SuffixPrefixOutputTextBox.FontSize = 12
-    $SuffixPrefixOutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
-    $SuffixPrefixOutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
-    $SuffixPrefixOutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
-    $SuffixPrefixOutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
+    # Text box and label for prefix
+    $PrefixStackPanel = New-Object Windows.Controls.StackPanel
+    $PrefixStackPanel.Orientation = "Horizontal"
+    $PrefixStackPanel.HorizontalAlignment = "Center"
+    $PrefixStackPanel.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
 
-    # Enable scrolling for the output box
-    $SuffixPrefixOutputTextBox.VerticalScrollBarVisibility = "Auto"
-    $SuffixPrefixOutputTextBox.HorizontalScrollBarVisibility = "Auto"
-
-    # Add the TextBox to the layout (e.g., StackPanel or Grid)
-    $PrefixSuffixCenterStackPanel.Children.Add($SuffixPrefixOutputTextBox)
-
-    # Text box for prefix
     $PrefixLabel = New-Object Windows.Controls.TextBlock
     $PrefixLabel.Text = "Enter Prefix: "
     $PrefixLabel.FontSize = 14
-    $PrefixLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
-    $PrefixLabel.HorizontalAlignment = "Center"
-    $PrefixSuffixCenterStackPanel.Children.Add($PrefixLabel)
+    $PrefixLabel.Margin = [Windows.Thickness]::new(0, 0, 5, 0)
+    $PrefixStackPanel.Children.Add($PrefixLabel)
 
     $PrefixTextBox = New-Object Windows.Controls.TextBox
-    $PrefixTextBox.Width = 200
+    $PrefixTextBox.Width = 220
     $PrefixTextBox.FontSize = 14
     $PrefixTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $PrefixTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
-    $PrefixTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
-    $PrefixSuffixCenterStackPanel.Children.Add($PrefixTextBox)
+    $PrefixStackPanel.Children.Add($PrefixTextBox)
 
-    # Text box for suffix
+    $PrefixSuffixCenterStackPanel.Children.Add($PrefixStackPanel)
+
+    # Text box and label for suffix
+    $SuffixStackPanel = New-Object Windows.Controls.StackPanel
+    $SuffixStackPanel.Orientation = "Horizontal"
+    $SuffixStackPanel.HorizontalAlignment = "Center"
+    $SuffixStackPanel.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+
     $SuffixLabel = New-Object Windows.Controls.TextBlock
     $SuffixLabel.Text = "Enter Suffix: "
     $SuffixLabel.FontSize = 14
-    $SuffixLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
-    $SuffixLabel.HorizontalAlignment = "Center"
-    $PrefixSuffixCenterStackPanel.Children.Add($SuffixLabel)
+    $SuffixLabel.Margin = [Windows.Thickness]::new(0, 0, 5, 0)
+    $SuffixStackPanel.Children.Add($SuffixLabel)
 
     $SuffixTextBox = New-Object Windows.Controls.TextBox
-    $SuffixTextBox.Width = 200
+    $SuffixTextBox.Width = 220
     $SuffixTextBox.FontSize = 14
     $SuffixTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $SuffixTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
-    $SuffixTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
-    $PrefixSuffixCenterStackPanel.Children.Add($SuffixTextBox)
+    $SuffixStackPanel.Children.Add($SuffixTextBox)
+
+    $PrefixSuffixCenterStackPanel.Children.Add($SuffixStackPanel)
 
     # Buttons for Apply, Undo, Redo, and Back
     $ButtonGrid = New-Object Windows.Controls.Grid
-    $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
+    $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 10)
 
     for ($row = 0; $row -lt 2; $row++) {
         $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
     }
-    for ($col = 0; $col -lt 3; $col++) {
+    for ($col = 0; $col -lt 2; $col++) {
         $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
     }
 
     $ApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
     $UndoButton = Create-SmallButton -Content "Undo" -Row 0 -Column 1
-    $RedoButton = Create-SmallButton -Content "Redo" -Row 0 -Column 2
+    $RedoButton = Create-SmallButton -Content "Redo" -Row 1 -Column 0
     $BackButton = Create-SmallButton -Content "Back" -Row 1 -Column 1
 
     $ButtonGrid.Children.Add($ApplyButton)
@@ -718,102 +717,42 @@ function ShowPrefixsuffixWindow {
     $ButtonGrid.Children.Add($BackButton)
 
     $PrefixSuffixCenterStackPanel.Children.Add($ButtonGrid)
+
+    # Add output display box with title
+    $RenamedFilesTitle = New-Object Windows.Controls.TextBlock
+    $RenamedFilesTitle.Text = "Renamed Files:"
+    $RenamedFilesTitle.FontSize = 14
+    $RenamedFilesTitle.HorizontalAlignment = "Center"
+    $RenamedFilesTitle.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $PrefixSuffixCenterStackPanel.Children.Add($RenamedFilesTitle)
+
+    $SuffixPrefixOutputTextBox = New-Object Windows.Controls.TextBox
+    $SuffixPrefixOutputTextBox.Width = 300
+    $SuffixPrefixOutputTextBox.Height = 100
+    $SuffixPrefixOutputTextBox.FontSize = 12
+    $SuffixPrefixOutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+    $SuffixPrefixOutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+    $SuffixPrefixOutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $SuffixPrefixOutputTextBox.IsReadOnly = $true
+    $SuffixPrefixOutputTextBox.VerticalScrollBarVisibility = "Auto"
+    $SuffixPrefixOutputTextBox.HorizontalScrollBarVisibility = "Auto"
+    $PrefixSuffixCenterStackPanel.Children.Add($SuffixPrefixOutputTextBox)
+
     $PrefixSuffixGrid.Children.Add($PrefixSuffixCenterStackPanel)
 
     # Set Grid as content
     $PrefixSuffixWindow.Content = $PrefixSuffixGrid
 
-    # Create undo and redo stacks
-    $undoStack = New-Object System.Collections.Stack
-    $redoStack = New-Object System.Collections.Stack
-
-    # Function to store current state to the undo stack
-    # function Save-CurrentState {
-    #     $currentState = @{
-    #         prefix = $PrefixTextBox.Text
-    #         suffix = $SuffixTextBox.Text
-    #         files = @($PrefixSuffixFileListBox.Items)
-    #     }
-    #     $undoStack.Push($currentState)
-    #     $redoStack.Clear()  # Clear redo stack whenever a new state is saved
-    # }
-
-    # # Function to undo the last action
-    # function Undo-Action {
-    #     if ($undoStack.Count -gt 0) {
-    #         $lastState = $undoStack.Pop()
-    #         $PrefixTextBox.Text = $lastState.prefix
-    #         $SuffixTextBox.Text = $lastState.suffix
-    #         $PrefixSuffixFileListBox.Items.Clear()
-    #         $lastState.files | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
-    #         $redoStack.Push($lastState)  # Push to redo stack
-    #     }
-    # }
-
-    # # Function to redo the last undone action
-    # function Redo-Action {
-    #     if ($redoStack.Count -gt 0) {
-    #         $lastUndoneState = $redoStack.Pop()
-    #         $PrefixTextBox.Text = $lastUndoneState.prefix
-    #         $SuffixTextBox.Text = $lastUndoneState.suffix
-    #         $PrefixSuffixFileListBox.Items.Clear()
-    #         $lastUndoneState.files | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
-    #         $undoStack.Push($lastUndoneState)  # Push to undo stack
-    #     }
-    # }
-
-    $ApplyButton.Add_Click({
-        # Get the prefix and suffix values from the textboxes
-        $prefix = $PrefixTextBox.Text
-        $suffix = $SuffixTextBox.Text
-        
-        # Ensure both prefix and suffix are entered
-        if (-not $prefix -and -not $suffix) {
-            Write-Host "Error: Both prefix and suffix cannot be empty." -ForegroundColor Red
-            return
-        }
-    
-        # Get the list of selected files
-        $selectedFiles = @()
-        foreach ($file in $PrefixSuffixFileListBox.Items) {
-            $selectedFiles += $file
-        }
-    
-        # Call the Rename-WithPrefixSuffix function to rename the files
-        $batchOperation = Rename-WithPrefixSuffix -selectedFiles $selectedFiles -prefix $prefix -suffix $suffix
-        
-        # Clear the output TextBox (but not the list box)
-        $SuffixPrefixOutputTextBox.Clear()
-    
-        # Process each operation in batch
-        foreach ($operation in $batchOperation) {
-            # Format the renaming message
-            $renamingMessage = "Renamed '$($operation.OriginalPath)' to '$($operation.NewPath)'"
-            
-            # Display the message in the output TextBox, appending to existing content
-            $SuffixPrefixOutputTextBox.AppendText($renamingMessage + "`r`n")
-        }
-    })
-
-    # Undo Button Logic
-    # $UndoButton.Add_Click({
-    #     Undo-Action
-    # })
-
-    # # Redo Button Logic
-    # $RedoButton.Add_Click({
-    #     Redo-Action
-    # })
-
     # Back Button Logic (close the current window and show the MainPageWindow)
     $BackButton.Add_Click({
-        $PrefixSuffixWindow.Close()  # Close the current window
-        $MainPageWindow.ShowDialog() | Out-Null  # Show the MainPageWindow again
+        $PrefixSuffixWindow.Close()
+        $MainPageWindow.ShowDialog() | Out-Null
     })
 
     # Show the Prefix-Suffix window
     $PrefixSuffixWindow.ShowDialog()
 }
+
 
 function showEncryptDecryptWindow {
     param()
@@ -821,7 +760,7 @@ function showEncryptDecryptWindow {
 
     $EncryptionWindow = New-Object Windows.Window
     $EncryptionWindow.Title = "SHIFTIFY: Encryption and Decryption Tool"
-    $EncryptionWindow.Height = 500
+    $EncryptionWindow.Height = 650
     $EncryptionWindow.Width = 400
     $EncryptionWindow.WindowStartupLocation = "CenterScreen"
     $EncryptionWindow.FontFamily = "Segoe UI"
@@ -865,10 +804,12 @@ function showEncryptDecryptWindow {
     $SelectFileButton = New-Object Windows.Controls.Button
     $SelectFileButton.Content = "Select File"
     $SelectFileButton.Width = 150
-    $SelectFileButton.Height = 40
-    $SelectFileButton.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
+    $SelectFileButton.Height = 35
+    $SelectFileButton.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
     $SelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $SelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+    $SelectFileButton.FontSize = 14
+    $SelectFileButton.FontWeight = "Bold"
     $EncryptionCenterStackPanel.Children.Add($SelectFileButton)
 
     # File list box
