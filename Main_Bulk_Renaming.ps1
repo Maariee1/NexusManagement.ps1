@@ -2,7 +2,7 @@
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName System.Windows.Forms
 
-../Rename.ps1
+. ./Rename.ps1
 
 # Function to convert a hex color to SolidColorBrush
 function ConvertTo-SolidColorBrush {
