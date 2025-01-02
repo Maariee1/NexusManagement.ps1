@@ -73,62 +73,72 @@ function Join-Files {
 
 # Function to handle file splitting operation
 function Handle-SplitFile {
-    $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
-    $OpenFileDialog.Filter = "All Files (*.*)|*.*"
-    $OpenFileDialog.Title = "Select a file to split"
-    $OpenFileDialog.InitialDirectory = [Environment]::GetFolderPath('Desktop')
-    
-    if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
-        $FilePath = $OpenFileDialog.FileName
-        $SizeUnit = Read-Host "Enter size unit (KB or MB)"
-        $SizeValue = [int](Read-Host "Enter size in $SizeUnit")
+    param (
+        [string]$FilePath,
+        [int]$ChunkSize
+    )
 
-        $ChunkSize = if ($SizeUnit -eq "KB") {
-            $SizeValue * 1024
-        } elseif ($SizeUnit -eq "MB") {
-            $SizeValue * 1024 * 1024
-        } else {
-            Write-Output "Invalid size unit! Defaulting to bytes."
-            $SizeValue
-        }
-
-        Split-File -FilePath $FilePath -ChunkSize $ChunkSize
-    } else {
-        Write-Output "No file selected."
+    if (-Not (Test-Path -Path $FilePath)) {
+        Write-Output "File not found!"
+        return
     }
+
+    $BaseName = [System.IO.Path]::GetFileName($FilePath)
+    $FileDir = [System.IO.Path]::GetDirectoryName($FilePath)
+    $FileStream = [System.IO.File]::OpenRead($FilePath)
+    $Buffer = New-Object byte[] $ChunkSize
+    $ChunkNum = 0
+
+    while ($ReadBytes = $FileStream.Read($Buffer, 0, $Buffer.Length)) {
+        $ChunkFileName = "$FileDir\$BaseName.part$ChunkNum"
+        $ChunkStream = [System.IO.File]::OpenWrite($ChunkFileName)
+        $ChunkStream.Write($Buffer, 0, $ReadBytes)
+        $ChunkStream.Close()
+        $ChunkNum++
+    }
+
+    $FileStream.Close()
+    Write-Output "File split into $ChunkNum chunks."
 }
 
 # Function to handle file joining operation
 function Handle-JoinFiles {
-    $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
-    $OpenFileDialog.Filter = "Part Files (*.part*)|*.part*|All Files (*.*)|*.*"
-    $OpenFileDialog.Title = "Select any part file"
-    $OpenFileDialog.InitialDirectory = [Environment]::GetFolderPath('Desktop')
+    param (
+        [string]$BaseName,
+        [string]$OutputFile
+    )
 
-    if ($OpenFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
-        $FilePath = $OpenFileDialog.FileName
-        $BaseName = [System.IO.Path]::GetFileNameWithoutExtension($FilePath) -replace "\.part\d+$", ""
+    $FileDir = [System.IO.Path]::GetDirectoryName($BaseName)
+    $BaseFileName = [System.IO.Path]::GetFileName($BaseName) -replace "\.part\d+$", ""
+    $PartFiles = Get-ChildItem -Path $FileDir -Filter "$BaseFileName.part*" | Sort-Object Name
 
-        $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
-        $SaveFileDialog.Filter = "All Files (*.*)|*.*"
-        $SaveFileDialog.Title = "Save joined file as"
-        $SaveFileDialog.InitialDirectory = [System.IO.Path]::GetDirectoryName($FilePath)
+    if ($PartFiles.Count -eq 0) {
+        Write-Output "No part files found!"
+        return
+    }
 
-        if ($SaveFileDialog.ShowDialog($form) -eq [System.Windows.Forms.DialogResult]::OK) {
-            $OutputFile = $SaveFileDialog.FileName
+    try {
+        $OutputStream = [System.IO.File]::OpenWrite($OutputFile)
 
-            # Ask for file type
-            $FileType = Read-Host "Enter the file extension/type (ex: txt/jpg/png/pdf, etc.) without the dot"
-            if ($FileType) {
-                $OutputFile = "$OutputFile.$FileType"
-            }
-
-            Join-Files -BaseName $BaseName -OutputFile $OutputFile
-        } else {
-            Write-Output "No output file specified."
+        foreach ($PartFile in $PartFiles) {
+            $PartStream = [System.IO.File]::OpenRead($PartFile.FullName)
+            $Buffer = New-Object byte[] $PartStream.Length
+            $ReadBytes = $PartStream.Read($Buffer, 0, $Buffer.Length)
+            $OutputStream.Write($Buffer, 0, $ReadBytes)
+            $PartStream.Close()
+            
+            # Close and remove the part file
+            Remove-Item -Path $PartFile.FullName -Force
         }
-    } else {
-        Write-Output "No part file selected."
+
+        $OutputStream.Close()
+        Write-Output "Files joined into $OutputFile and part files removed."
+    }
+    catch {
+        Write-Error "Error during join operation: $_"
+        if ($OutputStream) {
+            $OutputStream.Close()
+        }
     }
 }
 
@@ -826,7 +836,7 @@ function CreateJoinWindow {
             [System.Windows.MessageBox]::Show("Please fill in all fields!", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
-
+    
         try {
             $inputFile = $inputBox.Text
             $baseName = [System.IO.Path]::GetFileNameWithoutExtension($inputFile) -replace "\.part\d+$", ""
@@ -839,20 +849,23 @@ function CreateJoinWindow {
             if ($partFiles.Count -eq 0) {
                 throw "No part files found!"
             }
-
+    
             $outputPath = Join-Path $outputDir $baseName
             $outputStream = [System.IO.File]::OpenWrite($outputPath)
-
+    
             foreach ($partFile in $partFiles) {
                 $partStream = [System.IO.File]::OpenRead($partFile.FullName)
                 $buffer = New-Object byte[] $partStream.Length
                 $bytesRead = $partStream.Read($buffer, 0, $buffer.Length)
                 $outputStream.Write($buffer, 0, $bytesRead)
                 $partStream.Close()
+                
+                # Remove the part file after it's been processed
+                Remove-Item -Path $partFile.FullName -Force
             }
-
+    
             $outputStream.Close()
-            [System.Windows.MessageBox]::Show("Files successfully joined!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+            [System.Windows.MessageBox]::Show("Files successfully joined.", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
         }
         catch {
             [System.Windows.MessageBox]::Show("Error joining files: $_", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
