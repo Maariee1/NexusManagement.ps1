@@ -92,7 +92,7 @@ function HandleBulkRenameClick {
 
     $BulkRenamingWindow = New-Object Windows.Window
     $BulkRenamingWindow.Title = "SHIFTIFY: Bulk Renaming"
-    $BulkRenamingWindow.Height = 500
+    $BulkRenamingWindow.Height = 600
     $BulkRenamingWindow.Width = 400
     $BulkRenamingWindow.WindowStartupLocation = "CenterScreen"
     $BulkRenamingWindow.FontFamily = "Segoe UI"
@@ -141,7 +141,7 @@ function HandleBulkRenameClick {
     # File list box
     $FileListBox = New-Object Windows.Controls.ListBox
     $FileListBox.Width = 300
-    $FileListBox.Height = 60
+    $FileListBox.Height = 100
     $FileListBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
     $FileListBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $FileListBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -154,14 +154,16 @@ function HandleBulkRenameClick {
     $BaseNamePanel.HorizontalAlignment = "Center"
     $BaseNamePanel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
 
+    # Basename Label
     $BaseNameLabel = New-Object Windows.Controls.TextBlock
     $BaseNameLabel.Text = "Enter Base Name: "
     $BaseNameLabel.FontSize = 14
     $BaseNameLabel.VerticalAlignment = "Center"
     $BaseNamePanel.Children.Add($BaseNameLabel)
 
+    # Basename Text Box
     $BaseNameTextBox = New-Object Windows.Controls.TextBox
-    $BaseNameTextBox.Width = 150
+    $BaseNameTextBox.Width = 177
     $BaseNameTextBox.FontSize = 14
     $BaseNameTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $BaseNameTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -171,23 +173,7 @@ function HandleBulkRenameClick {
     # Add the BaseNamePanel to the main StackPanel
     $CenterStackPanel.Children.Add($BaseNamePanel)
 
-    # Output TextBox below the buttons
-    $OutputTextBox = New-Object Windows.Controls.TextBox
-    $OutputTextBox.Width = 300
-    $OutputTextBox.Height = 100
-    $OutputTextBox.FontSize = 12
-    $OutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
-    $OutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
-    $OutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
-    $OutputTextBox.BorderThickness = [Windows.Thickness]::new(2)
-    $OutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
-    $OutputTextBox.VerticalScrollBarVisibility = "Auto"
-    $OutputTextBox.HorizontalScrollBarVisibility = "Auto"
-
-    # Add the Output TextBox after the ButtonGrid
-    $CenterStackPanel.Children.Add($OutputTextBox)
-
-    # Button Grid 
+    # Button Grid
     $ButtonGrid = New-Object Windows.Controls.Grid
     $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
 
@@ -206,7 +192,32 @@ function HandleBulkRenameClick {
     $ButtonGrid.Children.Add($UndoButton)
     $ButtonGrid.Children.Add($RedoButton)
 
+    # Add the ButtonGrid to the main StackPanel
     $CenterStackPanel.Children.Add($ButtonGrid)
+
+    # Add title for Output TextBox
+    $OutputTitle = New-Object Windows.Controls.TextBlock
+    $OutputTitle.Text = "Renamed Files:"
+    $OutputTitle.FontSize = 14
+    $OutputTitle.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
+    $OutputTitle.HorizontalAlignment = "Center"
+    $CenterStackPanel.Children.Add($OutputTitle)
+
+    # Adjust layout for Output TextBox below the buttons
+    $OutputTextBox = New-Object Windows.Controls.TextBox
+    $OutputTextBox.Width = 300
+    $OutputTextBox.Height = 100
+    $OutputTextBox.FontSize = 12
+    $OutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+    $OutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+    $OutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $OutputTextBox.BorderThickness = [Windows.Thickness]::new(2)
+    $OutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
+    $OutputTextBox.VerticalScrollBarVisibility = "Auto"
+    $OutputTextBox.HorizontalScrollBarVisibility = "Auto"
+
+    # Add the Output TextBox after the ButtonGrid
+    $CenterStackPanel.Children.Add($OutputTextBox)
 
     # Bulk Renaming Back button
     $BackButton = New-Object Windows.Controls.Button
@@ -981,7 +992,7 @@ $form.Size = New-Object System.Drawing.Size(1, 1)
 # Main Window
 $MainPageWindow = New-Object Windows.Window
 $MainPageWindow.Title = "SHIFTIFY: Main Page"
-$MainPageWindow.Height = 500
+$MainPageWindow.Height = 600
 $MainPageWindow.Width = 400
 $MainPageWindow.WindowStartupLocation = "CenterScreen"
 $MainPageWindow.FontFamily = "Segoe UI"
