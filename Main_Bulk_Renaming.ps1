@@ -864,6 +864,28 @@ function showEncryptDecryptWindow {
     $EncryptionCenterStackPanel.Children.Add($ButtonGrid)
     $EncryptionGrid.Children.Add($EncryptionCenterStackPanel)
 
+    # Title for Output TextBox
+    $OutputTitle = New-Object Windows.Controls.TextBlock
+    $OutputTitle.Text = "Renamed Files:"
+    $OutputTitle.FontSize = 14
+    $OutputTitle.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
+    $OutputTitle.HorizontalAlignment = "Center"
+    $EncryptionCenterStackPanel.Children.Add($OutputTitle)
+
+    # Output TextBox
+    $OutputTextBox = New-Object Windows.Controls.TextBox
+    $OutputTextBox.Width = 300
+    $OutputTextBox.Height = 100
+    $OutputTextBox.FontSize = 12
+    $OutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+    $OutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+    $OutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $OutputTextBox.BorderThickness = [Windows.Thickness]::new(2)
+    $OutputTextBox.IsReadOnly = $true
+    $OutputTextBox.VerticalScrollBarVisibility = "Auto"
+
+    $EncryptionCenterStackPanel.Children.Add($OutputTextBox)
+
     # Set Grid as content
     $EncryptionWindow.Content = $EncryptionGrid
 
