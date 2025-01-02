@@ -955,10 +955,63 @@ function showEncryptDecryptWindow {
     })
 
     # Reset Button Logic
-    $ResetButton.Add_Click({
-        $EncryptionFileListBox.Items.Clear()
-        $FindTextBox.Clear()
+    $EncryptButton.Add_Click({
+        if ($EncryptionFileListBox.Items.Count -eq 0) {
+            [System.Windows.Forms.MessageBox]::Show("Please select files to encrypt.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+            return
+        }
+    
+        $Password = $FindTextBox.Text
+        if ([string]::IsNullOrWhiteSpace($Password)) {
+            [System.Windows.Forms.MessageBox]::Show("Please enter a secret key.", "No Secret Key", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+            return
+        }
+    
+        $successCount = 0
+        foreach ($filePath in $EncryptionFileListBox.Items) {
+            try {
+                Encrypt-File -InputFile $filePath -Password $Password
+                Write-Host "Success: File Encrypted successfully: $filePath" -ForegroundColor Green
+                $successCount++
+            } catch {
+                Write-Host "Error: Failed to encrypt file: $filePath`n$_" -ForegroundColor Red
+            }
+        }
+    
+        if ($successCount -eq $EncryptionFileListBox.Items.Count) {
+            [System.Windows.Forms.MessageBox]::Show("All files were successfully encrypted.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        }
     })
+      
+
+    $DecryptButton.Add_Click({
+        if ($EncryptionFileListBox.Items.Count -eq 0) {
+            Write-Host "Warning: Please select files to decrypt." -ForegroundColor Yellow
+            return
+        }
+    
+        $Password = $FindTextBox.Text
+        if ([string]::IsNullOrWhiteSpace($Password)) {
+            Write-Host "Warning: Please enter a secret key." -ForegroundColor Yellow
+            return
+        }
+    
+        $successCount = 0
+        foreach ($filePath in $EncryptionFileListBox.Items) {
+            try {
+                Decrypt-File -InputFile $filePath -Password $Password
+                Write-Host "Success: File Decrypted successfully: $filePath" -ForegroundColor Green
+                $successCount++
+            } catch {
+                Write-Host "Error: Failed to decrypt file: $filePath`n$_" -ForegroundColor Red
+            }
+        }
+    
+        if ($successCount -eq $EncryptionFileListBox.Items.Count) {
+            [System.Windows.Forms.MessageBox]::Show("All files were successfully decrypted.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        }
+    })
+    
 
     # Back Button Logic
     $BackButton.Add_Click({
