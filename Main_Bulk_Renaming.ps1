@@ -177,6 +177,7 @@ function HandleBulkRenameClick {
     $ButtonGrid = New-Object Windows.Controls.Grid
     $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
 
+    # Buttons for Rename, Undo, Redo
     for ($row = 0; $row -lt 2; $row++) {
         $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
     }
@@ -346,10 +347,11 @@ function HandleBulkRenameClick {
 function Show-ReplaceWindow {
     param()
     $MainPageWindow.Hide()
+    
     # Create the Replace window
     $ReplaceWindow = New-Object Windows.Window
     $ReplaceWindow.Title = "SHIFTIFY: Text Substitution Tool"
-    $ReplaceWindow.Height = 500
+    $ReplaceWindow.Height = 600
     $ReplaceWindow.Width = 400
     $ReplaceWindow.WindowStartupLocation = "CenterScreen"
     $ReplaceWindow.FontFamily = "Segoe UI"
@@ -417,31 +419,6 @@ function Show-ReplaceWindow {
     $ReplaceWithPanel.HorizontalAlignment = "Center"
     $ReplaceWithPanel.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
 
-    # Create the StackPanel to hold the output textbox
-    $CenterStackPanel = New-Object Windows.Controls.StackPanel
-    $CenterStackPanel.Orientation = "Vertical"
-    $CenterStackPanel.HorizontalAlignment = "Center"
-
-    # Create the output TextBox for displaying the renaming results
-    $ReplaceOutputTextBox = New-Object Windows.Controls.TextBox
-    $ReplaceOutputTextBox.Width = 300
-    $ReplaceOutputTextBox.Height = 60
-    $ReplaceOutputTextBox.FontSize = 12
-    $ReplaceOutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
-    $ReplaceOutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
-    $ReplaceOutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
-    $ReplaceOutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
-
-    # Enable scrolling for the output box
-    $ReplaceOutputTextBox.VerticalScrollBarVisibility = "Auto"
-    $ReplaceOutputTextBox.HorizontalScrollBarVisibility = "Auto"
-
-    # Add the TextBox to the layout (e.g., StackPanel or Grid)
-    $CenterStackPanel.Children.Add($ReplaceOutputTextBox)
-
-    # Add the StackPanel to your main layout container (e.g., $ReplaceCenterStackPanel)
-    $ReplaceCenterStackPanel.Children.Add($CenterStackPanel)
-
     # Text box and label for "Replace"
     $ReplaceLabel = New-Object Windows.Controls.TextBlock
     $ReplaceLabel.Text = "Replace:"
@@ -465,7 +442,7 @@ function Show-ReplaceWindow {
     $ReplaceWithPanel.Children.Add($SubstituteWithLabel)
 
     $SubstituteWithTextBox = New-Object Windows.Controls.TextBox
-    $SubstituteWithTextBox.Width = 100
+    $SubstituteWithTextBox.Width = 95
     $SubstituteWithTextBox.FontSize = 14
     $SubstituteWithTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $SubstituteWithTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -473,28 +450,7 @@ function Show-ReplaceWindow {
 
     $ReplaceCenterStackPanel.Children.Add($ReplaceWithPanel)
 
-    $CenterStackPanel = New-Object Windows.Controls.StackPanel
-    $CenterStackPanel.Orientation = "Vertical"
-    $CenterStackPanel.HorizontalAlignment = "Center"
-
-    # Create the output TextBox for displaying the renaming results
-    $ReplaceOutputTextBox = New-Object Windows.Controls.TextBox
-    $ReplaceOutputTextBox.Width = 300
-    $ReplaceOutputTextBox.Height = 60
-    $ReplaceOutputTextBox.FontSize = 12
-    $ReplaceOutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
-    $ReplaceOutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
-    $ReplaceOutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
-    $ReplaceOutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
-
-    # Enable scrolling for the output box
-    $ReplaceOutputTextBox.VerticalScrollBarVisibility = "Auto"
-    $ReplaceOutputTextBox.HorizontalScrollBarVisibility = "Auto"
-
-    # Add the TextBox to the layout (e.g., StackPanel or Grid)
-    $CenterStackPanel.Children.Add($ReplaceOutputTextBox)
-
-    # Buttons for Apply, Replace, Undo, Redo
+    # Buttons for Apply, Undo, Redo
     $ReplaceButtonGrid = New-Object Windows.Controls.Grid
     $ReplaceButtonGrid.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
 
@@ -512,33 +468,63 @@ function Show-ReplaceWindow {
     $ReplaceButtonGrid.Children.Add($ReplaceApplyButton)
     $ReplaceButtonGrid.Children.Add($ReplaceUndoButton)
     $ReplaceButtonGrid.Children.Add($ReplaceRedoButton)
-
+    
+    # Add the ButtonGrid to the main StackPanel
     $ReplaceCenterStackPanel.Children.Add($ReplaceButtonGrid)
+
+    # Title for Output TextBox
+    $OutputTitle = New-Object Windows.Controls.TextBlock
+    $OutputTitle.Text = "Renamed Files:"
+    $OutputTitle.FontSize = 14
+    $OutputTitle.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
+    $OutputTitle.HorizontalAlignment = "Center"
+    $ReplaceCenterStackPanel.Children.Add($OutputTitle)
+
+    # Layout for Output TextBox 
+    $ReplaceOutputTextBox = New-Object Windows.Controls.TextBox
+    $ReplaceOutputTextBox.Width = 300
+    $ReplaceOutputTextBox.Height = 100
+    $ReplaceOutputTextBox.FontSize = 12
+    $ReplaceOutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
+    $ReplaceOutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
+    $ReplaceOutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $ReplaceOutputTextBox.BorderThickness = [Windows.Thickness]::new(2)
+    $ReplaceOutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
+    $ReplaceOutputTextBox.VerticalScrollBarVisibility = "Auto"
+    $ReplaceOutputTextBox.HorizontalScrollBarVisibility = "Auto"
+
+    # Output TextBox after the ButtonGrid
+    $ReplaceCenterStackPanel.Children.Add($ReplaceOutputTextBox)
 
     # Replace Back button
     $ReplaceBackButton = New-Object Windows.Controls.Button
     $ReplaceBackButton.Content = "Back"
     $ReplaceBackButton.Width = 100
     $ReplaceBackButton.Height = 30
-    $ReplaceBackButton.Margin = [Windows.Thickness]::new(0, 3, 0, 0)
+    $ReplaceBackButton.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
     $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $ReplaceBackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceBackButton.FontSize = 12
     $ReplaceBackButton.FontWeight = "Bold"
+    $ReplaceBackButton.HorizontalAlignment = "Center"
+
+    # Set the "Back" button's position in the grid
+    [Windows.Controls.Grid]::SetRow($ReplaceBackButton, 1)
+    [Windows.Controls.Grid]::SetColumn($ReplaceBackButton, 1)
+
+    $ReplaceButtonGrid.Children.Add($ReplaceBackButton)
+
+    $ReplaceGrid.Children.Add($ReplaceCenterStackPanel)
+
+    $ReplaceWindow.Content = $ReplaceGrid
+
+    #Back button logic
     $ReplaceBackButton.Add_Click({
         $ReplaceWindow.Close()  # Close the current Replace window
         $MainPageWindow.ShowDialog() | Out-Null # Open the main window
     })
 
-    # Set the Back button's position in the grid
-    [Windows.Controls.Grid]::SetRow($ReplaceBackButton, 1)
-    [Windows.Controls.Grid]::SetColumn($ReplaceBackButton, 1)
-
-    # Add the Back button to the ReplaceButtonGrid
-    $ReplaceButtonGrid.Children.Add($ReplaceBackButton)
-
-    $ReplaceGrid.Children.Add($ReplaceCenterStackPanel)
-
+    # Select File logic
     $ReplaceSelectFileButton.Add_Click({
         $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
         $OpenFileDialog.Filter = "All Files (*.*)|*.*"
@@ -551,7 +537,6 @@ function Show-ReplaceWindow {
             # Loop through selected files
             foreach ($file in $OpenFileDialog.FileNames) {
                 $ReplaceFileListBox.Items.Add($file)  # Add each selected file path to the list box
-                # Add each selected file path to the OutputTextBox
             }
         }
     })
@@ -565,10 +550,8 @@ function Show-ReplaceWindow {
             return
         }
 
-        # Assume $selectedFiles is an array of selected files
         $selectedFiles = $ReplaceFileListBox.Items
 
-        # Call Rename-WithPatternReplacement with the values from the GUI
         $batchOperation = Rename-WithPatternReplacement -selectedFiles $selectedFiles -patternToFind $patternToFind -replacementWord $replacementWord
 
         $undoStack += ,$batchOperation
@@ -578,7 +561,6 @@ function Show-ReplaceWindow {
         $ReplaceOutputTextBox.Text = ""  # Clear previous output
     
         foreach ($operation in $batchOperation) {
-            # Extract the file name part only (not the full path)
             $originalFileName = [System.IO.Path]::GetFileName($operation.OriginalPath)
             $newFileName = [System.IO.Path]::GetFileName($operation.NewPath)
     
@@ -589,7 +571,6 @@ function Show-ReplaceWindow {
 
     $ReplaceWindow.Content = $ReplaceGrid
     $ReplaceWindow.ShowDialog() | Out-Null
-  
 }
 
 function ShowPrefixsuffixWindow {
