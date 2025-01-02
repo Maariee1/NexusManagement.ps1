@@ -148,42 +148,46 @@ function HandleBulkRenameClick {
     $FileListBox.BorderThickness = [Windows.Thickness]::new(2)
     $CenterStackPanel.Children.Add($FileListBox)
 
-    # Text box for base name
+    # Layout for "Enter Base Name" Label and TextBox
+    $BaseNamePanel = New-Object Windows.Controls.StackPanel
+    $BaseNamePanel.Orientation = "Horizontal"
+    $BaseNamePanel.HorizontalAlignment = "Center"
+    $BaseNamePanel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
+
     $BaseNameLabel = New-Object Windows.Controls.TextBlock
-    $BaseNameLabel.Text = "Enter Base Name:"
+    $BaseNameLabel.Text = "Enter Base Name: "
     $BaseNameLabel.FontSize = 14
-    $BaseNameLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
-    $BaseNameLabel.HorizontalAlignment = "Center"
-    $CenterStackPanel.Children.Add($BaseNameLabel)
+    $BaseNameLabel.VerticalAlignment = "Center"
+    $BaseNamePanel.Children.Add($BaseNameLabel)
 
     $BaseNameTextBox = New-Object Windows.Controls.TextBox
-    $BaseNameTextBox.Width = 100
+    $BaseNameTextBox.Width = 150
     $BaseNameTextBox.FontSize = 14
     $BaseNameTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $BaseNameTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
-    $BaseNameTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
-    $CenterStackPanel.Children.Add($BaseNameTextBox)
-    
-    # Create the TextBox for output display
+    $BaseNameTextBox.Margin = [Windows.Thickness]::new(10, 0, 0, 0)
+    $BaseNamePanel.Children.Add($BaseNameTextBox)
+
+    # Add the BaseNamePanel to the main StackPanel
+    $CenterStackPanel.Children.Add($BaseNamePanel)
+
+    # Output TextBox below the buttons
     $OutputTextBox = New-Object Windows.Controls.TextBox
     $OutputTextBox.Width = 300
-    $OutputTextBox.Height = 60
+    $OutputTextBox.Height = 100
     $OutputTextBox.FontSize = 12
     $OutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $OutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
     $OutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
     $OutputTextBox.BorderThickness = [Windows.Thickness]::new(2)
-
     $OutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
-
-    # Enable scrolling for the output box
     $OutputTextBox.VerticalScrollBarVisibility = "Auto"
     $OutputTextBox.HorizontalScrollBarVisibility = "Auto"
 
-    # Add the TextBox to the layout (e.g., StackPanel or Grid)
+    # Add the Output TextBox after the ButtonGrid
     $CenterStackPanel.Children.Add($OutputTextBox)
 
-    # Buttons for Preview, Rename, Undo, Redo, Back
+    # Button Grid 
     $ButtonGrid = New-Object Windows.Controls.Grid
     $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
 
@@ -197,7 +201,7 @@ function HandleBulkRenameClick {
     $RenameButton = Create-SmallButton -Content "Rename" -Row 0 -Column 0
     $UndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
     $RedoButton = Create-SmallButton -Content "Redo" -Row 0 -Column 1
-    
+
     $ButtonGrid.Children.Add($RenameButton)
     $ButtonGrid.Children.Add($UndoButton)
     $ButtonGrid.Children.Add($RedoButton)
@@ -209,11 +213,12 @@ function HandleBulkRenameClick {
     $BackButton.Content = "Back"
     $BackButton.Width = 100
     $BackButton.Height = 30
-    $BackButton.Margin = [Windows.Thickness]::new(0, 3, 0, 0)
+    $BackButton.Margin = [Windows.Thickness]::new(0, 1, 0, 0)
     $BackButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $BackButton.FontSize = 12
     $BackButton.FontWeight = "Bold"
+    $BackButton.HorizontalAlignment = "Center"
 
     # Set the "Back" button's position in the grid
     [Windows.Controls.Grid]::SetRow($BackButton, 1)
@@ -992,17 +997,17 @@ $MainGrid.VerticalAlignment = "Center"
 # Load the Logo Image
 $LogoSource = New-Object System.Windows.Media.Imaging.BitmapImage
 $LogoSource.BeginInit()
-$LogoSource.UriSource = New-Object System.Uri("C:\Users\zcint\Downloads\Shiftify Logo.png")  # Update with the actual path to your logo
+$LogoSource.UriSource = New-Object System.Uri("c:\Users\zcint\Downloads\Shiftify Logo.png")  
 $LogoSource.EndInit()
 
 # Create an Image Control for the Logo
 $LogoImage = New-Object Windows.Controls.Image
 $LogoImage.Source = $LogoSource
 $LogoImage.Width = 800 # Adjust as needed
-$LogoImage.Height = 280 # Adjust as needed
+$LogoImage.Height = 290 # Adjust as needed
 $LogoImage.HorizontalAlignment = "Center"
 $LogoImage.VerticalAlignment = "Top"
-$LogoImage.Margin = [Windows.Thickness]::new(0, -108, 0, 0)
+$LogoImage.Margin = [Windows.Thickness]::new(0, -115, 0, 0)
 
 # Add the Logo to the Main Grid
 $MainGrid.Children.Add($LogoImage) | Out-Null
