@@ -823,7 +823,7 @@ function showEncryptDecryptWindow {
     $MainPageWindow.Hide() 
 
     $EncryptionWindow = New-Object Windows.Window
-    $EncryptionWindow.Title = "SHIFTIFY: Text Substitution Tool"
+    $EncryptionWindow.Title = "SHIFTIFY: Encryption and Decryption Tool"
     $EncryptionWindow.Height = 500
     $EncryptionWindow.Width = 400
     $EncryptionWindow.WindowStartupLocation = "CenterScreen"
@@ -989,38 +989,23 @@ $MainGrid = New-Object Windows.Controls.Grid
 $MainGrid.HorizontalAlignment = "Center"
 $MainGrid.VerticalAlignment = "Center"
 
-# Title SHIFTIFY
-$TitleBorder = New-Object Windows.Controls.Border
-$TitleBorder.Width = 350
-$TitleBorder.Height = 60
-$TitleBorder.HorizontalAlignment = "Center"
-$TitleBorder.VerticalAlignment = "Top"
-$TitleBorder.Margin = [Windows.Thickness]::new(0, -25, 0, 0)
-$TitleBorder.Background = (ConvertTo-SolidColorBrush "#90CAF9")
-$TitleBorder.CornerRadius = [Windows.CornerRadius]::new(20)
-$TitleBorder.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4")
-$TitleBorder.BorderThickness = [Windows.Thickness]::new(3)
+# Load the Logo Image
+$LogoSource = New-Object System.Windows.Media.Imaging.BitmapImage
+$LogoSource.BeginInit()
+$LogoSource.UriSource = New-Object System.Uri("C:\Users\zcint\Downloads\Shiftify Logo.png")  # Update with the actual path to your logo
+$LogoSource.EndInit()
 
-$TitleTextBlock = New-Object Windows.Controls.TextBlock
-$TitleTextBlock.Text = "SHIFTIFY"
-$TitleTextBlock.FontSize = 28
-$TitleTextBlock.FontWeight = "Bold"
-$TitleTextBlock.HorizontalAlignment = "Center"
-$TitleTextBlock.VerticalAlignment = "Center"
-$TitleTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+# Create an Image Control for the Logo
+$LogoImage = New-Object Windows.Controls.Image
+$LogoImage.Source = $LogoSource
+$LogoImage.Width = 800 # Adjust as needed
+$LogoImage.Height = 280 # Adjust as needed
+$LogoImage.HorizontalAlignment = "Center"
+$LogoImage.VerticalAlignment = "Top"
+$LogoImage.Margin = [Windows.Thickness]::new(0, -108, 0, 0)
 
-$TitleBorder.Child = $TitleTextBlock
-$MainGrid.Children.Add($TitleBorder) | Out-Null
-
-# Subtitle ONE LINER
-$SubtitleTextBlock = New-Object Windows.Controls.TextBlock
-$SubtitleTextBlock.Text = "Rename. Replace. Encrypt."
-$SubtitleTextBlock.FontSize = 16
-$SubtitleTextBlock.FontStyle = "Italic"
-$SubtitleTextBlock.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
-$SubtitleTextBlock.HorizontalAlignment = "Center"
-$SubtitleTextBlock.Margin = [Windows.Thickness]::new(0, 55, 0, 0)
-$MainGrid.Children.Add($SubtitleTextBlock) | Out-Null
+# Add the Logo to the Main Grid
+$MainGrid.Children.Add($LogoImage) | Out-Null
 
 # Buttons
 $ButtonStackPanel = New-Object Windows.Controls.StackPanel
