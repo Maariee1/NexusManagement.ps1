@@ -1,9 +1,9 @@
-# Add necessary .NET types
+# Adds necessary .NET types
 Add-Type -AssemblyName PresentationFramework
-# Load Windows Forms assembly
+# Loads Windows Forms assembly
 Add-Type -AssemblyName System.Windows.Forms
 
-# Creates a form to host dialogs but make it invisible
+# Form to host dialogs but make it invisible
 $form = New-Object System.Windows.Forms.Form
 $form.TopMost = $true
 $form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
@@ -101,7 +101,7 @@ function Handle-SplitFile {
     Write-Output "File split into $ChunkNum chunks."
 }
 
-# Function to handle file joining operation
+# Function to handle file joining operations
 function Handle-JoinFiles {
     param (
         [string]$BaseName,
@@ -127,7 +127,7 @@ function Handle-JoinFiles {
             $OutputStream.Write($Buffer, 0, $ReadBytes)
             $PartStream.Close()
             
-            # Close and remove the part file
+            # Closes and removes the part files
             Remove-Item -Path $PartFile.FullName -Force
         }
 
@@ -162,7 +162,7 @@ function Encrypt-File {
             }
         }
 
-    # Generate a 32-byte key and 16-byte IV from the password
+    # This generates a 32-byte key and 16-byte IV from the password
     $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
     $IV = New-Object byte[] 16
     [System.Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($IV)
@@ -173,26 +173,26 @@ function Encrypt-File {
     $Aes.IV = $IV
     $Encryptor = $Aes.CreateEncryptor()
 
-    # Read the file content into memory
+    # Reads the file content into memory
     $FileContent = [System.IO.File]::ReadAllBytes($InputFile)
 
-    # Create a memory stream to hold the encrypted data
+    # Creates a memory stream to hold the encrypted data
     $EncryptedData = New-Object System.IO.MemoryStream
 
-    # Write the custom header to the encrypted data
+    # Writes the custom header to the encrypted data
     $Header = "ENCRYPTED_HEADER"
     $HeaderBytes = [System.Text.Encoding]::UTF8.GetBytes($Header)
     $EncryptedData.Write($HeaderBytes, 0, $HeaderBytes.Length)
 
-    # Write the IV to the encrypted data
+    # Writes the IV to the encrypted data
     $EncryptedData.Write($IV, 0, $IV.Length)
 
-    # Encrypt the file content and write to the memory stream
+    # Encrypts the file content and write to the memory stream
     $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($EncryptedData, $Encryptor, [System.Security.Cryptography.CryptoStreamMode]::Write)
     $CryptoStream.Write($FileContent, 0, $FileContent.Length)
     $CryptoStream.Close()
 
-    # Overwrite the original file with the encrypted data
+    # This overwrites the original file with the encrypted data
     [System.IO.File]::WriteAllBytes($InputFile, $EncryptedData.ToArray())
     $EncryptedData.Close()
 
@@ -215,27 +215,27 @@ function Decrypt-File {
             throw "Password cannot be empty"
         }
 
-        # Open the input file for reading
+        # Opens the input file for reading
         $FileStream = [System.IO.File]::Open($InputFile, 'Open', 'Read')
 
-        # Read the first bytes for the header
+        # Reads the first bytes for the header
         $HeaderBytes = New-Object byte[] 16
         $BytesRead = $FileStream.Read($HeaderBytes, 0, $HeaderBytes.Length)
         
-        # Check if we could read enough bytes for the header
+        # Checks if we could read enough bytes for the header
         if ($BytesRead -lt 16) {
             $FileStream.Close()
             throw "File is not encrypted (invalid file size)"
         }
 
-        # Convert the header bytes to a string and check if it matches the signature
+        # Converts the header bytes to a string and check if it matches the signature
         $Header = [System.Text.Encoding]::UTF8.GetString($HeaderBytes)
         if ($Header -ne "ENCRYPTED_HEADER") {
             $FileStream.Close()
             throw "File is not encrypted."
         }
 
-        # Read the IV (next 16 bytes after the header)
+        # Reads the IV (next 16 bytes after the header)
         $IV = New-Object byte[] 16
         $BytesRead = $FileStream.Read($IV, 0, $IV.Length)
         
@@ -301,7 +301,7 @@ function Handle-Encryption {
     }
 }
 
-# Function to handle decryption operation
+# Function to handle decryption operations
 function Handle-Decryption {
     $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
     $OpenFileDialog.Filter = "All Files (*.*)|*.*"
@@ -328,7 +328,7 @@ function New-SolidColorBrush {
     return New-Object System.Windows.Media.SolidColorBrush($color)
 }
 
-#Create the main window
+# Main window
 $window = New-Object System.Windows.Window
 $window.Title = "File Splitter and Joiner"
 $window.Width = 400
@@ -337,11 +337,11 @@ $window.ResizeMode = "NoResize"
 $window.Background = New-SolidColorBrush -R 173 -G 216 -B 230 # LightBlue
 $window.WindowStartupLocation = "CenterScreen"
 
-# Create a grid for layout
+# Grid for layout
 $grid = New-Object System.Windows.Controls.Grid
 $grid.Margin = "10"
 
-# Define grid rows
+# Grid rows
 $rowDefinitions = @(80, 30, 40, 40, 40, 40, 40) # Adjusted row heights for compact layout
 foreach ($height in $rowDefinitions) {
     $row = New-Object System.Windows.Controls.RowDefinition
@@ -349,7 +349,7 @@ foreach ($height in $rowDefinitions) {
     $null = $grid.RowDefinitions.Add($row)
 }
 
-# Title container (a Border for styling)
+# Title container (border for styling)
 $titleBorder = New-Object System.Windows.Controls.Border
 $titleBorder.BorderBrush = New-SolidColorBrush -R 0 -G 0 -B 0  # Black border
 $titleBorder.BorderThickness = [System.Windows.Thickness]::new(2)
@@ -368,7 +368,7 @@ $titleText.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255  # White text
 $titleText.TextAlignment = "Center"
 $titleText.VerticalAlignment = "Center"
 
-# Add shadow effect to the title text
+# Adds a shadow effect to the title text
 $dropShadowEffect = New-Object System.Windows.Media.Effects.DropShadowEffect
 $dropShadowEffect.Color = [System.Windows.Media.Color]::FromArgb(100, 0, 0, 0)  # Semi-transparent black shadow
 $dropShadowEffect.Direction = 320  # Angle of the shadow
@@ -377,13 +377,13 @@ $dropShadowEffect.BlurRadius = 10  # Blur of shadow
 
 $titleText.Effect = $dropShadowEffect
 
-# Add the TextBlock to the Border
+# Adds the TextBlock to the Border
 $titleBorder.Child = $titleText
 
-# Add the title border to the grid
+# Adds the title border to the grid
 $null = $grid.Children.Add($titleBorder)
 
-# Add motto text
+# Adds motto text
 $motto = New-Object System.Windows.Controls.TextBlock
 $motto.Text = "Effortless File Management"
 $motto.FontSize = 12
@@ -392,10 +392,10 @@ $motto.Foreground = New-SolidColorBrush -R 0 -G 0 -B 128 # Navy
 $motto.SetValue([System.Windows.Controls.Grid]::RowProperty, 1)
 $null = $grid.Children.Add($motto)
 
-# Set the grid as the window content
+# Sets the grid as the window content
 $window.Content = $grid
 
-# Assign the main window
+# Assigns the main window
 $MainWindow = $window
 
 # Function to handle button clicks
@@ -419,7 +419,7 @@ function HandleButtonClick {
         }
         "Exit" {
             if ($MainWindow -ne $null) {
-                $MainWindow.Close()  # Gracefully close the main window
+                $MainWindow.Close()  # Gracefully closes the main window
             } else {
                 Write-Host "MainWindow is not defined."
             }
@@ -427,7 +427,7 @@ function HandleButtonClick {
     }
 }
 
-# Create buttons
+# Creates buttons
 $buttonNames = @("Split", "Join", "Encrypt", "Decrypt", "Exit")
 $buttonColors = @(
     @{ R = 70; G = 130; B = 180 },  # SteelBlue
@@ -487,19 +487,19 @@ for ($i = 0; $i -lt $buttonNames.Length; $i++) {
 
 # Split Window (1st window)
 function CreateSplitWindow {
-    param([System.Windows.Window]$MainWindow)  # Accept the main window as a parameter
+    param([System.Windows.Window]$MainWindow)  # Accepts the main window as a parameter
     $splitWindow = New-Object System.Windows.Window
     $splitWindow.Title = "Split"
-    $splitWindow.Width = 400 # Keep original size
+    $splitWindow.Width = 400 # Keeps original size
     $splitWindow.Height = 400
     $splitWindow.Background = New-SolidColorBrush -R 173 -G 216 -B 230  # Light Blue
     $splitWindow.WindowStartupLocation = "CenterScreen"
-    $splitWindow.ResizeMode = "NoResize"  # Prevent resizing
+    $splitWindow.ResizeMode = "NoResize"  # Prevents resizing
 
     $grid = New-Object System.Windows.Controls.Grid
     $grid.Margin = "10"
 
-    # Define Rows and Columns
+    # Rows and Columns
     $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Title
     $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Input File
     $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" }))  # Output File
@@ -532,7 +532,7 @@ function CreateSplitWindow {
     [System.Windows.Controls.Grid]::SetRow($titleBorder, 0)
     $null = $grid.Children.Add($titleBorder)
 
-    #select file button
+    # Select file button
     $inputButton = New-Object System.Windows.Controls.Button
     $inputButton.Content = "Select File"
     $inputButton.Width = 80
@@ -562,10 +562,10 @@ function CreateSplitWindow {
     $inputBox.VerticalAlignment = "Center"
     [System.Windows.Controls.Grid]::SetRow($inputBox, 1)
     [System.Windows.Controls.Grid]::SetColumn($inputBox, 1)
-    [System.Windows.Controls.Grid]::SetColumnSpan($inputBox, 2)  # Ensure it spans across remaining space
+    [System.Windows.Controls.Grid]::SetColumnSpan($inputBox, 2)  # Ensuring taht it spans across remaining space
     $null = $grid.Children.Add($inputBox)
 
-    #select folder button
+    # Select folder button
     $outputButton = New-Object System.Windows.Controls.Button
     $outputButton.Content = "Select Folder"
     $outputButton.Width = 80
@@ -589,7 +589,7 @@ function CreateSplitWindow {
     $outputBox = New-Object System.Windows.Controls.TextBox
     $outputBox.Margin = "0,10,10,10"
     $outputBox.Height = 25
-    $outputBox.HorizontalAlignment = "Stretch"  # Allow stretching
+    $outputBox.HorizontalAlignment = "Stretch"  # Allosw stretching
     $outputBox.VerticalAlignment = "Center"
     [System.Windows.Controls.Grid]::SetRow($outputBox, 2)
     [System.Windows.Controls.Grid]::SetColumn($outputBox, 1)
@@ -648,6 +648,8 @@ function CreateSplitWindow {
     $startButton.FontWeight = "Bold"
     $startButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
+
+    #This is where split functionality happens in this window
     $startButton.Add_Click({
         if (-not $inputBox.Text -or -not $outputBox.Text -or -not $splitSizeBox.Text) {
             [System.Windows.MessageBox]::Show("Please fill in all fields!", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
@@ -831,6 +833,8 @@ function CreateJoinWindow {
     $startButton.FontWeight = "Bold"
     $startButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # Steel Blue
     $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
+
+    # This is where the join functionality happens in this window
     $startButton.Add_Click({
         if (-not $inputBox.Text -or -not $outputBox.Text) {
             [System.Windows.MessageBox]::Show("Please fill in all fields!", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
@@ -842,7 +846,7 @@ function CreateJoinWindow {
             $baseName = [System.IO.Path]::GetFileNameWithoutExtension($inputFile) -replace "\.part\d+$", ""
             $outputDir = $outputBox.Text
             
-            # Get all part files
+            # Gets all part files
             $fileDir = [System.IO.Path]::GetDirectoryName($inputFile)
             $partFiles = Get-ChildItem -Path $fileDir -Filter "$baseName.part*" | Sort-Object Name
             
@@ -860,7 +864,7 @@ function CreateJoinWindow {
                 $outputStream.Write($buffer, 0, $bytesRead)
                 $partStream.Close()
                 
-                # Remove the part file after it's been processed
+                # Removes the part file after it's been processed
                 Remove-Item -Path $partFile.FullName -Force
             }
     
@@ -1002,7 +1006,7 @@ function CreateEncryptionWindow {
     $toggleButton.Background = New-SolidColorBrush -R 70 -G 130 -B 180
     $toggleButton.BorderThickness = "0"
 
-    # Create eye icon
+    # Creates eye icon (if the user want to see the password or censor it)
     $eyePath = New-Object System.Windows.Shapes.Path
     $eyePath.Data = [System.Windows.Media.Geometry]::Parse("M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z")
     $eyePath.Fill = New-SolidColorBrush -R 255 -G 255 -B 255
@@ -1013,7 +1017,7 @@ function CreateEncryptionWindow {
     $toggleButton.Content = $eyePath
     [System.Windows.Controls.Grid]::SetColumn($toggleButton, 1)
 
-    # Add toggle functionality
+    # Adds toggle functionality
     $toggleButton.Add_Click({
         if ($outputBox.Visibility -eq "Visible") {
             $outputTextBox.Text = $outputBox.Password
@@ -1028,7 +1032,7 @@ function CreateEncryptionWindow {
 
     $null = $passwordGrid.Children.Add($toggleButton)
 
-    # Add the password grid to the main grid
+    # Adds the password grid to the main grid
     [System.Windows.Controls.Grid]::SetRow($passwordGrid, 2)
     [System.Windows.Controls.Grid]::SetColumn($passwordGrid, 1)
     $null = $grid.Children.Add($passwordGrid)
