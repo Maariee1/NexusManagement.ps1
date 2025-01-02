@@ -143,6 +143,15 @@ function Encrypt-File {
             throw "Password cannot be empty"
         }
 
+    $fileBytes = [System.IO.File]::ReadAllBytes($InputFile)
+        if ($fileBytes.Length -ge 16) {
+            $headerBytes = $fileBytes[0..15]
+            $header = [System.Text.Encoding]::UTF8.GetString($headerBytes)
+            if ($header -eq "ENCRYPTED_HEADER") {
+                throw "File is already encrypted!"
+            }
+        }
+
     # Generate a 32-byte key and 16-byte IV from the password
     $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
     $IV = New-Object byte[] 16
@@ -196,52 +205,45 @@ function Decrypt-File {
             throw "Password cannot be empty"
         }
 
-    # Open the input file for reading
-    $FileStream = [System.IO.File]::Open($InputFile, 'Open', 'Read')
+        # Open the input file for reading
+        $FileStream = [System.IO.File]::Open($InputFile, 'Open', 'Read')
 
-    # Read the first bytes for the header
-    $HeaderBytes = New-Object byte[] 16
-    $FileStream.Read($HeaderBytes, 0, $HeaderBytes.Length) | Out-Null
+        # Read the first bytes for the header
+        $HeaderBytes = New-Object byte[] 16
+        $BytesRead = $FileStream.Read($HeaderBytes, 0, $HeaderBytes.Length)
+        
+        # Check if we could read enough bytes for the header
+        if ($BytesRead -lt 16) {
+            $FileStream.Close()
+            throw "File is not encrypted (invalid file size)"
+        }
 
-    # Convert the header bytes to a string and check if it matches the signature
-    $Header = [System.Text.Encoding]::UTF8.GetString($HeaderBytes)
-    if ($Header -ne "ENCRYPTED_HEADER") {
-        Write-Output "This file is not encrypted!"
-        $FileStream.Close()
-        return
-    }
+        # Convert the header bytes to a string and check if it matches the signature
+        $Header = [System.Text.Encoding]::UTF8.GetString($HeaderBytes)
+        if ($Header -ne "ENCRYPTED_HEADER") {
+            $FileStream.Close()
+            throw "File is not encrypted."
+        }
 
-    # Read the IV (next 16 bytes after the header)
-    $IV = New-Object byte[] 16
-    $FileStream.Read($IV, 0, $IV.Length) | Out-Null
+        # Read the IV (next 16 bytes after the header)
+        $IV = New-Object byte[] 16
+        $BytesRead = $FileStream.Read($IV, 0, $IV.Length)
+        
+        if ($BytesRead -lt 16) {
+            $FileStream.Close()
+            throw "File is not encrypted (invalid IV)"
+        }
 
-    # Attempt decryption with up to 3 tries
-    $Attempts = 0
-    $MaxAttempts = 3
-    $DecryptedSuccessfully = $false
-
-    while ($Attempts -lt $MaxAttempts -and -not $DecryptedSuccessfully) {
-        # Increment the attempt counter
-        $Attempts++
-
-        # Generate the key from the password
         $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
-
-        # Initialize AES decryption
         $Aes = [System.Security.Cryptography.Aes]::Create()
         $Aes.Key = $Key
         $Aes.IV = $IV
 
         try {
             $Decryptor = $Aes.CreateDecryptor()
-
-            # Move the file pointer to the position after the header and IV
             $FileStream.Position = 32
 
-            # Create a CryptoStream for decryption
             $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($FileStream, $Decryptor, [System.Security.Cryptography.CryptoStreamMode]::Read)
-
-            # Decrypt the file content into memory
             $DecryptedData = New-Object System.IO.MemoryStream
             $Buffer = New-Object byte[] 4096
 
@@ -249,34 +251,28 @@ function Decrypt-File {
                 $DecryptedData.Write($Buffer, 0, $BytesRead)
             }
 
-            # Close the streams
             $CryptoStream.Close()
             $FileStream.Close()
 
-            # Overwrite the original file with decrypted content
             [System.IO.File]::WriteAllBytes($InputFile, $DecryptedData.ToArray())
             $DecryptedData.Close()
 
-            Write-Output "File is decrypted."
-            $DecryptedSuccessfully = $true
-        } catch {
-            Write-Output "Incorrect password. Attempts remaining: $(($MaxAttempts - $Attempts))"
-
-            if ($Attempts -lt $MaxAttempts) {
-                $Password = Read-Host "Enter decryption password"
-            } else {
-                Write-Output "Maximum attempts reached. Decryption failed."
-            }
+            return $true
+        }
+        catch {
+            if ($CryptoStream) { $CryptoStream.Close() }
+            if ($FileStream) { $FileStream.Close() }
+            if ($DecryptedData) { $DecryptedData.Close() }
+            return $false
         }
     }
-
-    # Ensure the file stream is closed if still open
-    if ($FileStream -and $FileStream.CanRead) {
-        $FileStream.Close()
-    }
-    }
     catch {
-        throw "Decryption failed: $($_.Exception.Message)"
+        throw $_.Exception.Message
+    }
+    finally {
+        if ($FileStream -and $FileStream.CanRead) {
+            $FileStream.Close()
+        }
     }
 }
 
@@ -1260,6 +1256,8 @@ function CreateDecryptionWindow {
     $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
     $startButton.Add_Click({
         $password = if ($outputBox.Visibility -eq "Visible") { $outputBox.Password } else { $outputTextBox.Text }
+        $maxAttempts = 3
+        $currentAttempt = 1
 
         if ([string]::IsNullOrWhiteSpace($inputBox.Text)) {
             [System.Windows.MessageBox]::Show("Please select a file to decrypt.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
@@ -1273,14 +1271,54 @@ function CreateDecryptionWindow {
             [System.Windows.MessageBox]::Show("Selected file does not exist.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
-    
-        try {
-            Decrypt-File -InputFile $inputBox.Text -Password $password
-            [System.Windows.MessageBox]::Show("File decrypted successfully!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
-            $decryptionWindow.Close()
-        }
-        catch {
-            [System.Windows.MessageBox]::Show("Failed to decrypt file: $($_.Exception.Message)", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+
+        while ($currentAttempt -le $maxAttempts) {
+            try {
+                $result = Decrypt-File -InputFile $inputBox.Text -Password $password
+
+                if ($result) {
+                    [System.Windows.MessageBox]::Show("File decrypted successfully!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+                    $decryptionWindow.Close()
+                    return
+                } else {
+                    $remainingAttempts = $maxAttempts - $currentAttempt
+                    if ($remainingAttempts -gt 0) {
+                        $response = [System.Windows.MessageBox]::Show(
+                            "Incorrect password. $remainingAttempts attempts remaining.`nWould you like to try again?",
+                            "Decryption Failed",
+                            [System.Windows.MessageBoxButton]::YesNo,
+                            [System.Windows.MessageBoxImage]::Warning
+                        )
+
+                        if ($response -eq [System.Windows.MessageBoxResult]::Yes) {
+                            $currentAttempt++
+                            $password = Read-Host "Enter decryption password"
+                            if ($outputBox.Visibility -eq "Visible") {
+                                $outputBox.Password = $password
+                            } else {
+                                $outputTextBox.Text = $password
+                            }
+                        } else {
+                            $decryptionWindow.Close()
+                            return
+                        }
+                    } else {
+                        [System.Windows.MessageBox]::Show(
+                            "Maximum password attempts exceeded. Returning to main menu.",
+                            "Decryption Failed",
+                            [System.Windows.MessageBoxButton]::OK,
+                            [System.Windows.MessageBoxImage]::Error
+                        )
+                        $decryptionWindow.Close()
+                        return
+                    }
+                }
+            }
+            catch {
+                [System.Windows.MessageBox]::Show("Failed to decrypt file: $($_.Exception.Message)", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+                $decryptionWindow.Close()
+                return
+            }
         }
     })
     $buttonPanel.Children.Add($startButton)
