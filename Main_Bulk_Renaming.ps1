@@ -11,7 +11,7 @@ function ConvertTo-SolidColorBrush {
         255, 
         [Convert]::ToByte($hexColor.Substring(1, 2), 16),
         [Convert]::ToByte($hexColor.Substring(3, 2), 16),
-        [Convert]::ToByte($hexColor.Substring(5, 2), 16)
+        [Convert]::ToByte($hexColor.Substring(5, 2), 16) 
     )
     $Brush = New-Object Windows.Media.SolidColorBrush
     $Brush.Color = $Color
@@ -204,7 +204,7 @@ function HandleBulkRenameClick {
 
     $CenterStackPanel.Children.Add($ButtonGrid)
 
-    # Back button
+    # Bulk Renaming Back button
     $BackButton = New-Object Windows.Controls.Button
     $BackButton.Content = "Back"
     $BackButton.Width = 100
@@ -408,7 +408,7 @@ function Show-ReplaceWindow {
 
     # Create the output TextBox for displaying the renaming results
     $ReplaceOutputTextBox = New-Object Windows.Controls.TextBox
-    $ReplaceOutputTextBox.Width = 200
+    $ReplaceOutputTextBox.Width = 300
     $ReplaceOutputTextBox.Height = 60
     $ReplaceOutputTextBox.FontSize = 12
     $ReplaceOutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
@@ -463,7 +463,7 @@ function Show-ReplaceWindow {
 
     # Create the output TextBox for displaying the renaming results
     $ReplaceOutputTextBox = New-Object Windows.Controls.TextBox
-    $ReplaceOutputTextBox.Width = 200
+    $ReplaceOutputTextBox.Width = 300
     $ReplaceOutputTextBox.Height = 60
     $ReplaceOutputTextBox.FontSize = 12
     $ReplaceOutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
@@ -491,7 +491,7 @@ function Show-ReplaceWindow {
 
     $ReplaceApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
     $ReplaceUndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
-    $ReplaceRedoButton = Create-SmallButton -Content "Redo" -Row 1 -Column 1
+    $ReplaceRedoButton = Create-SmallButton -Content "Redo" -Row 0 -Column 1
 
     $ReplaceButtonGrid.Children.Add($ReplaceApplyButton)
     $ReplaceButtonGrid.Children.Add($ReplaceUndoButton)
@@ -499,21 +499,27 @@ function Show-ReplaceWindow {
 
     $ReplaceCenterStackPanel.Children.Add($ReplaceButtonGrid)
 
-    # Back button below the other buttons
+    # Replace Back button
     $ReplaceBackButton = New-Object Windows.Controls.Button
     $ReplaceBackButton.Content = "Back"
-    $ReplaceBackButton.Width = 90
+    $ReplaceBackButton.Width = 100
     $ReplaceBackButton.Height = 30
-    $ReplaceBackButton.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $ReplaceBackButton.Margin = [Windows.Thickness]::new(0, 3, 0, 0)
     $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $ReplaceBackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceBackButton.FontSize = 12
     $ReplaceBackButton.FontWeight = "Bold"
     $ReplaceBackButton.Add_Click({
         $ReplaceWindow.Close()  # Close the current Replace window
-        $MainPageWindow.ShowDialog() | Out-Null         # Open the main window
+        $MainPageWindow.ShowDialog() | Out-Null # Open the main window
     })
-    $ReplaceCenterStackPanel.Children.Add($ReplaceBackButton)
+
+    # Set the Back button's position in the grid
+    [Windows.Controls.Grid]::SetRow($ReplaceBackButton, 1)
+    [Windows.Controls.Grid]::SetColumn($ReplaceBackButton, 1)
+
+    # Add the Back button to the ReplaceButtonGrid
+    $ReplaceButtonGrid.Children.Add($ReplaceBackButton)
 
     $ReplaceGrid.Children.Add($ReplaceCenterStackPanel)
 
