@@ -930,7 +930,7 @@ $MainGrid.VerticalAlignment = "Center"
 # Load the Logo Image
 $LogoSource = New-Object System.Windows.Media.Imaging.BitmapImage
 $LogoSource.BeginInit()
-$LogoSource.UriSource = New-Object System.Uri("c:\Users\zcint\Downloads\Shiftify Logo.png")  
+$LogoSource.UriSource = New-Object System.Uri("Shiftify Logo.png", [System.UriKind]::RelativeOrAbsolute)  
 $LogoSource.EndInit()
 
 # Create an Image Control for the Logo
