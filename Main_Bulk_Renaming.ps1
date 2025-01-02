@@ -166,12 +166,14 @@ function HandleBulkRenameClick {
     
     # Create the TextBox for output display
     $OutputTextBox = New-Object Windows.Controls.TextBox
-    $OutputTextBox.Width = 200
+    $OutputTextBox.Width = 300
     $OutputTextBox.Height = 60
     $OutputTextBox.FontSize = 12
     $OutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $OutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
     $OutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $OutputTextBox.BorderThickness = [Windows.Thickness]::new(2)
+
     $OutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
 
     # Enable scrolling for the output box
@@ -192,10 +194,10 @@ function HandleBulkRenameClick {
         $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
     }
 
-    $RenameButton = Create-SmallButton -Content "Rename" -Row 0 -Column 1
+    $RenameButton = Create-SmallButton -Content "Rename" -Row 0 -Column 0
     $UndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
-    $RedoButton = Create-SmallButton -Content "Redo" -Row 1 -Column 1
-
+    $RedoButton = Create-SmallButton -Content "Redo" -Row 0 -Column 1
+    
     $ButtonGrid.Children.Add($RenameButton)
     $ButtonGrid.Children.Add($UndoButton)
     $ButtonGrid.Children.Add($RedoButton)
@@ -212,8 +214,14 @@ function HandleBulkRenameClick {
     $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $BackButton.FontSize = 12
     $BackButton.FontWeight = "Bold"
-    $CenterStackPanel.Children.Add($BackButton)
 
+    # Set the "Back" button's position in the grid
+    [Windows.Controls.Grid]::SetRow($BackButton, 1)
+    [Windows.Controls.Grid]::SetColumn($BackButton, 1)
+
+    # Add the "Back" button to the ButtonGrid
+    $ButtonGrid.Children.Add($BackButton)
+    
     $BulkGrid.Children.Add($CenterStackPanel)
 
     $BulkRenamingWindow.Content = $BulkGrid
