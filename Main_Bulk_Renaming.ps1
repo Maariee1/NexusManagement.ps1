@@ -743,6 +743,78 @@ function ShowPrefixsuffixWindow {
     # Set Grid as content
     $PrefixSuffixWindow.Content = $PrefixSuffixGrid
 
+    # Create undo and redo stacks
+    $undoStack = New-Object System.Collections.Stack
+    $redoStack = New-Object System.Collections.Stack
+
+    # Function to store current state to the undo stack
+    # function Save-CurrentState {
+    #     $currentState = @{
+    #         prefix = $PrefixTextBox.Text
+    #         suffix = $SuffixTextBox.Text
+    #         files = @($PrefixSuffixFileListBox.Items)
+    #     }
+    #     $undoStack.Push($currentState)
+    #     $redoStack.Clear()  # Clear redo stack whenever a new state is saved
+    # }
+
+    # # Function to undo the last action
+    # function Undo-Action {
+    #     if ($undoStack.Count -gt 0) {
+    #         $lastState = $undoStack.Pop()
+    #         $PrefixTextBox.Text = $lastState.prefix
+    #         $SuffixTextBox.Text = $lastState.suffix
+    #         $PrefixSuffixFileListBox.Items.Clear()
+    #         $lastState.files | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
+    #         $redoStack.Push($lastState)  # Push to redo stack
+    #     }
+    # }
+
+    # # Function to redo the last undone action
+    # function Redo-Action {
+    #     if ($redoStack.Count -gt 0) {
+    #         $lastUndoneState = $redoStack.Pop()
+    #         $PrefixTextBox.Text = $lastUndoneState.prefix
+    #         $SuffixTextBox.Text = $lastUndoneState.suffix
+    #         $PrefixSuffixFileListBox.Items.Clear()
+    #         $lastUndoneState.files | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
+    #         $undoStack.Push($lastUndoneState)  # Push to undo stack
+    #     }
+    # }
+
+    $ApplyButton.Add_Click({
+        # Get the prefix and suffix values from the textboxes
+        $prefix = $PrefixTextBox.Text
+        $suffix = $SuffixTextBox.Text
+        
+        # Ensure both prefix and suffix are entered
+        if (-not $prefix -and -not $suffix) {
+            Write-Host "Error: Both prefix and suffix cannot be empty." -ForegroundColor Red
+            return
+        }
+    
+        # Get the list of selected files
+        $selectedFiles = @()
+        foreach ($file in $PrefixSuffixFileListBox.Items) {
+            $selectedFiles += $file
+        }
+    
+        # Call the Rename-WithPrefixSuffix function to rename the files
+        $batchOperation = Rename-WithPrefixSuffix -selectedFiles $selectedFiles -prefix $prefix -suffix $suffix
+        
+        # Clear the output TextBox (but not the list box)
+        $SuffixPrefixOutputTextBox.Clear()
+    
+        # Process each operation in batch
+        foreach ($operation in $batchOperation) {
+            # Format the renaming message
+            $renamingMessage = "Renamed '$($operation.OriginalPath)' to '$($operation.NewPath)'"
+            
+            # Display the message in the output TextBox, appending to existing content
+            $SuffixPrefixOutputTextBox.AppendText($renamingMessage + "`r`n")
+        }
+    })
+
     # Back Button Logic (close the current window and show the MainPageWindow)
     $BackButton.Add_Click({
         $PrefixSuffixWindow.Close()
