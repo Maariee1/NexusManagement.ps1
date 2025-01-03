@@ -358,19 +358,19 @@ foreach ($width in $columnDefinitions) {
     $null = $grid.ColumnDefinitions.Add($col)
 }
 
-# Path to the Logo Image
-$imagePath = "C:\Users\Admin\Documents\GitHub\NexusManagement.ps1\NexusManagement.ps1\SnipSync Logo.png"
+# # Path to the Logo Image
+# $imagePath = "C:\Users\Admin\Documents\GitHub\NexusManagement.ps1\NexusManagement.ps1\SnipSync Logo.png"
 
-# Check if the file exists
-if (-Not (Test-Path $imagePath)) {
-    [System.Windows.MessageBox]::Show("Error: Logo file not found at $imagePath", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
-    return
-}
+# # Check if the file exists
+# if (-Not (Test-Path $imagePath)) {
+#     [System.Windows.MessageBox]::Show("Error: Logo file not found at $imagePath", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+#     return
+# }
 
 # Load the Logo Image
 $LogoSource = New-Object System.Windows.Media.Imaging.BitmapImage
 $LogoSource.BeginInit()
-$LogoSource.UriSource = New-Object System.Uri($imagePath, [System.UriKind]::Absolute)
+$LogoSource.UriSource = New-Object System.Uri("SnipSync Logo.png", [System.UriKind]::RelativeOrAbsolute)
 $LogoSource.EndInit()
 
 # Create an Image Control for the Logo
