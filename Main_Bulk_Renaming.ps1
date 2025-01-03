@@ -260,17 +260,28 @@ function HandleBulkRenameClick {
         $OpenFileDialog.Filter = "All Files (*.*)|*.*"
         $OpenFileDialog.Title = "Select files to rename"
         $OpenFileDialog.Multiselect = $true 
-
+    
         if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             $FileListBox.Items.Clear()  # Clear any existing items in the list box
-    
+        
             # Loop through selected files
             foreach ($file in $OpenFileDialog.FileNames) {
                 $FileListBox.Items.Add($file)  # Add each selected file path to the list box
-                # Add each selected file path to the OutputTextBox
             }
         }
     })
+    
+    # Event handler for selection change on ListBox item
+    $FileListBox.Add_SelectionChanged({
+        # Get the selected file path
+        $clickedFile = $FileListBox.SelectedItem
+        
+        if ($clickedFile) {
+            # Open the file using the default application
+            Start-Process $clickedFile
+        }
+    })
+    
     # Rename button logic
     $RenameButton.Add_Click({
         $MainPageWindow.Hide()
@@ -304,46 +315,6 @@ function HandleBulkRenameClick {
     
             # Display the renaming result in the OutputTextBox
             $OutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
-        }
-    })
-    # Redo button logic
-    $RedoButton.Add_Click({
-        if ($redoStack.Count -gt 0) {
-            # Get the last operation from the redo stack
-            $operationToRedo = $redoStack[-1]
-            $redoStack = $redoStack[0..($redoStack.Count - 2)]  # Remove last operation from redo stack
-
-            # Perform the redo operation (reapply the renaming)
-            foreach ($action in $operationToRedo) {
-                Rename-Item -Path $action.OriginalPath -NewName (Split-Path -Leaf $action.NewPath) -ErrorAction Stop
-                Write-Host "Redo: Renamed '$($action.OriginalPath)' back to '$($action.NewPath)'" -ForegroundColor Cyan
-            }
-
-            # Push the operation back to the undo stack
-            $undoStack += ,$operationToRedo
-            Write-Host "Redo completed." -ForegroundColor Cyan
-        } else {
-            [System.Windows.Forms.MessageBox]::Show("No actions to redo.", "Redo", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
-        }
-    })
-    # Undo button logic
-    $UndoButton.Add_Click({
-        if ($undoStack.Count -gt 0) {
-            # Get the last operation from the undo stack
-            $lastBatch = $undoStack[-1]
-            $undoStack = $undoStack[0..($undoStack.Count - 2)]  # Remove last operation from undo stack
-
-            # Undo each rename in reverse order (restore original file names)
-            foreach ($action in $lastBatch) {
-                Rename-Item -Path $action.NewPath -NewName (Split-Path -Leaf $action.OriginalPath) -ErrorAction Stop
-                Write-Host "Undo: Renamed '$($action.NewPath)' back to '$($action.OriginalPath)'" -ForegroundColor Cyan
-            }
-
-            # Push the operation to the redo stack
-            $redoStack += ,$lastBatch
-            Write-Host "Undo completed." -ForegroundColor Cyan
-        } else {
-            [System.Windows.Forms.MessageBox]::Show("Nothing to undo.", "Undo", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
         }
     })
     # Show the Bulk Renaming window modally
@@ -547,6 +518,16 @@ function Show-ReplaceWindow {
         }
     })
 
+    $ReplaceFileListBox.Add_SelectionChanged({
+        # Get the selected file path
+        $clickedFile = $ReplaceFileListBox.SelectedItem
+        
+        if ($clickedFile) {
+            # Open the file using the default application
+            Start-Process $clickedFile
+        }
+    })
+
     $ReplaceApplyButton.Add_Click({
         $patternToFind = $ReplaceTextBox.Text
         $replacementWord = $SubstituteWithTextBox.Text
@@ -743,45 +724,6 @@ function ShowPrefixsuffixWindow {
     # Set Grid as content
     $PrefixSuffixWindow.Content = $PrefixSuffixGrid
 
-    # Create undo and redo stacks
-    $undoStack = New-Object System.Collections.Stack
-    $redoStack = New-Object System.Collections.Stack
-
-    # Function to store current state to the undo stack
-    # function Save-CurrentState {
-    #     $currentState = @{
-    #         prefix = $PrefixTextBox.Text
-    #         suffix = $SuffixTextBox.Text
-    #         files = @($PrefixSuffixFileListBox.Items)
-    #     }
-    #     $undoStack.Push($currentState)
-    #     $redoStack.Clear()  # Clear redo stack whenever a new state is saved
-    # }
-
-    # # Function to undo the last action
-    # function Undo-Action {
-    #     if ($undoStack.Count -gt 0) {
-    #         $lastState = $undoStack.Pop()
-    #         $PrefixTextBox.Text = $lastState.prefix
-    #         $SuffixTextBox.Text = $lastState.suffix
-    #         $PrefixSuffixFileListBox.Items.Clear()
-    #         $lastState.files | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
-    #         $redoStack.Push($lastState)  # Push to redo stack
-    #     }
-    # }
-
-    # # Function to redo the last undone action
-    # function Redo-Action {
-    #     if ($redoStack.Count -gt 0) {
-    #         $lastUndoneState = $redoStack.Pop()
-    #         $PrefixTextBox.Text = $lastUndoneState.prefix
-    #         $SuffixTextBox.Text = $lastUndoneState.suffix
-    #         $PrefixSuffixFileListBox.Items.Clear()
-    #         $lastUndoneState.files | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
-    #         $undoStack.Push($lastUndoneState)  # Push to undo stack
-    #     }
-    # }
-
     $ApplyButton.Add_Click({
         # Get the prefix and suffix values from the textboxes
         $prefix = $PrefixTextBox.Text
@@ -806,9 +748,14 @@ function ShowPrefixsuffixWindow {
         $SuffixPrefixOutputTextBox.Clear()
     
         # Process each operation in batch
+        # Process each operation in batch
         foreach ($operation in $batchOperation) {
+            # Extract the old and new filenames from the operation
+            $originalFileName = [System.IO.Path]::GetFileName($operation.OriginalPath)  # Get original file name
+            $newFileName = [System.IO.Path]::GetFileName($operation.NewPath)  # Get new file name
+
             # Format the renaming message
-            $renamingMessage = "Renamed '$($operation.OriginalPath)' to '$($operation.NewPath)'"
+            $renamingMessage = "Renamed '$originalFileName' to '$newFileName'"
             
             # Display the message in the output TextBox, appending to existing content
             $SuffixPrefixOutputTextBox.AppendText($renamingMessage + "`r`n")
@@ -819,6 +766,17 @@ function ShowPrefixsuffixWindow {
     $BackButton.Add_Click({
         $PrefixSuffixWindow.Close()
         $MainPageWindow.ShowDialog() | Out-Null
+    })
+
+    # Event handler for selection change on ListBox item
+    $PrefixSuffixFileListBox.Add_SelectionChanged({
+        # Get the selected file path
+        $clickedFile = $PrefixSuffixFileListBox.SelectedItem
+        
+        if ($clickedFile) {
+            # Open the file using the default application
+            Start-Process $clickedFile
+        }
     })
 
     # Show the Prefix-Suffix window
@@ -951,6 +909,16 @@ function showEncryptDecryptWindow {
             foreach ($file in $OpenFileDialog.FileNames) {
                 $EncryptionFileListBox.Items.Add($file)
             }
+        }
+    })
+
+    $EncryptionFileListBox.Add_SelectionChanged({
+        # Get the selected file path
+        $clickedFile = $EncryptionFileListBox.SelectedItem
+        
+        if ($clickedFile) {
+            # Open the file using the default application
+            Start-Process $clickedFile
         }
     })
 
