@@ -330,7 +330,7 @@ function New-SolidColorBrush {
 
 # Main window
 $window = New-Object System.Windows.Window
-$window.Title = "File Splitter and Joiner"
+$window.Title = "Snip Sync: File Splitter and Joiner"
 $window.Width = 400
 $window.Height = 400
 $window.ResizeMode = "NoResize"
@@ -640,7 +640,7 @@ function CreateSplitWindow {
 
     #Start Button 
     $startButton = New-Object System.Windows.Controls.Button
-    $startButton.Content = "Start"
+    $startButton.Content = "Split"
     $startButton.Width = 80
     $startButton.Margin = "10,0,10,0"
     $startButton.FontWeight = "Bold"
@@ -829,7 +829,7 @@ function CreateJoinWindow {
     [System.Windows.Controls.Grid]::SetRow($buttonPanel, 4)
     #Start Button
     $startButton = New-Object System.Windows.Controls.Button
-    $startButton.Content = "Start"
+    $startButton.Content = "Join"
     $startButton.Width = 80
     $startButton.Margin = "10,0,10,0"
     $startButton.FontWeight = "Bold"
