@@ -332,7 +332,7 @@ function New-SolidColorBrush {
 $window = New-Object System.Windows.Window
 $window.Title = "File Splitter and Joiner"
 $window.Width = 400
-$window.Height = 400  # Reduced height
+$window.Height = 400
 $window.ResizeMode = "NoResize"
 $window.Background = New-SolidColorBrush -R 173 -G 216 -B 230 # LightBlue
 $window.WindowStartupLocation = "CenterScreen"
@@ -341,62 +341,49 @@ $window.WindowStartupLocation = "CenterScreen"
 $grid = New-Object System.Windows.Controls.Grid
 $grid.Margin = "10"
 
-# Grid rows
-$rowDefinitions = @(80, 30, 40, 40, 40, 40, 40) # Adjusted row heights for compact layout
+# Define rows
+$rowDefinitions = @(170, 50, 50, 50, 50)  # Increase first row height (logo) to 100px
 foreach ($height in $rowDefinitions) {
     $row = New-Object System.Windows.Controls.RowDefinition
-    $row.Height = [System.Windows.GridLength]::Auto
+    $row.Height = [System.Windows.GridLength]::new($height, [System.Windows.GridUnitType]::Pixel)
     $null = $grid.RowDefinitions.Add($row)
 }
 
-# Title container (border for styling)
-$titleBorder = New-Object System.Windows.Controls.Border
-$titleBorder.BorderBrush = New-SolidColorBrush -R 0 -G 0 -B 0  # Black border
-$titleBorder.BorderThickness = [System.Windows.Thickness]::new(2)
-$titleBorder.Background = New-SolidColorBrush -R 70 -G 130 -B 180  # SteelBlue background
-$titleBorder.Margin = "0,10,0,10"
-$titleBorder.CornerRadius = "5"  # Slightly rounded corners
-$titleBorder.SetValue([System.Windows.Controls.Grid]::RowProperty, 0)
 
-# Title TextBlock with styling
-$titleText = New-Object System.Windows.Controls.TextBlock
-$titleText.Text = "File Splitter and Joiner"
-$titleText.FontSize = 24
-$titleText.FontWeight = "Bold"
-$titleText.FontFamily = New-Object System.Windows.Media.FontFamily("Monsterrat")
-$titleText.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255  # White text
-$titleText.TextAlignment = "Center"
-$titleText.VerticalAlignment = "Center"
+# Define columns
+$columnDefinitions = @(1, 1)  # Two equal-width columns
+foreach ($width in $columnDefinitions) {
+    $col = New-Object System.Windows.Controls.ColumnDefinition
+    $col.Width = [System.Windows.GridLength]::new($width, [System.Windows.GridUnitType]::Star)
+    $null = $grid.ColumnDefinitions.Add($col)
+}
 
-# Adds a shadow effect to the title text
-$dropShadowEffect = New-Object System.Windows.Media.Effects.DropShadowEffect
-$dropShadowEffect.Color = [System.Windows.Media.Color]::FromArgb(100, 0, 0, 0)  # Semi-transparent black shadow
-$dropShadowEffect.Direction = 320  # Angle of the shadow
-$dropShadowEffect.ShadowDepth = 5  # Distance of shadow
-$dropShadowEffect.BlurRadius = 10  # Blur of shadow
+# Path to the Logo Image
+$imagePath = "C:\Users\Admin\Documents\GitHub\NexusManagement.ps1\NexusManagement.ps1\SnipSync Logo.png"
 
-$titleText.Effect = $dropShadowEffect
+# Check if the file exists
+if (-Not (Test-Path $imagePath)) {
+    [System.Windows.MessageBox]::Show("Error: Logo file not found at $imagePath", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+    return
+}
 
-# Adds the TextBlock to the Border
-$titleBorder.Child = $titleText
+# Load the Logo Image
+$LogoSource = New-Object System.Windows.Media.Imaging.BitmapImage
+$LogoSource.BeginInit()
+$LogoSource.UriSource = New-Object System.Uri($imagePath, [System.UriKind]::Absolute)
+$LogoSource.EndInit()
 
-# Adds the title border to the grid
-$null = $grid.Children.Add($titleBorder)
-
-# Adds motto text
-$motto = New-Object System.Windows.Controls.TextBlock
-$motto.Text = "Effortless File Management"
-$motto.FontSize = 12
-$motto.HorizontalAlignment = "Center"
-$motto.Foreground = New-SolidColorBrush -R 0 -G 0 -B 128 # Navy
-$motto.SetValue([System.Windows.Controls.Grid]::RowProperty, 1)
-$null = $grid.Children.Add($motto)
-
-# Sets the grid as the window content
-$window.Content = $grid
-
-# Assigns the main window
-$MainWindow = $window
+# Create an Image Control for the Logo
+$LogoImage = New-Object Windows.Controls.Image
+$LogoImage.Source = $LogoSource
+$LogoImage.Width = 800  # Scaled down
+$LogoImage.Height = 290 # Scaled down
+$LogoImage.HorizontalAlignment = "Center"
+$LogoImage.VerticalAlignment = "Center"
+$LogoImage.Margin = [Windows.Thickness]::new(0, 10, 0, 10)
+$LogoImage.SetValue([System.Windows.Controls.Grid]::RowProperty, 0)
+$LogoImage.SetValue([System.Windows.Controls.Grid]::ColumnSpanProperty, 2)  # Span across both columns
+$grid.Children.Add($LogoImage) | Out-Null
 
 # Function to handle button clicks
 function HandleButtonClick {
@@ -427,63 +414,74 @@ function HandleButtonClick {
     }
 }
 
-# Creates buttons
-$buttonNames = @("Split", "Join", "Encrypt", "Decrypt", "Exit")
-$buttonColors = @(
-    @{ R = 70; G = 130; B = 180 },  # SteelBlue
-    @{ R = 70; G = 130; B = 180 },  # SteelBlue
-    @{ R = 70; G = 130; B = 180 },  # SteelBlue
-    @{ R = 70; G = 130; B = 180 },  # SteelBlue
-    @{ R = 0; G = 0; B = 139 }      # Darker Blue for Exit
+# Buttons data
+$buttonData = @(
+    @{ Name = "Split"; Row = 1; Column = 0 },
+    @{ Name = "Join"; Row = 1; Column = 1 },
+    @{ Name = "Encrypt"; Row = 2; Column = 0 },
+    @{ Name = "Decrypt"; Row = 2; Column = 1 },
+    @{ Name = "Exit"; Row = 3; Column = 0; ColumnSpan = 2 }
 )
 
-for ($i = 0; $i -lt $buttonNames.Length; $i++) {
-    # Button container (Border for styling)
-    $buttonBorder = New-Object System.Windows.Controls.Border
-    $buttonBorder.Background = New-SolidColorBrush -R $buttonColors[$i].R -G $buttonColors[$i].G -B $buttonColors[$i].B
-    $buttonBorder.CornerRadius = "5"  # Slightly rounded corners
-    $buttonBorder.Padding = "2"
-    $buttonBorder.Margin = "0,5,0,5"
-    $buttonBorder.Width = 130
-    $buttonBorder.Height = 40
-    $buttonBorder.HorizontalAlignment = "Center"
-
-    # Button with custom TextBlock for drop shadow effect
-    $button = New-Object System.Windows.Controls.Button
-    $button.Width = 130
-    $button.Height = 40
-    $button.Background = [System.Windows.Media.Brushes]::Transparent  # Transparent to let Border handle design
-    $button.BorderThickness = "0"  # No border around the button itself
-    $button.Padding = "0"
-
-    $buttonText = New-Object System.Windows.Controls.TextBlock
-    $buttonText.Text = $buttonNames[$i]
-    $buttonText.FontSize = 14
-    $buttonText.FontWeight = "Bold"
-    $buttonText.FontFamily = New-Object System.Windows.Media.FontFamily("Arial")
-    $buttonText.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255  # White text
-    $buttonText.HorizontalAlignment = "Center"
-    $buttonText.VerticalAlignment = "Center"
-
-    # Adding a DropShadowEffect to the TextBlock
-    $buttonText.Effect = New-Object System.Windows.Media.Effects.DropShadowEffect -Property @{
-        BlurRadius = 4
-        ShadowDepth = 2
-        Color = [System.Windows.Media.Color]::FromArgb(255, 0, 0, 0)  # Black shadow
-        Opacity = 0.7
+# Create buttons dynamically
+foreach ($data in $buttonData) {
+    # Create a Border to wrap the Button
+    $border = New-Object System.Windows.Controls.Border
+    $border.Width = 150
+    $border.Height = 50
+    $border.CornerRadius = New-Object System.Windows.CornerRadius 15 # Rounded corners
+    $border.HorizontalAlignment = "Center"
+    $border.VerticalAlignment = "Center"
+    $border.Margin = [Windows.Thickness]::new(5)
+    $border.Background = if ($data.Name -eq "Exit") {
+        New-SolidColorBrush -R 0 -G 0 -B 139 # DarkBlue
+    } else {
+        New-SolidColorBrush -R 70 -G 130 -B 180 # SteelBlue
     }
 
-    $button.Content = $buttonText
-    # Add click event handler
+    # Add Drop Shadow Effect to Border
+    $borderDropShadow = New-Object System.Windows.Media.Effects.DropShadowEffect
+    $borderDropShadow.Color = [System.Windows.Media.Colors]::Black
+    $borderDropShadow.Direction = 315
+    $borderDropShadow.ShadowDepth = 5
+    $borderDropShadow.Opacity = 0.5
+    $borderDropShadow.BlurRadius = 10
+    $border.Effect = $borderDropShadow
+
+    # Create the Button inside the Border
+    $button = New-Object System.Windows.Controls.Button
+    $button.Content = $data.Name
+    $button.FontSize = 14
+    $button.FontWeight = "Bold"
+    $button.Foreground = [System.Windows.Media.Brushes]::White
+    $button.Background = [System.Windows.Media.Brushes]::Transparent
+    $button.BorderThickness = [System.Windows.Thickness]::new(0) # Remove default button border
+
+    # Attach button click handler
     $button.Add_Click({
         param ($sender, $args)
-        HandleButtonClick -Action $sender.Content.Text -MainWindow $MainWindow
+        HandleButtonClick -Action $sender.Content -MainWindow $MainWindow
     })
 
-    $buttonBorder.Child = $button
-    $buttonBorder.SetValue([System.Windows.Controls.Grid]::RowProperty, $i + 2)
-    $null = $grid.Children.Add($buttonBorder)
+    # Add the Button as a child of the Border
+    $border.Child = $button
+
+    # Set position in the grid
+    $border.SetValue([System.Windows.Controls.Grid]::RowProperty, $data.Row)
+    $border.SetValue([System.Windows.Controls.Grid]::ColumnProperty, $data.Column)
+    if ($data.ContainsKey("ColumnSpan")) {
+        $border.SetValue([System.Windows.Controls.Grid]::ColumnSpanProperty, $data.ColumnSpan)
+    }
+
+    # Add Border (with Button inside) to the Grid
+    $grid.Children.Add($border) | Out-Null
 }
+
+
+
+# Set the grid as the window content
+$window.Content = $grid
+
 
 # Split Window (1st window)
 function CreateSplitWindow {
@@ -650,44 +648,48 @@ function CreateSplitWindow {
     $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
 
     #This is where split functionality happens in this window
-    $startButton.Add_Click({
-        if (-not $inputBox.Text -or -not $outputBox.Text -or -not $splitSizeBox.Text) {
-            [System.Windows.MessageBox]::Show("Please fill in all fields!", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
-            return
+$startButton.Add_Click({
+    if (-not $inputBox.Text -or -not $outputBox.Text -or -not $splitSizeBox.Text) {
+        Write-Host "Error: Please fill in all fields!" -ForegroundColor Red
+        [System.Windows.MessageBox]::Show("Please fill in all fields!", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+        return
+    }
+
+    $size = [int]$splitSizeBox.Text
+    $unit = $unitBox.SelectedItem.ToString()
+
+    $chunkSize = switch ($unit) {
+        "Kbytes" { $size * 1024 }
+        "Mbytes" { $size * 1024 * 1024 }
+    }
+
+    try {
+        $inputFile = $inputBox.Text
+        $baseName = [System.IO.Path]::GetFileName($inputFile)
+        $outputDir = $outputBox.Text
+
+        $fileStream = [System.IO.File]::OpenRead($inputFile)
+        $buffer = New-Object byte[] $chunkSize
+        $chunkNum = 0
+
+        while ($bytesRead = $fileStream.Read($buffer, 0, $buffer.Length)) {
+            $chunkPath = Join-Path $outputDir "$baseName.part$chunkNum"
+            $chunkStream = [System.IO.File]::OpenWrite($chunkPath)
+            $chunkStream.Write($buffer, 0, $bytesRead)
+            $chunkStream.Close()
+            $chunkNum++
         }
 
-        $size = [int]$splitSizeBox.Text
-        $unit = $unitBox.SelectedItem.ToString()
-        
-        $chunkSize = switch ($unit) {
-            "Kbytes" { $size * 1024 }
-            "Mbytes" { $size * 1024 * 1024 }
-        }
+        $fileStream.Close()
+        Write-Host "Success: File successfully split into $chunkNum parts!" -ForegroundColor Green
+        [System.Windows.MessageBox]::Show("File successfully split into $chunkNum parts!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+    }
+    catch {
+        Write-Host "Error: Unable to split file. $_" -ForegroundColor Red
+        [System.Windows.MessageBox]::Show("Error splitting file: $_", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+    }
+})
 
-        try {
-            $inputFile = $inputBox.Text
-            $baseName = [System.IO.Path]::GetFileName($inputFile)
-            $outputDir = $outputBox.Text
-
-            $fileStream = [System.IO.File]::OpenRead($inputFile)
-            $buffer = New-Object byte[] $chunkSize
-            $chunkNum = 0
-
-            while ($bytesRead = $fileStream.Read($buffer, 0, $buffer.Length)) {
-                $chunkPath = Join-Path $outputDir "$baseName.part$chunkNum"
-                $chunkStream = [System.IO.File]::OpenWrite($chunkPath)
-                $chunkStream.Write($buffer, 0, $bytesRead)
-                $chunkStream.Close()
-                $chunkNum++
-            }
-
-            $fileStream.Close()
-            [System.Windows.MessageBox]::Show("File successfully split into $chunkNum parts!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
-        }
-        catch {
-            [System.Windows.MessageBox]::Show("Error splitting file: $_", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
-        }
-    })
     $buttonPanel.Children.Add($startButton)
 
     #Close Button
@@ -837,6 +839,7 @@ function CreateJoinWindow {
     # This is where the join functionality happens in this window
     $startButton.Add_Click({
         if (-not $inputBox.Text -or -not $outputBox.Text) {
+            Write-Host "Error: Please fill in all fields!" -ForegroundColor Red
             [System.Windows.MessageBox]::Show("Please fill in all fields!", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
@@ -851,6 +854,7 @@ function CreateJoinWindow {
             $partFiles = Get-ChildItem -Path $fileDir -Filter "$baseName.part*" | Sort-Object Name
             
             if ($partFiles.Count -eq 0) {
+                Write-Host "Error: No part files found!" -ForegroundColor Red
                 throw "No part files found!"
             }
     
@@ -869,12 +873,15 @@ function CreateJoinWindow {
             }
     
             $outputStream.Close()
+            Write-Host "Success: Files successfully joined." -ForegroundColor Green
             [System.Windows.MessageBox]::Show("Files successfully joined.", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
         }
         catch {
+            Write-Host "Error: Unable to join files. $_" -ForegroundColor Red
             [System.Windows.MessageBox]::Show("Error joining files: $_", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
         }
     })
+    
     $buttonPanel.Children.Add($startButton)
     #Close Button
     $closeButton = New-Object System.Windows.Controls.Button
@@ -1063,29 +1070,35 @@ function CreateEncryptionWindow {
     $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
     $startButton.Add_Click({
         $password = if ($outputBox.Visibility -eq "Visible") { $outputBox.Password } else { $outputTextBox.Text }
-
+    
         if ([string]::IsNullOrWhiteSpace($inputBox.Text)) {
+            Write-Host "Error: Please select a file to encrypt." -ForegroundColor Red
             [System.Windows.MessageBox]::Show("Please select a file to encrypt.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
         if ([string]::IsNullOrWhiteSpace($password)) {
+            Write-Host "Error: Please enter a password." -ForegroundColor Red
             [System.Windows.MessageBox]::Show("Please enter a password.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
         if (!(Test-Path $inputBox.Text)) {
+            Write-Host "Error: Selected file does not exist." -ForegroundColor Red
             [System.Windows.MessageBox]::Show("Selected file does not exist.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
         
         try {
             Encrypt-File -InputFile $inputBox.Text -Password $password
+            Write-Host "Success: File encrypted successfully!" -ForegroundColor Green
             [System.Windows.MessageBox]::Show("File encrypted successfully!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
             $encryptionWindow.Close()
         }
         catch {
+            Write-Host "Error: Failed to encrypt file: $($_.Exception.Message)" -ForegroundColor Red
             [System.Windows.MessageBox]::Show("Failed to encrypt file: $($_.Exception.Message)", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
         }
     })
+    
     $buttonPanel.Children.Add($startButton)
 
     $closeButton = New-Object System.Windows.Controls.Button
@@ -1275,38 +1288,43 @@ function CreateDecryptionWindow {
         $password = if ($outputBox.Visibility -eq "Visible") { $outputBox.Password } else { $outputTextBox.Text }
         $maxAttempts = 3
         $currentAttempt = 1
-
+    
         if ([string]::IsNullOrWhiteSpace($inputBox.Text)) {
+            Write-Host "Error: Please select a file to decrypt." -ForegroundColor Red
             [System.Windows.MessageBox]::Show("Please select a file to decrypt.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
         if ([string]::IsNullOrWhiteSpace($password)) {
+            Write-Host "Error: Please enter a password." -ForegroundColor Red
             [System.Windows.MessageBox]::Show("Please enter a password.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
         if (!(Test-Path $inputBox.Text)) {
+            Write-Host "Error: Selected file does not exist." -ForegroundColor Red
             [System.Windows.MessageBox]::Show("Selected file does not exist.", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
             return
         }
-
+    
         while ($currentAttempt -le $maxAttempts) {
             try {
                 $result = Decrypt-File -InputFile $inputBox.Text -Password $password
-
+    
                 if ($result) {
+                    Write-Host "Success: File decrypted successfully!" -ForegroundColor Green
                     [System.Windows.MessageBox]::Show("File decrypted successfully!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
                     $decryptionWindow.Close()
                     return
                 } else {
                     $remainingAttempts = $maxAttempts - $currentAttempt
                     if ($remainingAttempts -gt 0) {
+                        Write-Host "Warning: Incorrect password. $remainingAttempts attempts remaining." -ForegroundColor Yellow
                         $response = [System.Windows.MessageBox]::Show(
                             "Incorrect password. $remainingAttempts attempts remaining.`nWould you like to try again?",
                             "Decryption Failed",
                             [System.Windows.MessageBoxButton]::YesNo,
                             [System.Windows.MessageBoxImage]::Warning
                         )
-
+    
                         if ($response -eq [System.Windows.MessageBoxResult]::Yes) {
                             $currentAttempt++
                             $password = Read-Host "Enter decryption password"
@@ -1316,10 +1334,12 @@ function CreateDecryptionWindow {
                                 $outputTextBox.Text = $password
                             }
                         } else {
+                            Write-Host "Info: User chose not to retry decryption." -ForegroundColor Cyan
                             $decryptionWindow.Close()
                             return
                         }
                     } else {
+                        Write-Host "Error: Maximum password attempts exceeded. Exiting decryption." -ForegroundColor Red
                         [System.Windows.MessageBox]::Show(
                             "Maximum password attempts exceeded. Returning to main menu.",
                             "Decryption Failed",
@@ -1332,12 +1352,14 @@ function CreateDecryptionWindow {
                 }
             }
             catch {
+                Write-Host "Error: Failed to decrypt file: $($_.Exception.Message)" -ForegroundColor Red
                 [System.Windows.MessageBox]::Show("Failed to decrypt file: $($_.Exception.Message)", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
                 $decryptionWindow.Close()
                 return
             }
         }
     })
+    
     $buttonPanel.Children.Add($startButton)
 
     $closeButton = New-Object System.Windows.Controls.Button
