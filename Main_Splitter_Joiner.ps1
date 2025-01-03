@@ -1095,7 +1095,7 @@ function CreateEncryptionWindow {
         }
         catch {
             Write-Host "Error: Failed to encrypt file: $($_.Exception.Message)" -ForegroundColor Red
-            [System.Windows.MessageBox]::Show("Failed to encrypt file: $($_.Exception.Message)", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+            [System.Windows.MessageBox]::Show("$($_.Exception.Message)", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
         }
     })
     

@@ -5,41 +5,64 @@ function Encrypt-File {
         [string]$Password     # Password for encryption
     )
 
-    # Generate a 32-byte key and 16-byte IV from the password
-    $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
-    $IV = New-Object byte[] 16
-    [System.Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($IV)
+    try {
+        # Check if file is already encrypted by reading first bytes
+        $FileContent = [System.IO.File]::ReadAllBytes($InputFile)
+        if ($FileContent.Length -ge 16) {
+            $HeaderBytes = $FileContent[0..15]
+            $Header = [System.Text.Encoding]::UTF8.GetString($HeaderBytes)
+            if ($Header -eq "ENCRYPTED_HEADER") {
+                throw "File is already encrypted."
+            }
+        }
 
-    # Initialize AES encryption
-    $Aes = [System.Security.Cryptography.Aes]::Create()
-    $Aes.Key = $Key
-    $Aes.IV = $IV
-    $Encryptor = $Aes.CreateEncryptor()
+        # Generate a 32-byte key and 16-byte IV from the password
+        $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
+        $IV = New-Object byte[] 16
+        [System.Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($IV)
 
-    # Read the file content into memory
-    $FileContent = [System.IO.File]::ReadAllBytes($InputFile)
+        # Initialize AES encryption
+        $Aes = [System.Security.Cryptography.Aes]::Create()
+        $Aes.Key = $Key
+        $Aes.IV = $IV
+        $Encryptor = $Aes.CreateEncryptor()
 
-    # Create a memory stream to hold the encrypted data
-    $EncryptedData = New-Object System.IO.MemoryStream
+        # Create a memory stream to hold the encrypted data
+        $EncryptedData = New-Object System.IO.MemoryStream
 
-    # Write the custom header to the encrypted data
-    $Header = "ENCRYPTED_HEADER"
-    $HeaderBytes = [System.Text.Encoding]::UTF8.GetBytes($Header)
-    $EncryptedData.Write($HeaderBytes, 0, $HeaderBytes.Length)
+        # Write the custom header to the encrypted data
+        $Header = "ENCRYPTED_HEADER"
+        $HeaderBytes = [System.Text.Encoding]::UTF8.GetBytes($Header)
+        $EncryptedData.Write($HeaderBytes, 0, $HeaderBytes.Length)
 
-    # Write the IV to the encrypted data
-    $EncryptedData.Write($IV, 0, $IV.Length)
+        # Write the IV to the encrypted data
+        $EncryptedData.Write($IV, 0, $IV.Length)
 
-    # Encrypt the file content and write to the memory stream
-    $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($EncryptedData, $Encryptor, [System.Security.Cryptography.CryptoStreamMode]::Write)
-    $CryptoStream.Write($FileContent, 0, $FileContent.Length)
-    $CryptoStream.Close()
+        # Create hash of the password and write it (for validation during decryption)
+        $PasswordHash = (New-Object System.Security.Cryptography.SHA256Managed).ComputeHash([System.Text.Encoding]::UTF8.GetBytes($Password))
+        $EncryptedData.Write($PasswordHash, 0, $PasswordHash.Length)
 
-    # Overwrite the original file with the encrypted data
-    [System.IO.File]::WriteAllBytes($InputFile, $EncryptedData.ToArray())
-    $EncryptedData.Close()
+        # Encrypt the file content and write to the memory stream
+        $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($EncryptedData, $Encryptor, [System.Security.Cryptography.CryptoStreamMode]::Write)
+        $CryptoStream.Write($FileContent, 0, $FileContent.Length)
+        $CryptoStream.FlushFinalBlock()
+        $CryptoStream.Close()
 
-    Write-Output "File is encrypted."
+        # Overwrite the original file with the encrypted data
+        [System.IO.File]::WriteAllBytes($InputFile, $EncryptedData.ToArray())
+        $EncryptedData.Close()
+
+        Write-Output "File encrypted successfully."
+    }
+    catch {
+        if ($_.Exception.Message -eq "File is already encrypted.") {
+            [System.Windows.Forms.MessageBox]::Show("This file is already encrypted.", "Already Encrypted", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+        }
+        else {
+            [System.Windows.Forms.MessageBox]::Show("Failed to encrypt file: $($_.Exception.Message)", "Encryption Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        }
+        throw
+    }
 }
 
 # Function to decrypt a file in place
@@ -49,60 +72,76 @@ function Decrypt-File {
         [string]$Password     # Password for decryption
     )
 
-    # Open the input file for reading
-    $FileStream = [System.IO.File]::Open($InputFile, 'Open', 'Read')
-
-   try {
-        # Read the first bytes for the header
-        $HeaderBytes = New-Object byte[] 16
-        $FileStream.Read($HeaderBytes, 0, $HeaderBytes.Length) | Out-Null
-
-        # Convert the header bytes to a string and check if it matches the signature
-        $Header = [System.Text.Encoding]::UTF8.GetString($HeaderBytes)
+    try {
+        # Open the input file for reading
+        $FileContent = [System.IO.File]::ReadAllBytes($InputFile)
+        
+        # Check if file is encrypted by verifying header
+        if ($FileContent.Length -lt 16) {
+            throw "File is not encrypted."
+        }
+        
+        $Header = [System.Text.Encoding]::UTF8.GetString($FileContent[0..15])
         if ($Header -ne "ENCRYPTED_HEADER") {
-            Write-Host "File '$InputFile' is not encrypted." -ForegroundColor Yellow
-            $FileStream.Close()
-            return
+            throw "File is not encrypted."
         }
 
-        # Read the IV (next 16 bytes after the header)
-        $IV = New-Object byte[] 16
-        $FileStream.Read($IV, 0, $IV.Length) | Out-Null
+        # Extract IV (16 bytes after header)
+        $IV = $FileContent[16..31]
 
-        # Generate the key from the password
-        $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
+        # Extract stored password hash (32 bytes after IV)
+        $StoredPasswordHash = $FileContent[32..63]
 
-        # Initialize AES decryption
-        $Aes = [System.Security.Cryptography.Aes]::Create()
-        $Aes.Key = $Key
-        $Aes.IV = $IV
-        $Decryptor = $Aes.CreateDecryptor()
+        # Calculate hash of provided password
+        $ProvidedPasswordHash = (New-Object System.Security.Cryptography.SHA256Managed).ComputeHash([System.Text.Encoding]::UTF8.GetBytes($Password))
 
-        # Move the file pointer to the position after the header and IV
-        $FileStream.Position = 32
+        # Compare password hashes
+        if (-not (Compare-Object $StoredPasswordHash $ProvidedPasswordHash)) {
+            # Generate the key from the password
+            $Key = [System.Text.Encoding]::UTF8.GetBytes($Password.PadRight(32, '0').Substring(0, 32))
 
-        # Create a CryptoStream for decryption
-        $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($FileStream, $Decryptor, [System.Security.Cryptography.CryptoStreamMode]::Read)
+            # Initialize AES decryption
+            $Aes = [System.Security.Cryptography.Aes]::Create()
+            $Aes.Key = $Key
+            $Aes.IV = $IV
+            $Decryptor = $Aes.CreateDecryptor()
 
-        # Decrypt the file content into memory
-        $DecryptedData = New-Object System.IO.MemoryStream
-        $Buffer = New-Object byte[] 4096
+            # Create streams for decryption
+            $EncryptedStream = New-Object System.IO.MemoryStream(@(,$FileContent[64..($FileContent.Length-1)]))
+            $DecryptedData = New-Object System.IO.MemoryStream
+            $CryptoStream = New-Object System.Security.Cryptography.CryptoStream($EncryptedStream, $Decryptor, [System.Security.Cryptography.CryptoStreamMode]::Read)
 
-        while (($BytesRead = $CryptoStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
-            $DecryptedData.Write($Buffer, 0, $BytesRead)
+            # Perform decryption
+            $Buffer = New-Object byte[] 4096
+            while (($BytesRead = $CryptoStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
+                $DecryptedData.Write($Buffer, 0, $BytesRead)
+            }
+
+            # Close streams
+            $CryptoStream.Close()
+            $EncryptedStream.Close()
+
+            # Write decrypted data back to file
+            [System.IO.File]::WriteAllBytes($InputFile, $DecryptedData.ToArray())
+            $DecryptedData.Close()
+
+            Write-Output "File decrypted successfully."
         }
-
-        # Close the streams
-        $CryptoStream.Close()
-        $FileStream.Close()
-
-        # Overwrite the original file with decrypted content
-        [System.IO.File]::WriteAllBytes($InputFile, $DecryptedData.ToArray())
-        $DecryptedData.Close()
-
-    } catch {
-        Write-Host "Decryption failed for file '$InputFile'." -ForegroundColor Red
-        $FileStream.Close()
+        else {
+            throw "Incorrect password."
+        }
+    }
+    catch {
+        if ($_.Exception.Message -eq "File is not encrypted.") {
+            [System.Windows.Forms.MessageBox]::Show("This file is not encrypted.", "Not Encrypted", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+        }
+        elseif ($_.Exception.Message -eq "Incorrect password.") {
+            [System.Windows.Forms.MessageBox]::Show("The password provided is incorrect.", "Incorrect Password", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        }
+        else {
+            [System.Windows.Forms.MessageBox]::Show("Failed to decrypt file: $($_.Exception.Message)", "Decryption Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        }
+        throw
     }
 }
 
