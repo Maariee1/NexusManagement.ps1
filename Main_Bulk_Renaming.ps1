@@ -957,12 +957,14 @@ function showEncryptDecryptWindow {
     # Encryption Button Logic
     $EncryptButton.Add_Click({
         if ($EncryptionFileListBox.Items.Count -eq 0) {
+            Write-Host "Error: Please select a file to encrypt." -ForegroundColor Red
             [System.Windows.Forms.MessageBox]::Show("Please select files to encrypt.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
     
         $Password = $FindTextBox.Text
         if ([string]::IsNullOrWhiteSpace($Password)) {
+            Write-Host "Error: Please enter a secret key." -ForegroundColor Red
             [System.Windows.Forms.MessageBox]::Show("Please enter a secret key.", "No Secret Key", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
@@ -986,12 +988,14 @@ function showEncryptDecryptWindow {
     # Decryption Button Logic
     $DecryptButton.Add_Click({
         if ($EncryptionFileListBox.Items.Count -eq 0) {
+            Write-Host "Error: Please select a file to decrypt." -ForegroundColor Red
             [System.Windows.Forms.MessageBox]::Show("Please select files to decrypt.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
     
         $Password = $FindTextBox.Text
         if ([string]::IsNullOrWhiteSpace($Password)) {
+            Write-Host "Error: Please enter a secret key." -ForegroundColor Red
             [System.Windows.Forms.MessageBox]::Show("Please enter a secret key.", "No Secret Key", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
