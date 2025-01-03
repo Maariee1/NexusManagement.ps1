@@ -994,6 +994,7 @@ function showEncryptDecryptWindow {
         }
     
         $Password = $FindTextBox.Text
+
         if ([string]::IsNullOrWhiteSpace($Password)) {
             Write-Host "Error: Please enter a secret key." -ForegroundColor Red
             [System.Windows.Forms.MessageBox]::Show("Please enter a secret key.", "No Secret Key", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
@@ -1001,13 +1002,21 @@ function showEncryptDecryptWindow {
         }
     
         $successCount = 0
+        $passwordCorrect = $true
+
         foreach ($filePath in $EncryptionFileListBox.Items) {
             try {
                 Decrypt-File -InputFile $filePath -Password $Password
                 Write-Host "Success: File Decrypted successfully: $filePath" -ForegroundColor Green
                 $successCount++
             } catch {
-                Write-Host "Error: Failed to decrypt file: $filePath`n$_" -ForegroundColor Red
+                if ($_.Exception.Message -match "Incorrect password") {
+                    Write-Host "Error: Incorrect password provided." -ForegroundColor Red
+                    $passwordCorrect = $false
+                    break
+                } else {
+                    Write-Host "Error: Failed to decrypt file: $filePath`n$_" -ForegroundColor Red
+                }
             }
         }
     
