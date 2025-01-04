@@ -889,6 +889,24 @@ function showEncryptDecryptWindow {
     # Create a Grid for Encryption Page
     $EncryptionGrid = New-Object Windows.Controls.Grid
 
+    # Load the Logo Image
+    $LogoSource = New-Object System.Windows.Media.Imaging.BitmapImage
+    $LogoSource.BeginInit()
+    $LogoSource.UriSource = New-Object System.Uri("Shiftify Logo.png", [System.UriKind]::RelativeOrAbsolute)
+    $LogoSource.EndInit()
+
+    # Create an Image Control for the Logo
+    $LogoImage = New-Object Windows.Controls.Image
+    $LogoImage.Source = $LogoSource
+    $LogoImage.Width = 500 # Adjust as needed
+    $LogoImage.Height = 200 # Adjust as needed
+    $LogoImage.HorizontalAlignment = "Center"
+    $LogoImage.VerticalAlignment = "Bottom"
+    $LogoImage.Margin = [Windows.Thickness]::new(0, 2, 0, -18)
+
+    # Add the Logo to the Main Grid (or use a DockPanel for more control)
+    $EncryptionGrid.Children.Add($LogoImage)
+
     # Title for Encryption Page
     $EncryptionTitleBorder = New-Object Windows.Controls.Border
     $EncryptionTitleBorder.Width = 350
