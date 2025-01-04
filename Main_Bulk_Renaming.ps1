@@ -164,6 +164,8 @@ function HandleBulkRenameClick {
     $BaseNameLabel = New-Object Windows.Controls.TextBlock
     $BaseNameLabel.Text = "Enter Base Name: "
     $BaseNameLabel.FontSize = 14
+    $BaseNameLabel.FontWeight = "Bold"
+    $BaseNameLabel.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $BaseNameLabel.VerticalAlignment = "Center"
     $BaseNamePanel.Children.Add($BaseNameLabel)
 
@@ -202,6 +204,8 @@ function HandleBulkRenameClick {
     $OutputTitle = New-Object Windows.Controls.TextBlock
     $OutputTitle.Text = "Renamed Files:"
     $OutputTitle.FontSize = 14
+    $OutputTitle.FontWeight = "Bold"
+    $OutputTitle.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $OutputTitle.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
     $OutputTitle.HorizontalAlignment = "Center"
     $CenterStackPanel.Children.Add($OutputTitle)
@@ -396,6 +400,8 @@ function Show-ReplaceWindow {
     $ReplaceLabel = New-Object Windows.Controls.TextBlock
     $ReplaceLabel.Text = "Replace:"
     $ReplaceLabel.FontSize = 14
+    $ReplaceLabel.FontWeight = "Bold"
+    $ReplaceLabel.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceLabel.Margin = [Windows.Thickness]::new(0, 0, 5, 0)
     $ReplaceWithPanel.Children.Add($ReplaceLabel)
 
@@ -407,13 +413,16 @@ function Show-ReplaceWindow {
     $ReplaceTextBox.Margin = [Windows.Thickness]::new(0, 0, 10, 0)
     $ReplaceWithPanel.Children.Add($ReplaceTextBox)
 
-    # Text box and label for "With"
+    # Label for "With"
     $SubstituteWithLabel = New-Object Windows.Controls.TextBlock
     $SubstituteWithLabel.Text = "With:"
     $SubstituteWithLabel.FontSize = 14
+    $SubstituteWithLabel.FontWeight = "Bold"
+    $SubstituteWithLabel.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $SubstituteWithLabel.Margin = [Windows.Thickness]::new(0, 0, 5, 0)
     $ReplaceWithPanel.Children.Add($SubstituteWithLabel)
 
+    # Text Box
     $SubstituteWithTextBox = New-Object Windows.Controls.TextBox
     $SubstituteWithTextBox.Width = 95
     $SubstituteWithTextBox.FontSize = 14
@@ -445,6 +454,8 @@ function Show-ReplaceWindow {
     $OutputTitle = New-Object Windows.Controls.TextBlock
     $OutputTitle.Text = "Renamed Files:"
     $OutputTitle.FontSize = 14
+    $OutputTitle.FontWeight = "Bold"
+    $OutputTitle.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $OutputTitle.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
     $OutputTitle.HorizontalAlignment = "Center"
     $ReplaceCenterStackPanel.Children.Add($OutputTitle)
@@ -635,6 +646,8 @@ function ShowPrefixsuffixWindow {
     $PrefixLabel = New-Object Windows.Controls.TextBlock
     $PrefixLabel.Text = "Enter Prefix: "
     $PrefixLabel.FontSize = 14
+    $PrefixLabel.FontWeight = "Bold"
+    $PrefixLabel.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $PrefixLabel.Margin = [Windows.Thickness]::new(0, 0, 5, 0)
     $PrefixStackPanel.Children.Add($PrefixLabel)
 
@@ -656,6 +669,8 @@ function ShowPrefixsuffixWindow {
     $SuffixLabel = New-Object Windows.Controls.TextBlock
     $SuffixLabel.Text = "Enter Suffix: "
     $SuffixLabel.FontSize = 14
+    $SuffixLabel.FontWeight = "Bold"
+    $SuffixLabel.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $SuffixLabel.Margin = [Windows.Thickness]::new(0, 0, 5, 0)
     $SuffixStackPanel.Children.Add($SuffixLabel)
 
@@ -691,6 +706,8 @@ function ShowPrefixsuffixWindow {
     $RenamedFilesTitle = New-Object Windows.Controls.TextBlock
     $RenamedFilesTitle.Text = "Renamed Files:"
     $RenamedFilesTitle.FontSize = 14
+    $RenamedFilesTitle.FontWeight = "Bold"
+    $RenamedFilesTitle.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $RenamedFilesTitle.HorizontalAlignment = "Center"
     $RenamedFilesTitle.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
     $PrefixSuffixCenterStackPanel.Children.Add($RenamedFilesTitle)
@@ -708,7 +725,6 @@ function ShowPrefixsuffixWindow {
     $SuffixPrefixOutputTextBox.VerticalScrollBarVisibility = "Auto"
     $SuffixPrefixOutputTextBox.HorizontalScrollBarVisibility = "Auto"
     $PrefixSuffixCenterStackPanel.Children.Add($SuffixPrefixOutputTextBox)
-
 
     $PrefixSuffixGrid.Children.Add($PrefixSuffixCenterStackPanel)
 
@@ -846,10 +862,13 @@ function showEncryptDecryptWindow {
     $FindLabel = New-Object Windows.Controls.TextBlock
     $FindLabel.Text = "Enter secret key: "
     $FindLabel.FontSize = 14
+    $FindLabel.FontWeight = "Bold"
+    $FindLabel.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $FindLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
     $FindLabel.HorizontalAlignment = "Center"
     $EncryptionCenterStackPanel.Children.Add($FindLabel)
 
+    # Text Box for Find
     $FindTextBox = New-Object Windows.Controls.TextBox
     $FindTextBox.Width = 200
     $FindTextBox.FontSize = 14
