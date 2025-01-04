@@ -544,8 +544,16 @@ function Show-ReplaceWindow {
         $patternToFind = $ReplaceTextBox.Text
         $replacementWord = $SubstituteWithTextBox.Text
 
+        # Check if any files have been selected
+        if ($ReplaceFileListBox.Items.Count -eq 0) {
+            Write-Host "Error: Please select a file to rename." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Please select files before proceeding.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+            return
+        }
+
         if (-not $patternToFind -or -not $replacementWord) {
             Write-Host "Error: Both 'Replace' and 'With' fields must be filled." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Both 'Replace' and 'With' fields must be filled.", "Incomplete Fill in Fields", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
 
