@@ -183,7 +183,7 @@ function HandleBulkRenameClick {
     $ButtonGrid = New-Object Windows.Controls.Grid
     $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
 
-    # Buttons for Rename, Undo, Redo
+    # Buttons for Apply, Back
     for ($row = 0; $row -lt 2; $row++) {
         $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
     }
@@ -191,13 +191,9 @@ function HandleBulkRenameClick {
         $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
     }
 
-    $RenameButton = Create-SmallButton -Content "Rename" -Row 0 -Column 0
-    $UndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
-    $RedoButton = Create-SmallButton -Content "Redo" -Row 0 -Column 1
+    $RenameButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
 
     $ButtonGrid.Children.Add($RenameButton)
-    $ButtonGrid.Children.Add($UndoButton)
-    $ButtonGrid.Children.Add($RedoButton)
 
     # Add the ButtonGrid to the main StackPanel
     $CenterStackPanel.Children.Add($ButtonGrid)
@@ -239,7 +235,7 @@ function HandleBulkRenameClick {
     $BackButton.HorizontalAlignment = "Center"
 
     # Set the "Back" button's position in the grid
-    [Windows.Controls.Grid]::SetRow($BackButton, 1)
+    [Windows.Controls.Grid]::SetRow($BackButton, 0)
     [Windows.Controls.Grid]::SetColumn($BackButton, 1)
 
     # Add the "Back" button to the ButtonGrid
@@ -427,7 +423,7 @@ function Show-ReplaceWindow {
 
     $ReplaceCenterStackPanel.Children.Add($ReplaceWithPanel)
 
-    # Buttons for Apply, Undo, Redo
+    # Buttons for Apply, Back
     $ReplaceButtonGrid = New-Object Windows.Controls.Grid
     $ReplaceButtonGrid.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
 
@@ -439,12 +435,8 @@ function Show-ReplaceWindow {
     }
 
     $ReplaceApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
-    $ReplaceUndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
-    $ReplaceRedoButton = Create-SmallButton -Content "Redo" -Row 0 -Column 1
 
     $ReplaceButtonGrid.Children.Add($ReplaceApplyButton)
-    $ReplaceButtonGrid.Children.Add($ReplaceUndoButton)
-    $ReplaceButtonGrid.Children.Add($ReplaceRedoButton)
     
     # Add the ButtonGrid to the main StackPanel
     $ReplaceCenterStackPanel.Children.Add($ReplaceButtonGrid)
@@ -486,7 +478,7 @@ function Show-ReplaceWindow {
     $ReplaceBackButton.HorizontalAlignment = "Center"
 
     # Set the "Back" button's position in the grid
-    [Windows.Controls.Grid]::SetRow($ReplaceBackButton, 1)
+    [Windows.Controls.Grid]::SetRow($ReplaceBackButton, 0)
     [Windows.Controls.Grid]::SetColumn($ReplaceBackButton, 1)
 
     $ReplaceButtonGrid.Children.Add($ReplaceBackButton)
@@ -676,7 +668,7 @@ function ShowPrefixsuffixWindow {
 
     $PrefixSuffixCenterStackPanel.Children.Add($SuffixStackPanel)
 
-    # Buttons for Apply, Undo, Redo, and Back
+    # Buttons for Apply, Back
     $ButtonGrid = New-Object Windows.Controls.Grid
     $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 10)
 
@@ -688,13 +680,9 @@ function ShowPrefixsuffixWindow {
     }
 
     $ApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
-    $UndoButton = Create-SmallButton -Content "Undo" -Row 0 -Column 1
-    $RedoButton = Create-SmallButton -Content "Redo" -Row 1 -Column 0
-    $BackButton = Create-SmallButton -Content "Back" -Row 1 -Column 1
+    $BackButton = Create-SmallButton -Content "Back" -Row 0 -Column 1
 
     $ButtonGrid.Children.Add($ApplyButton)
-    $ButtonGrid.Children.Add($UndoButton)
-    $ButtonGrid.Children.Add($RedoButton)
     $ButtonGrid.Children.Add($BackButton)
 
     $PrefixSuffixCenterStackPanel.Children.Add($ButtonGrid)
@@ -783,7 +771,6 @@ function ShowPrefixsuffixWindow {
     $PrefixSuffixWindow.ShowDialog()
 }
 
-
 function showEncryptDecryptWindow {
     param()
     $MainPageWindow.Hide() 
@@ -868,12 +855,13 @@ function showEncryptDecryptWindow {
     $FindTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
     $EncryptionCenterStackPanel.Children.Add($FindTextBox)
 
-    # Buttons for Encrypt, Decrypt, Reset, and Back
+   # Buttons for Encrypt, Decrypt, and Back
     $ButtonGrid = New-Object Windows.Controls.Grid
     $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
     $ButtonGrid.HorizontalAlignment = "Center"
     $ButtonGrid.VerticalAlignment = "Center"
 
+    # Define Rows and Columns
     for ($row = 0; $row -lt 2; $row++) {
         $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
     }
@@ -881,19 +869,22 @@ function showEncryptDecryptWindow {
         $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
     }
 
+    # Encrypt and Decrypt Buttons
     $EncryptButton = Create-StyledButton -Content "Encrypt" -Row 0 -Column 0
     $DecryptButton = Create-StyledButton -Content "Decrypt" -Row 0 -Column 1
-    $ResetButton = Create-StyledButton -Content "Reset" -Row 1 -Column 0
-    $BackButton = Create-StyledButton -Content "Back" -Row 1 -Column 1
 
+    # Back Button - Centered Below Encrypt and Decrypt
+    $BackButton = Create-StyledButton -Content "Back" -Row 1 -Column 0
+    [Windows.Controls.Grid]::SetColumnSpan($BackButton, 2)  # Span both columns to center
+
+    # Add Buttons to Grid
     $ButtonGrid.Children.Add($EncryptButton)
     $ButtonGrid.Children.Add($DecryptButton)
-    $ButtonGrid.Children.Add($ResetButton)
     $ButtonGrid.Children.Add($BackButton)
 
+    # Add the Grid to the Parent Container
     $EncryptionCenterStackPanel.Children.Add($ButtonGrid)
     $EncryptionGrid.Children.Add($EncryptionCenterStackPanel)
-
 
     # Set Grid as content
     $EncryptionWindow.Content = $EncryptionGrid
@@ -1060,7 +1051,7 @@ $ButtonStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
 $BulkRenameButton = Create-Button -Content "Bulk Renaming" -TopMargin 0
 $PrefixSuffixButton = Create-Button -Content "Prefix and Suffix" -TopMargin 10
 $ReplaceButton = Create-Button -Content "Replacing" -TopMargin 10
-$EncryptButton = Create-Button -Content "Encryption" -TopMargin 10
+$EncryptButton = Create-Button -Content "Encryption & Decryption" -TopMargin 10
 
 # Exit Button
 $ExitButton = Create-Button -Content "Exit" -TopMargin 10
