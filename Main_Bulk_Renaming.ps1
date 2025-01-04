@@ -141,6 +141,7 @@ function HandleBulkRenameClick {
     $SelectFilesButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $SelectFilesButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $SelectFilesButton.FontSize = 14
+    $SelectFilesButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $SelectFilesButton.FontWeight = "Bold"
     $CenterStackPanel.Children.Add($SelectFilesButton)
 
@@ -194,6 +195,7 @@ function HandleBulkRenameClick {
     }
 
     $RenameButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
+    $RenameButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
 
     $ButtonGrid.Children.Add($RenameButton)
 
@@ -232,11 +234,23 @@ function HandleBulkRenameClick {
     $BackButton.Width = 100
     $BackButton.Height = 30
     $BackButton.Margin = [Windows.Thickness]::new(0, 1, 0, 0)
-    $BackButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
-    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $BackButton.FontSize = 12
     $BackButton.FontWeight = "Bold"
+    $BackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $BackButton.HorizontalAlignment = "Center"
+
+    # Set the Exit Button's unique style
+    $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
+    $BackButton.BorderThickness = [Windows.Thickness]::new(1)
+
+    # Add a hover effect for the Exit button
+    $BackButton.Add_MouseEnter({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+    })
+    $BackButton.Add_MouseLeave({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
+    })
 
     # Set the "Back" button's position in the grid
     [Windows.Controls.Grid]::SetRow($BackButton, 0)
@@ -386,6 +400,7 @@ function Show-ReplaceWindow {
     $ReplaceSelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $ReplaceSelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceSelectFileButton.FontSize = 14
+    $ReplaceSelectFileButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceSelectFileButton.FontWeight = "Bold"
     $ReplaceCenterStackPanel.Children.Add($ReplaceSelectFileButton)
 
@@ -453,6 +468,7 @@ function Show-ReplaceWindow {
     }
 
     $ReplaceApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
+    $ReplaceApplyButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
 
     $ReplaceButtonGrid.Children.Add($ReplaceApplyButton)
     
@@ -491,11 +507,23 @@ function Show-ReplaceWindow {
     $ReplaceBackButton.Width = 100
     $ReplaceBackButton.Height = 30
     $ReplaceBackButton.Margin = [Windows.Thickness]::new(0, 1, 0, 0)
-    $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
-    $ReplaceBackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceBackButton.FontSize = 12
+    $ReplaceBackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceBackButton.FontWeight = "Bold"
     $ReplaceBackButton.HorizontalAlignment = "Center"
+
+    # Set the Exit Button's unique style
+    $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+    $ReplaceBackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
+    $ReplaceBackButton.BorderThickness = [Windows.Thickness]::new(1)
+
+    # Add a hover effect for the Exit button
+    $ReplaceBackButton.Add_MouseEnter({
+        $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+    })
+    $ReplaceBackButton.Add_MouseLeave({
+        $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
+    })
 
     # Set the "Back" button's position in the grid
     [Windows.Controls.Grid]::SetRow($ReplaceBackButton, 0)
@@ -619,7 +647,6 @@ function ShowPrefixsuffixWindow {
     $PrefixSuffixTitleBorder.CornerRadius = [Windows.CornerRadius]::new(20)
     $PrefixSuffixTitleBorder.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4")
     $PrefixSuffixTitleBorder.BorderThickness = [Windows.Thickness]::new(3)
-
     $PrefixSuffixTitleTextBlock = New-Object Windows.Controls.TextBlock
     $PrefixSuffixTitleTextBlock.Text = "Add Prefix and Suffix"
     $PrefixSuffixTitleTextBlock.FontSize = 24
@@ -646,6 +673,7 @@ function ShowPrefixsuffixWindow {
     $PrefixSuffixSelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $PrefixSuffixSelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $PrefixSuffixSelectFileButton.FontSize = 14
+    $PrefixSuffixSelectFileButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $PrefixSuffixSelectFileButton.FontWeight = "Bold"
     $PrefixSuffixSelectFileButton.Add_Click({
         $dialog = New-Object Windows.Forms.OpenFileDialog
@@ -723,10 +751,26 @@ function ShowPrefixsuffixWindow {
     }
 
     $ApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
+    $ApplyButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
+
     $BackButton = Create-SmallButton -Content "Back" -Row 0 -Column 1
+    $BackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
 
     $ButtonGrid.Children.Add($ApplyButton)
     $ButtonGrid.Children.Add($BackButton)
+
+    # Set the Exit Button's unique style
+    $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
+    $BackButton.BorderThickness = [Windows.Thickness]::new(1)
+
+    # Add a hover effect for the Exit button
+    $BackButton.Add_MouseEnter({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+    })
+    $BackButton.Add_MouseLeave({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
+    })
 
     $PrefixSuffixCenterStackPanel.Children.Add($ButtonGrid)
 
@@ -857,6 +901,7 @@ function showEncryptDecryptWindow {
     $EncryptionTitleBorder.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4")
     $EncryptionTitleBorder.BorderThickness = [Windows.Thickness]::new(3)
 
+    # Encryption Title Text Block
     $EncryptionTitleTextBlock = New-Object Windows.Controls.TextBlock
     $EncryptionTitleTextBlock.Text = "Encryption and Decryption"
     $EncryptionTitleTextBlock.FontSize = 24
@@ -883,6 +928,7 @@ function showEncryptDecryptWindow {
     $SelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $SelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $SelectFileButton.FontSize = 14
+    $SelectFileButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $SelectFileButton.FontWeight = "Bold"
     $EncryptionCenterStackPanel.Children.Add($SelectFileButton)
 
@@ -931,10 +977,28 @@ function showEncryptDecryptWindow {
 
     # Encrypt and Decrypt Buttons
     $EncryptButton = Create-StyledButton -Content "Encrypt" -Row 0 -Column 0
+    $EncryptButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
+
     $DecryptButton = Create-StyledButton -Content "Decrypt" -Row 0 -Column 1
+    $DecryptButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
 
     # Back Button - Centered Below Encrypt and Decrypt
     $BackButton = Create-StyledButton -Content "Back" -Row 1 -Column 0
+
+    # Set the Exit Button's unique style
+    $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
+    $BackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
+    $BackButton.BorderThickness = [Windows.Thickness]::new(1)
+
+    # Add a hover effect for the Exit button
+    $BackButton.Add_MouseEnter({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+    })
+    $BackButton.Add_MouseLeave({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
+    })
+
     [Windows.Controls.Grid]::SetColumnSpan($BackButton, 2)  # Span both columns to center
 
     # Add Buttons to Grid
