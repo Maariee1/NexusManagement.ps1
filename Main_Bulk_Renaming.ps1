@@ -470,7 +470,7 @@ function Show-ReplaceWindow {
     $ReplaceBackButton.Content = "Back"
     $ReplaceBackButton.Width = 100
     $ReplaceBackButton.Height = 30
-    $ReplaceBackButton.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $ReplaceBackButton.Margin = [Windows.Thickness]::new(0, 1, 0, 0)
     $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $ReplaceBackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceBackButton.FontSize = 12
