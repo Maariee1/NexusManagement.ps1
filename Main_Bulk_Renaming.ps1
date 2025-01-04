@@ -543,39 +543,48 @@ function Show-ReplaceWindow {
     $ReplaceApplyButton.Add_Click({
         $patternToFind = $ReplaceTextBox.Text
         $replacementWord = $SubstituteWithTextBox.Text
-
+    
         # Check if any files have been selected
         if ($ReplaceFileListBox.Items.Count -eq 0) {
             Write-Host "Error: Please select a file to rename." -ForegroundColor Red
             [System.Windows.Forms.MessageBox]::Show("Please select files before proceeding.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
-
+    
         if (-not $patternToFind -or -not $replacementWord) {
             Write-Host "Error: Both 'Replace' and 'With' fields must be filled." -ForegroundColor Red
             [System.Windows.Forms.MessageBox]::Show("Both 'Replace' and 'With' fields must be filled.", "Incomplete Fill in Fields", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
-
+    
         $selectedFiles = $ReplaceFileListBox.Items
         $batchOperation = Rename-WithPatternReplacement -selectedFiles $selectedFiles -patternToFind $patternToFind -replacementWord $replacementWord
-
+    
         $undoStack += ,$batchOperation
         $redoStack = @()  # Clear the redo stack since new operations are performed
     
         # Display the renamed files in the OutputTextBox
         $ReplaceOutputTextBox.Text = ""  # Clear previous output
+        $renamedCount = 0  # Initialize renamed count
     
         foreach ($operation in $batchOperation) {
             $originalFileName = [System.IO.Path]::GetFileName($operation.OriginalPath)
             $newFileName = [System.IO.Path]::GetFileName($operation.NewPath)
     
-            # Display the renaming result in the OutputTextBox
-            $ReplaceOutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
+            if ($originalFileName -ne $newFileName) {
+                # Display the renaming result in the OutputTextBox
+                $ReplaceOutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
+                $renamedCount++
+            }
         }
-
-        [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+    
+        if ($renamedCount -gt 0) {
+            [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        } else {
+            [System.Windows.Forms.MessageBox]::Show("No files were renamed. Ensure the 'Replace' word exists in the selected file names.", "No Changes", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        }
     })
+    
 
     $ReplaceWindow.Content = $ReplaceGrid
     $ReplaceWindow.ShowDialog() | Out-Null
