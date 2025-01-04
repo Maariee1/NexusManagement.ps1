@@ -1137,7 +1137,7 @@ $ExitButton.Add_MouseEnter({
     $ExitButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
 })
 $ExitButton.Add_MouseLeave({
-    $ExitButton.Background = (ConvertTo-SolidColorBrush "#1565C0")  # Original color
+    $ExitButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
 })
 
 # Add the Exit button's click event
