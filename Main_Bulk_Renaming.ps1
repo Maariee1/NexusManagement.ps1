@@ -754,10 +754,18 @@ function ShowPrefixsuffixWindow {
         # Get the prefix and suffix values from the textboxes
         $prefix = $PrefixTextBox.Text
         $suffix = $SuffixTextBox.Text
+
+        # Check if any files have been selected
+        if ($PrefixSuffixFileListBox.Items.Count -eq 0) {
+            Write-Host "Error: Please select a file to rename." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Please select files before proceeding.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+            return
+        }
         
         # Ensure both prefix and suffix are entered
         if (-not $prefix -and -not $suffix) {
             Write-Host "Error: Both prefix and suffix cannot be empty." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Both prefix and suffix cannot be empty.", "Incomplete Fill in Fields", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
     
