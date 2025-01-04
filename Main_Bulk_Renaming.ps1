@@ -92,8 +92,8 @@ function HandleBulkRenameClick {
 
     $BulkRenamingWindow = New-Object Windows.Window
     $BulkRenamingWindow.Title = "SHIFTIFY: Bulk Renaming"
-    $BulkRenamingWindow.Height = 650
-    $BulkRenamingWindow.Width = 400
+    $BulkRenamingWindow.Height = 600
+    $BulkRenamingWindow.Width = 500
     $BulkRenamingWindow.WindowStartupLocation = "CenterScreen"
     $BulkRenamingWindow.FontFamily = "Segoe UI"
     $BulkRenamingWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
@@ -324,8 +324,8 @@ function Show-ReplaceWindow {
     # Create the Replace window
     $ReplaceWindow = New-Object Windows.Window
     $ReplaceWindow.Title = "SHIFTIFY: Text Substitution Tool"
-    $ReplaceWindow.Height = 650
-    $ReplaceWindow.Width = 400
+    $ReplaceWindow.Height = 600
+    $ReplaceWindow.Width = 500
     $ReplaceWindow.WindowStartupLocation = "CenterScreen"
     $ReplaceWindow.FontFamily = "Segoe UI"
     $ReplaceWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
@@ -558,8 +558,8 @@ function ShowPrefixsuffixWindow {
     # Create the Prefix-Suffix window
     $PrefixSuffixWindow = New-Object Windows.Window
     $PrefixSuffixWindow.Title = "SHIFTIFY: Prefix and Suffix Tool"
-    $PrefixSuffixWindow.Height = 650
-    $PrefixSuffixWindow.Width = 400
+    $PrefixSuffixWindow.Height = 600
+    $PrefixSuffixWindow.Width = 500
     $PrefixSuffixWindow.WindowStartupLocation = "CenterScreen"
     $PrefixSuffixWindow.FontFamily = "Segoe UI"
     $PrefixSuffixWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
@@ -695,6 +695,7 @@ function ShowPrefixsuffixWindow {
     $RenamedFilesTitle.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
     $PrefixSuffixCenterStackPanel.Children.Add($RenamedFilesTitle)
 
+    # Output Text Box
     $SuffixPrefixOutputTextBox = New-Object Windows.Controls.TextBox
     $SuffixPrefixOutputTextBox.Width = 300
     $SuffixPrefixOutputTextBox.Height = 100
@@ -702,10 +703,12 @@ function ShowPrefixsuffixWindow {
     $SuffixPrefixOutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $SuffixPrefixOutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
     $SuffixPrefixOutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $SuffixPrefixOutputTextBox.BorderThickness = [Windows.Thickness]::new(2)
     $SuffixPrefixOutputTextBox.IsReadOnly = $true
     $SuffixPrefixOutputTextBox.VerticalScrollBarVisibility = "Auto"
     $SuffixPrefixOutputTextBox.HorizontalScrollBarVisibility = "Auto"
     $PrefixSuffixCenterStackPanel.Children.Add($SuffixPrefixOutputTextBox)
+
 
     $PrefixSuffixGrid.Children.Add($PrefixSuffixCenterStackPanel)
 
@@ -777,8 +780,8 @@ function showEncryptDecryptWindow {
 
     $EncryptionWindow = New-Object Windows.Window
     $EncryptionWindow.Title = "SHIFTIFY: Encryption and Decryption Tool"
-    $EncryptionWindow.Height = 650
-    $EncryptionWindow.Width = 400
+    $EncryptionWindow.Height = 600
+    $EncryptionWindow.Width = 500
     $EncryptionWindow.WindowStartupLocation = "CenterScreen"
     $EncryptionWindow.FontFamily = "Segoe UI"
     $EncryptionWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
@@ -1012,7 +1015,7 @@ $form.Size = New-Object System.Drawing.Size(1, 1)
 $MainPageWindow = New-Object Windows.Window
 $MainPageWindow.Title = "SHIFTIFY: Main Page"
 $MainPageWindow.Height = 600
-$MainPageWindow.Width = 400
+$MainPageWindow.Width = 500
 $MainPageWindow.WindowStartupLocation = "CenterScreen"
 $MainPageWindow.FontFamily = "Segoe UI"
 $MainPageWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
