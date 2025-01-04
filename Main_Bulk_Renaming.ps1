@@ -291,7 +291,14 @@ function HandleBulkRenameClick {
     
         # Check if any files have been selected
         if ($FileListBox.Items.Count -eq 0) {
+            Write-Host "Error: Please select a file to rename." -ForegroundColor Red
             [System.Windows.Forms.MessageBox]::Show("Please select files before proceeding.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+            return
+        }
+
+        if ([string]::IsNullOrWhiteSpace($baseName)) {
+            Write-Host "Error: Please enter a base name." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Please enter a base name.", "No Base Name", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
     
@@ -316,6 +323,8 @@ function HandleBulkRenameClick {
             # Display the renaming result in the OutputTextBox
             $OutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
         }
+
+        [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
     })
     # Show the Bulk Renaming window modally
     $BulkRenamingWindow.ShowDialog() | Out-Null
