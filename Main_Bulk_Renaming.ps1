@@ -171,7 +171,7 @@ function HandleBulkRenameClick {
 
     # Basename Text Box
     $BaseNameTextBox = New-Object Windows.Controls.TextBox
-    $BaseNameTextBox.Width = 177
+    $BaseNameTextBox.Width = 170
     $BaseNameTextBox.FontSize = 14
     $BaseNameTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $BaseNameTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -424,7 +424,7 @@ function Show-ReplaceWindow {
 
     # Text Box
     $SubstituteWithTextBox = New-Object Windows.Controls.TextBox
-    $SubstituteWithTextBox.Width = 95
+    $SubstituteWithTextBox.Width = 90
     $SubstituteWithTextBox.FontSize = 14
     $SubstituteWithTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $SubstituteWithTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -652,7 +652,7 @@ function ShowPrefixsuffixWindow {
     $PrefixStackPanel.Children.Add($PrefixLabel)
 
     $PrefixTextBox = New-Object Windows.Controls.TextBox
-    $PrefixTextBox.Width = 220
+    $PrefixTextBox.Width = 210
     $PrefixTextBox.FontSize = 14
     $PrefixTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $PrefixTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -675,7 +675,7 @@ function ShowPrefixsuffixWindow {
     $SuffixStackPanel.Children.Add($SuffixLabel)
 
     $SuffixTextBox = New-Object Windows.Controls.TextBox
-    $SuffixTextBox.Width = 220
+    $SuffixTextBox.Width = 210
     $SuffixTextBox.FontSize = 14
     $SuffixTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $SuffixTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -1055,40 +1055,102 @@ $LogoSource.EndInit()
 # Create an Image Control for the Logo
 $LogoImage = New-Object Windows.Controls.Image
 $LogoImage.Source = $LogoSource
-$LogoImage.Width = 800 # Adjust as needed
-$LogoImage.Height = 320 # Adjust as needed
+$LogoImage.Width = 900 # Adjust as needed
+$LogoImage.Height = 420 # Adjust as needed
 $LogoImage.HorizontalAlignment = "Center"
 $LogoImage.VerticalAlignment = "Top"
-$LogoImage.Margin = [Windows.Thickness]::new(0, -135, 0, 0)
+$LogoImage.Margin = [Windows.Thickness]::new(0, -150, 0, 0)
 
 # Add the Logo to the Main Grid
 $MainGrid.Children.Add($LogoImage) | Out-Null
 
-# Buttons
-$ButtonStackPanel = New-Object Windows.Controls.StackPanel
-$ButtonStackPanel.HorizontalAlignment = "Center"
-$ButtonStackPanel.VerticalAlignment = "Top"
-$ButtonStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
+# Define the button grid
+$ButtonGrid = New-Object Windows.Controls.Grid
+$ButtonGrid.HorizontalAlignment = "Center"
+$ButtonGrid.VerticalAlignment = "Top"
+$ButtonGrid.Margin = [Windows.Thickness]::new(0, 160, 0, 0)
 
-$BulkRenameButton = Create-Button -Content "Bulk Renaming" -TopMargin 0
-$PrefixSuffixButton = Create-Button -Content "Prefix and Suffix" -TopMargin 10
-$ReplaceButton = Create-Button -Content "Replacing" -TopMargin 10
-$EncryptButton = Create-Button -Content "Encryption & Decryption" -TopMargin 10
+# Define rows and columns for the grid
+for ($i = 0; $i -lt 3; $i++) {
+    $RowDefinition = New-Object Windows.Controls.RowDefinition
+    $RowDefinition.Height = "Auto"  # Auto-sized rows
+    $ButtonGrid.RowDefinitions.Add($RowDefinition) | Out-Null
+}
+for ($i = 0; $i -lt 2; $i++) {
+    $ColumnDefinition = New-Object Windows.Controls.ColumnDefinition
+    $ColumnDefinition.Width = "Auto"  # Auto-sized columns
+    $ButtonGrid.ColumnDefinitions.Add($ColumnDefinition) | Out-Null
+}
 
-# Exit Button
-$ExitButton = Create-Button -Content "Exit" -TopMargin 10
+# Create buttons with spacing adjustments
+$BulkRenameButton = Create-Button -Content "Bulk Renaming" -TopMargin 0 -Width 180 -Height 50
+$BulkRenameButton.Margin = [Windows.Thickness]::new(8)  # Add space around the button
+
+$PrefixSuffixButton = Create-Button -Content "Prefix & Suffix" -TopMargin 0 -Width 180 -Height 50
+$PrefixSuffixButton.Margin = [Windows.Thickness]::new(8)
+
+$ReplaceButton = Create-Button -Content "Replacing" -TopMargin 0 -Width 180 -Height 50
+$ReplaceButton.Margin = [Windows.Thickness]::new(8)
+
+$EncryptButton = Create-Button -Content "Encryption & Decryption" -TopMargin 0 -Width 180 -Height 50
+$EncryptButton.Margin = [Windows.Thickness]::new(8)
+
+# Set the grid positions for each button
+$BulkRenameButton.SetValue([Windows.Controls.Grid]::RowProperty, 0)
+$BulkRenameButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 0)
+
+$ReplaceButton.SetValue([Windows.Controls.Grid]::RowProperty, 0)
+$ReplaceButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 1)
+
+$PrefixSuffixButton.SetValue([Windows.Controls.Grid]::RowProperty, 1)
+$PrefixSuffixButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 0)
+
+$EncryptButton.SetValue([Windows.Controls.Grid]::RowProperty, 1)
+$EncryptButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 1)
+
+# Add the buttons to the grid
+$ButtonGrid.Children.Add($BulkRenameButton) | Out-Null
+$ButtonGrid.Children.Add($ReplaceButton) | Out-Null
+$ButtonGrid.Children.Add($PrefixSuffixButton) | Out-Null
+$ButtonGrid.Children.Add($EncryptButton) | Out-Null
+
+# Add the grid to the main grid
+$MainGrid.Children.Add($ButtonGrid) | Out-Null
+
+# Create the Exit Button
+$ExitButton = New-Object Windows.Controls.Button
+$ExitButton.Content = "Exit"
+$ExitButton.Width = 180
+$ExitButton.Height = 50
+$ExitButton.FontSize = 14
+$ExitButton.FontWeight = "Bold"
+$ExitButton.Margin = [Windows.Thickness]::new(8)
+
+# Set the Exit Button's unique style
+$ExitButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+$ExitButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
+$ExitButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")  # Even Darker Blue Border
+$ExitButton.BorderThickness = [Windows.Thickness]::new(2)
+
+# Add a hover effect for the Exit button
+$ExitButton.Add_MouseEnter({
+    $ExitButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+})
+$ExitButton.Add_MouseLeave({
+    $ExitButton.Background = (ConvertTo-SolidColorBrush "#1565C0")  # Original color
+})
+
+# Add the Exit button's click event
 $ExitButton.Add_Click({
     $MainPageWindow.Close()
 })
 
-# Add buttons to the stack panel and suppress output
-$ButtonStackPanel.Children.Add($BulkRenameButton) | Out-Null
-$ButtonStackPanel.Children.Add($ReplaceButton) | Out-Null
-$ButtonStackPanel.Children.Add($PrefixSuffixButton) | Out-Null
-$ButtonStackPanel.Children.Add($EncryptButton) | Out-Null
-$ButtonStackPanel.Children.Add($ExitButton) | Out-Null
+# Set the Exit Button's grid position
+$ExitButton.SetValue([Windows.Controls.Grid]::RowProperty, 2)
+$ExitButton.SetValue([Windows.Controls.Grid]::ColumnSpanProperty, 2)
 
-$MainGrid.Children.Add($ButtonStackPanel) | Out-Null
+# Add the Exit Button to the grid
+$ButtonGrid.Children.Add($ExitButton) | Out-Null
 
 # Button Logic
 $BulkRenameButton.Add_Click({
