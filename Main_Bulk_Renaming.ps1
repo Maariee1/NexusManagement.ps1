@@ -291,7 +291,14 @@ function HandleBulkRenameClick {
     
         # Check if any files have been selected
         if ($FileListBox.Items.Count -eq 0) {
+            Write-Host "Error: Please select a file to rename." -ForegroundColor Red
             [System.Windows.Forms.MessageBox]::Show("Please select files before proceeding.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+            return
+        }
+
+        if ([string]::IsNullOrWhiteSpace($baseName)) {
+            Write-Host "Error: Please enter a base name." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Please enter a base name.", "No Base Name", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
     
@@ -316,6 +323,8 @@ function HandleBulkRenameClick {
             # Display the renaming result in the OutputTextBox
             $OutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
         }
+
+        [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
     })
     # Show the Bulk Renaming window modally
     $BulkRenamingWindow.ShowDialog() | Out-Null
@@ -534,29 +543,48 @@ function Show-ReplaceWindow {
     $ReplaceApplyButton.Add_Click({
         $patternToFind = $ReplaceTextBox.Text
         $replacementWord = $SubstituteWithTextBox.Text
-
-        if (-not $patternToFind -or -not $replacementWord) {
-            Write-Host "Error: Both 'Replace' and 'With' fields must be filled." -ForegroundColor Red
+    
+        # Check if any files have been selected
+        if ($ReplaceFileListBox.Items.Count -eq 0) {
+            Write-Host "Error: Please select a file to rename." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Please select files before proceeding.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
-
+    
+        if (-not $patternToFind -or -not $replacementWord) {
+            Write-Host "Error: Both 'Replace' and 'With' fields must be filled." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Both 'Replace' and 'With' fields must be filled.", "Incomplete Fill in Fields", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+            return
+        }
+    
         $selectedFiles = $ReplaceFileListBox.Items
         $batchOperation = Rename-WithPatternReplacement -selectedFiles $selectedFiles -patternToFind $patternToFind -replacementWord $replacementWord
-
+    
         $undoStack += ,$batchOperation
         $redoStack = @()  # Clear the redo stack since new operations are performed
     
         # Display the renamed files in the OutputTextBox
         $ReplaceOutputTextBox.Text = ""  # Clear previous output
+        $renamedCount = 0  # Initialize renamed count
     
         foreach ($operation in $batchOperation) {
             $originalFileName = [System.IO.Path]::GetFileName($operation.OriginalPath)
             $newFileName = [System.IO.Path]::GetFileName($operation.NewPath)
     
-            # Display the renaming result in the OutputTextBox
-            $ReplaceOutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
+            if ($originalFileName -ne $newFileName) {
+                # Display the renaming result in the OutputTextBox
+                $ReplaceOutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
+                $renamedCount++
+            }
+        }
+    
+        if ($renamedCount -gt 0) {
+            [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        } else {
+            [System.Windows.Forms.MessageBox]::Show("No files were renamed. Ensure the 'Replace' word exists in the selected file names.", "No Changes", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
         }
     })
+    
 
     $ReplaceWindow.Content = $ReplaceGrid
     $ReplaceWindow.ShowDialog() | Out-Null
@@ -735,10 +763,18 @@ function ShowPrefixsuffixWindow {
         # Get the prefix and suffix values from the textboxes
         $prefix = $PrefixTextBox.Text
         $suffix = $SuffixTextBox.Text
+
+        # Check if any files have been selected
+        if ($PrefixSuffixFileListBox.Items.Count -eq 0) {
+            Write-Host "Error: Please select a file to rename." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Please select files before proceeding.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+            return
+        }
         
         # Ensure both prefix and suffix are entered
         if (-not $prefix -and -not $suffix) {
             Write-Host "Error: Both prefix and suffix cannot be empty." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Both prefix and suffix cannot be empty.", "Incomplete Fill in Fields", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
     
@@ -767,6 +803,8 @@ function ShowPrefixsuffixWindow {
             # Display the message in the output TextBox, appending to existing content
             $SuffixPrefixOutputTextBox.AppendText($renamingMessage + "`r`n")
         }
+
+        [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
     })
 
     # Back Button Logic (close the current window and show the MainPageWindow)

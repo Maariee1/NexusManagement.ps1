@@ -1286,8 +1286,6 @@ function CreateDecryptionWindow {
     $startButton.Foreground = New-SolidColorBrush -R 255 -G 255 -B 255 # White
     $startButton.Add_Click({
         $password = if ($outputBox.Visibility -eq "Visible") { $outputBox.Password } else { $outputTextBox.Text }
-        $maxAttempts = 3
-        $currentAttempt = 1
     
         if ([string]::IsNullOrWhiteSpace($inputBox.Text)) {
             Write-Host "Error: Please select a file to decrypt." -ForegroundColor Red
@@ -1314,47 +1312,10 @@ function CreateDecryptionWindow {
                     [System.Windows.MessageBox]::Show("File decrypted successfully!", "Success", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
                     $decryptionWindow.Close()
                     return
-                } else {
-                    $remainingAttempts = $maxAttempts - $currentAttempt
-                    if ($remainingAttempts -gt 0) {
-                        Write-Host "Warning: Incorrect password. $remainingAttempts attempts remaining." -ForegroundColor Yellow
-                        $response = [System.Windows.MessageBox]::Show(
-                            "Incorrect password. $remainingAttempts attempts remaining.`nWould you like to try again?",
-                            "Decryption Failed",
-                            [System.Windows.MessageBoxButton]::YesNo,
-                            [System.Windows.MessageBoxImage]::Warning
-                        )
-    
-                        if ($response -eq [System.Windows.MessageBoxResult]::Yes) {
-                            $currentAttempt++
-                            $password = Read-Host "Enter decryption password"
-                            if ($outputBox.Visibility -eq "Visible") {
-                                $outputBox.Password = $password
-                            } else {
-                                $outputTextBox.Text = $password
-                            }
-                        } else {
-                            Write-Host "Info: User chose not to retry decryption." -ForegroundColor Cyan
-                            $decryptionWindow.Close()
-                            return
-                        }
-                    } else {
-                        Write-Host "Error: Maximum password attempts exceeded. Exiting decryption." -ForegroundColor Red
-                        [System.Windows.MessageBox]::Show(
-                            "Maximum password attempts exceeded. Returning to main menu.",
-                            "Decryption Failed",
-                            [System.Windows.MessageBoxButton]::OK,
-                            [System.Windows.MessageBoxImage]::Error
-                        )
-                        $decryptionWindow.Close()
-                        return
-                    }
                 }
             }
             catch {
-                Write-Host "Error: Failed to decrypt file: $($_.Exception.Message)" -ForegroundColor Red
-                [System.Windows.MessageBox]::Show("Failed to decrypt file: $($_.Exception.Message)", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
-                $decryptionWindow.Close()
+                [System.Windows.MessageBox]::Show("Failed to decrypt file. Try Again!", "Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
                 return
             }
         }
