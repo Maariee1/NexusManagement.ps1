@@ -565,6 +565,8 @@ function Show-ReplaceWindow {
             # Display the renaming result in the OutputTextBox
             $ReplaceOutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
         }
+
+        [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
     })
 
     $ReplaceWindow.Content = $ReplaceGrid
@@ -776,6 +778,8 @@ function ShowPrefixsuffixWindow {
             # Display the message in the output TextBox, appending to existing content
             $SuffixPrefixOutputTextBox.AppendText($renamingMessage + "`r`n")
         }
+
+        [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
     })
 
     # Back Button Logic (close the current window and show the MainPageWindow)
