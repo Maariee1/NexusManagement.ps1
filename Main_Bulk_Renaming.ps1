@@ -54,8 +54,8 @@ function Create-SmallButton {
     return $Button
 }
 
-function Create-Button {
-    param ($Content, $TopMargin, $Width = 200, $Height = 40)
+function Create-Button { #Buttons for main window
+    param ($Content, $TopMargin, $Width = 250, $Height = 55)
     $Button = New-Object Windows.Controls.Button
     $Button.Content = $Content
     $Button.Width = $Width
@@ -1056,10 +1056,10 @@ $LogoSource.EndInit()
 $LogoImage = New-Object Windows.Controls.Image
 $LogoImage.Source = $LogoSource
 $LogoImage.Width = 800 # Adjust as needed
-$LogoImage.Height = 290 # Adjust as needed
+$LogoImage.Height = 320 # Adjust as needed
 $LogoImage.HorizontalAlignment = "Center"
 $LogoImage.VerticalAlignment = "Top"
-$LogoImage.Margin = [Windows.Thickness]::new(0, -115, 0, 0)
+$LogoImage.Margin = [Windows.Thickness]::new(0, -135, 0, 0)
 
 # Add the Logo to the Main Grid
 $MainGrid.Children.Add($LogoImage) | Out-Null
