@@ -1008,7 +1008,6 @@ function showEncryptDecryptWindow {
     $EncryptionWindow.ShowDialog() | Out-Null
 }
 
-
 # Main code for the application window (unchanged)
 $form = New-Object System.Windows.Forms.Form
 $form.TopMost = $true
@@ -1037,7 +1036,7 @@ $MainGrid.VerticalAlignment = "Center"
 # Load the Logo Image
 $LogoSource = New-Object System.Windows.Media.Imaging.BitmapImage
 $LogoSource.BeginInit()
-$LogoSource.UriSource = New-Object System.Uri("Shiftify Logo.png", [System.UriKind]::RelativeOrAbsolute)  
+$LogoSource.UriSource = New-Object System.Uri("Shiftify Logo.png", [System.UriKind]::RelativeOrAbsolute)
 $LogoSource.EndInit()
 
 # Create an Image Control for the Logo
@@ -1063,11 +1062,18 @@ $PrefixSuffixButton = Create-Button -Content "Prefix and Suffix" -TopMargin 10
 $ReplaceButton = Create-Button -Content "Replacing" -TopMargin 10
 $EncryptButton = Create-Button -Content "Encryption" -TopMargin 10
 
+# Exit Button
+$ExitButton = Create-Button -Content "Exit" -TopMargin 10
+$ExitButton.Add_Click({
+    $MainPageWindow.Close()
+})
+
 # Add buttons to the stack panel and suppress output
 $ButtonStackPanel.Children.Add($BulkRenameButton) | Out-Null
 $ButtonStackPanel.Children.Add($ReplaceButton) | Out-Null
 $ButtonStackPanel.Children.Add($PrefixSuffixButton) | Out-Null
 $ButtonStackPanel.Children.Add($EncryptButton) | Out-Null
+$ButtonStackPanel.Children.Add($ExitButton) | Out-Null
 
 $MainGrid.Children.Add($ButtonStackPanel) | Out-Null
 
