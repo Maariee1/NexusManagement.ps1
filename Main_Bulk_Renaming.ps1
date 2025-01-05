@@ -339,7 +339,7 @@ function HandleBulkRenameClick {
         $OutputTextBox.Text = ""  # Clear previous output
     
         $FileListBox.Items.Clear()  # Clear the existing file list
-        
+
         foreach ($operation in $batchOperation) {
             # Extract the file name part only (not the full path)
             $originalFileName = [System.IO.Path]::GetFileName($operation.OriginalPath)
@@ -356,7 +356,6 @@ function HandleBulkRenameClick {
     # Show the Bulk Renaming window modally
     $BulkRenamingWindow.ShowDialog() | Out-Null
 }
-
 function Show-ReplaceWindow {
     param()
     $MainPageWindow.Hide()
@@ -601,13 +600,12 @@ function Show-ReplaceWindow {
         $selectedFiles = $ReplaceFileListBox.Items
         $batchOperation = Rename-WithPatternReplacement -selectedFiles $selectedFiles -patternToFind $patternToFind -replacementWord $replacementWord
     
-        $undoStack += ,$batchOperation
-        $redoStack = @()  # Clear the redo stack since new operations are performed
-    
         # Display the renamed files in the OutputTextBox
         $ReplaceOutputTextBox.Text = ""  # Clear previous output
         $renamedCount = 0  # Initialize renamed count
     
+        $ReplaceFileListBox.Items.Clear()
+
         foreach ($operation in $batchOperation) {
             $originalFileName = [System.IO.Path]::GetFileName($operation.OriginalPath)
             $newFileName = [System.IO.Path]::GetFileName($operation.NewPath)
@@ -616,6 +614,8 @@ function Show-ReplaceWindow {
                 # Display the renaming result in the OutputTextBox
                 $ReplaceOutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
                 $renamedCount++
+
+                $ReplaceFileListBox.Items.Add($operation.Newpath)
             }
         }
     
@@ -846,8 +846,9 @@ function ShowPrefixsuffixWindow {
         
         # Clear the output TextBox (but not the list box)
         $SuffixPrefixOutputTextBox.Clear()
-    
-        # Process each operation in batch
+
+        $PrefixSuffixFileListBox.Items.Clear()
+        
         # Process each operation in batch
         foreach ($operation in $batchOperation) {
             # Extract the old and new filenames from the operation
@@ -859,6 +860,8 @@ function ShowPrefixsuffixWindow {
             
             # Display the message in the output TextBox, appending to existing content
             $SuffixPrefixOutputTextBox.AppendText($renamingMessage + "`r`n")
+
+            $PrefixSuffixFileListBox.Items.Add($operation.NewPath)
         }
 
         [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
