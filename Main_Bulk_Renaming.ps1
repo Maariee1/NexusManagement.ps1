@@ -54,8 +54,8 @@ function Create-SmallButton {
     return $Button
 }
 
-function Create-Button {
-    param ($Content, $TopMargin, $Width = 200, $Height = 40)
+function Create-Button { #Buttons for main window
+    param ($Content, $TopMargin, $Width = 250, $Height = 55)
     $Button = New-Object Windows.Controls.Button
     $Button.Content = $Content
     $Button.Width = $Width
@@ -92,8 +92,8 @@ function HandleBulkRenameClick {
 
     $BulkRenamingWindow = New-Object Windows.Window
     $BulkRenamingWindow.Title = "SHIFTIFY: Bulk Renaming"
-    $BulkRenamingWindow.Height = 650
-    $BulkRenamingWindow.Width = 400
+    $BulkRenamingWindow.Height = 600
+    $BulkRenamingWindow.Width = 500
     $BulkRenamingWindow.WindowStartupLocation = "CenterScreen"
     $BulkRenamingWindow.FontFamily = "Segoe UI"
     $BulkRenamingWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
@@ -126,6 +126,19 @@ function HandleBulkRenameClick {
     $BulkTitleBorder.Child = $BulkTitleTextBlock
     $BulkGrid.Children.Add($BulkTitleBorder)
 
+    # border-radius for buttons
+    # $ReplaceButton = New-Object Windows.Controls.Border
+    # $ReplaceButton.Width = 350
+    # $ReplaceButton.Height = 60
+    # $ReplaceButton.HorizontalAlignment = "Center"
+    # $ReplaceButton.VerticalAlignment = "Top"
+    # $ReplaceButton.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
+    # $ReplaceButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+    # $ReplaceButton.CornerRadius = [Windows.CornerRadius]::new(20)
+    # $ReplaceButton.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4")
+    # $ReplaceButton.BorderThickness = [Windows.Thickness]::new(3)
+    # end
+
     # Center panel for actions and input
     $CenterStackPanel = New-Object Windows.Controls.StackPanel
     $CenterStackPanel.HorizontalAlignment = "Center"
@@ -141,6 +154,7 @@ function HandleBulkRenameClick {
     $SelectFilesButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $SelectFilesButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $SelectFilesButton.FontSize = 14
+    $SelectFilesButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $SelectFilesButton.FontWeight = "Bold"
     $CenterStackPanel.Children.Add($SelectFilesButton)
 
@@ -164,12 +178,14 @@ function HandleBulkRenameClick {
     $BaseNameLabel = New-Object Windows.Controls.TextBlock
     $BaseNameLabel.Text = "Enter Base Name: "
     $BaseNameLabel.FontSize = 14
+    $BaseNameLabel.FontWeight = "Bold"
+    $BaseNameLabel.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $BaseNameLabel.VerticalAlignment = "Center"
     $BaseNamePanel.Children.Add($BaseNameLabel)
 
     # Basename Text Box
     $BaseNameTextBox = New-Object Windows.Controls.TextBox
-    $BaseNameTextBox.Width = 177
+    $BaseNameTextBox.Width = 170
     $BaseNameTextBox.FontSize = 14
     $BaseNameTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $BaseNameTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -183,7 +199,7 @@ function HandleBulkRenameClick {
     $ButtonGrid = New-Object Windows.Controls.Grid
     $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
 
-    # Buttons for Rename, Undo, Redo
+    # Buttons for Apply, Back
     for ($row = 0; $row -lt 2; $row++) {
         $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
     }
@@ -191,13 +207,10 @@ function HandleBulkRenameClick {
         $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
     }
 
-    $RenameButton = Create-SmallButton -Content "Rename" -Row 0 -Column 0
-    $UndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
-    $RedoButton = Create-SmallButton -Content "Redo" -Row 0 -Column 1
+    $RenameButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
+    $RenameButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
 
     $ButtonGrid.Children.Add($RenameButton)
-    $ButtonGrid.Children.Add($UndoButton)
-    $ButtonGrid.Children.Add($RedoButton)
 
     # Add the ButtonGrid to the main StackPanel
     $CenterStackPanel.Children.Add($ButtonGrid)
@@ -206,6 +219,8 @@ function HandleBulkRenameClick {
     $OutputTitle = New-Object Windows.Controls.TextBlock
     $OutputTitle.Text = "Renamed Files:"
     $OutputTitle.FontSize = 14
+    $OutputTitle.FontWeight = "Bold"
+    $OutputTitle.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $OutputTitle.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
     $OutputTitle.HorizontalAlignment = "Center"
     $CenterStackPanel.Children.Add($OutputTitle)
@@ -232,14 +247,26 @@ function HandleBulkRenameClick {
     $BackButton.Width = 100
     $BackButton.Height = 30
     $BackButton.Margin = [Windows.Thickness]::new(0, 1, 0, 0)
-    $BackButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
-    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $BackButton.FontSize = 12
     $BackButton.FontWeight = "Bold"
+    $BackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $BackButton.HorizontalAlignment = "Center"
 
+    # Set the Exit Button's unique style
+    $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
+    $BackButton.BorderThickness = [Windows.Thickness]::new(1)
+
+    # Add a hover effect for the Exit button
+    $BackButton.Add_MouseEnter({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+    })
+    $BackButton.Add_MouseLeave({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
+    })
+
     # Set the "Back" button's position in the grid
-    [Windows.Controls.Grid]::SetRow($BackButton, 1)
+    [Windows.Controls.Grid]::SetRow($BackButton, 0)
     [Windows.Controls.Grid]::SetColumn($BackButton, 1)
 
     # Add the "Back" button to the ButtonGrid
@@ -291,7 +318,14 @@ function HandleBulkRenameClick {
     
         # Check if any files have been selected
         if ($FileListBox.Items.Count -eq 0) {
+            Write-Host "Error: Please select a file to rename." -ForegroundColor Red
             [System.Windows.Forms.MessageBox]::Show("Please select files before proceeding.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+            return
+        }
+
+        if ([string]::IsNullOrWhiteSpace($baseName)) {
+            Write-Host "Error: Please enter a base name." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Please enter a base name.", "No Base Name", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
     
@@ -316,6 +350,8 @@ function HandleBulkRenameClick {
             # Display the renaming result in the OutputTextBox
             $OutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
         }
+
+        [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
     })
     # Show the Bulk Renaming window modally
     $BulkRenamingWindow.ShowDialog() | Out-Null
@@ -328,8 +364,8 @@ function Show-ReplaceWindow {
     # Create the Replace window
     $ReplaceWindow = New-Object Windows.Window
     $ReplaceWindow.Title = "SHIFTIFY: Text Substitution Tool"
-    $ReplaceWindow.Height = 650
-    $ReplaceWindow.Width = 400
+    $ReplaceWindow.Height = 600
+    $ReplaceWindow.Width = 500
     $ReplaceWindow.WindowStartupLocation = "CenterScreen"
     $ReplaceWindow.FontFamily = "Segoe UI"
     $ReplaceWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
@@ -377,6 +413,7 @@ function Show-ReplaceWindow {
     $ReplaceSelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $ReplaceSelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceSelectFileButton.FontSize = 14
+    $ReplaceSelectFileButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceSelectFileButton.FontWeight = "Bold"
     $ReplaceCenterStackPanel.Children.Add($ReplaceSelectFileButton)
 
@@ -400,6 +437,8 @@ function Show-ReplaceWindow {
     $ReplaceLabel = New-Object Windows.Controls.TextBlock
     $ReplaceLabel.Text = "Replace:"
     $ReplaceLabel.FontSize = 14
+    $ReplaceLabel.FontWeight = "Bold"
+    $ReplaceLabel.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceLabel.Margin = [Windows.Thickness]::new(0, 0, 5, 0)
     $ReplaceWithPanel.Children.Add($ReplaceLabel)
 
@@ -411,15 +450,18 @@ function Show-ReplaceWindow {
     $ReplaceTextBox.Margin = [Windows.Thickness]::new(0, 0, 10, 0)
     $ReplaceWithPanel.Children.Add($ReplaceTextBox)
 
-    # Text box and label for "With"
+    # Label for "With"
     $SubstituteWithLabel = New-Object Windows.Controls.TextBlock
     $SubstituteWithLabel.Text = "With:"
     $SubstituteWithLabel.FontSize = 14
+    $SubstituteWithLabel.FontWeight = "Bold"
+    $SubstituteWithLabel.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $SubstituteWithLabel.Margin = [Windows.Thickness]::new(0, 0, 5, 0)
     $ReplaceWithPanel.Children.Add($SubstituteWithLabel)
 
+    # Text Box
     $SubstituteWithTextBox = New-Object Windows.Controls.TextBox
-    $SubstituteWithTextBox.Width = 95
+    $SubstituteWithTextBox.Width = 90
     $SubstituteWithTextBox.FontSize = 14
     $SubstituteWithTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $SubstituteWithTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -427,7 +469,7 @@ function Show-ReplaceWindow {
 
     $ReplaceCenterStackPanel.Children.Add($ReplaceWithPanel)
 
-    # Buttons for Apply, Undo, Redo
+    # Buttons for Apply, Back
     $ReplaceButtonGrid = New-Object Windows.Controls.Grid
     $ReplaceButtonGrid.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
 
@@ -439,12 +481,9 @@ function Show-ReplaceWindow {
     }
 
     $ReplaceApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
-    $ReplaceUndoButton = Create-SmallButton -Content "Undo" -Row 1 -Column 0
-    $ReplaceRedoButton = Create-SmallButton -Content "Redo" -Row 0 -Column 1
+    $ReplaceApplyButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
 
     $ReplaceButtonGrid.Children.Add($ReplaceApplyButton)
-    $ReplaceButtonGrid.Children.Add($ReplaceUndoButton)
-    $ReplaceButtonGrid.Children.Add($ReplaceRedoButton)
     
     # Add the ButtonGrid to the main StackPanel
     $ReplaceCenterStackPanel.Children.Add($ReplaceButtonGrid)
@@ -453,6 +492,8 @@ function Show-ReplaceWindow {
     $OutputTitle = New-Object Windows.Controls.TextBlock
     $OutputTitle.Text = "Renamed Files:"
     $OutputTitle.FontSize = 14
+    $OutputTitle.FontWeight = "Bold"
+    $OutputTitle.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $OutputTitle.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
     $OutputTitle.HorizontalAlignment = "Center"
     $ReplaceCenterStackPanel.Children.Add($OutputTitle)
@@ -478,15 +519,27 @@ function Show-ReplaceWindow {
     $ReplaceBackButton.Content = "Back"
     $ReplaceBackButton.Width = 100
     $ReplaceBackButton.Height = 30
-    $ReplaceBackButton.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
-    $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
-    $ReplaceBackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+    $ReplaceBackButton.Margin = [Windows.Thickness]::new(0, 1, 0, 0)
     $ReplaceBackButton.FontSize = 12
+    $ReplaceBackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceBackButton.FontWeight = "Bold"
     $ReplaceBackButton.HorizontalAlignment = "Center"
 
+    # Set the Exit Button's unique style
+    $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+    $ReplaceBackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
+    $ReplaceBackButton.BorderThickness = [Windows.Thickness]::new(1)
+
+    # Add a hover effect for the Exit button
+    $ReplaceBackButton.Add_MouseEnter({
+        $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+    })
+    $ReplaceBackButton.Add_MouseLeave({
+        $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
+    })
+
     # Set the "Back" button's position in the grid
-    [Windows.Controls.Grid]::SetRow($ReplaceBackButton, 1)
+    [Windows.Controls.Grid]::SetRow($ReplaceBackButton, 0)
     [Windows.Controls.Grid]::SetColumn($ReplaceBackButton, 1)
 
     $ReplaceButtonGrid.Children.Add($ReplaceBackButton)
@@ -531,29 +584,48 @@ function Show-ReplaceWindow {
     $ReplaceApplyButton.Add_Click({
         $patternToFind = $ReplaceTextBox.Text
         $replacementWord = $SubstituteWithTextBox.Text
-
-        if (-not $patternToFind -or -not $replacementWord) {
-            Write-Host "Error: Both 'Replace' and 'With' fields must be filled." -ForegroundColor Red
+    
+        # Check if any files have been selected
+        if ($ReplaceFileListBox.Items.Count -eq 0) {
+            Write-Host "Error: Please select a file to rename." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Please select files before proceeding.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
-
+    
+        if (-not $patternToFind -or -not $replacementWord) {
+            Write-Host "Error: Both 'Replace' and 'With' fields must be filled." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Both 'Replace' and 'With' fields must be filled.", "Incomplete Fill in Fields", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+            return
+        }
+    
         $selectedFiles = $ReplaceFileListBox.Items
         $batchOperation = Rename-WithPatternReplacement -selectedFiles $selectedFiles -patternToFind $patternToFind -replacementWord $replacementWord
-
+    
         $undoStack += ,$batchOperation
         $redoStack = @()  # Clear the redo stack since new operations are performed
     
         # Display the renamed files in the OutputTextBox
         $ReplaceOutputTextBox.Text = ""  # Clear previous output
+        $renamedCount = 0  # Initialize renamed count
     
         foreach ($operation in $batchOperation) {
             $originalFileName = [System.IO.Path]::GetFileName($operation.OriginalPath)
             $newFileName = [System.IO.Path]::GetFileName($operation.NewPath)
     
-            # Display the renaming result in the OutputTextBox
-            $ReplaceOutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
+            if ($originalFileName -ne $newFileName) {
+                # Display the renaming result in the OutputTextBox
+                $ReplaceOutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
+                $renamedCount++
+            }
+        }
+    
+        if ($renamedCount -gt 0) {
+            [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        } else {
+            [System.Windows.Forms.MessageBox]::Show("No files were renamed. Ensure the 'Replace' word exists in the selected file names.", "No Changes", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
         }
     })
+    
 
     $ReplaceWindow.Content = $ReplaceGrid
     $ReplaceWindow.ShowDialog() | Out-Null
@@ -566,8 +638,8 @@ function ShowPrefixsuffixWindow {
     # Create the Prefix-Suffix window
     $PrefixSuffixWindow = New-Object Windows.Window
     $PrefixSuffixWindow.Title = "SHIFTIFY: Prefix and Suffix Tool"
-    $PrefixSuffixWindow.Height = 650
-    $PrefixSuffixWindow.Width = 400
+    $PrefixSuffixWindow.Height = 600
+    $PrefixSuffixWindow.Width = 500
     $PrefixSuffixWindow.WindowStartupLocation = "CenterScreen"
     $PrefixSuffixWindow.FontFamily = "Segoe UI"
     $PrefixSuffixWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
@@ -588,7 +660,6 @@ function ShowPrefixsuffixWindow {
     $PrefixSuffixTitleBorder.CornerRadius = [Windows.CornerRadius]::new(20)
     $PrefixSuffixTitleBorder.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4")
     $PrefixSuffixTitleBorder.BorderThickness = [Windows.Thickness]::new(3)
-
     $PrefixSuffixTitleTextBlock = New-Object Windows.Controls.TextBlock
     $PrefixSuffixTitleTextBlock.Text = "Add Prefix and Suffix"
     $PrefixSuffixTitleTextBlock.FontSize = 24
@@ -615,6 +686,7 @@ function ShowPrefixsuffixWindow {
     $PrefixSuffixSelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $PrefixSuffixSelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $PrefixSuffixSelectFileButton.FontSize = 14
+    $PrefixSuffixSelectFileButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $PrefixSuffixSelectFileButton.FontWeight = "Bold"
     $PrefixSuffixSelectFileButton.Add_Click({
         $dialog = New-Object Windows.Forms.OpenFileDialog
@@ -643,11 +715,13 @@ function ShowPrefixsuffixWindow {
     $PrefixLabel = New-Object Windows.Controls.TextBlock
     $PrefixLabel.Text = "Enter Prefix: "
     $PrefixLabel.FontSize = 14
+    $PrefixLabel.FontWeight = "Bold"
+    $PrefixLabel.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $PrefixLabel.Margin = [Windows.Thickness]::new(0, 0, 5, 0)
     $PrefixStackPanel.Children.Add($PrefixLabel)
 
     $PrefixTextBox = New-Object Windows.Controls.TextBox
-    $PrefixTextBox.Width = 220
+    $PrefixTextBox.Width = 210
     $PrefixTextBox.FontSize = 14
     $PrefixTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $PrefixTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -664,11 +738,13 @@ function ShowPrefixsuffixWindow {
     $SuffixLabel = New-Object Windows.Controls.TextBlock
     $SuffixLabel.Text = "Enter Suffix: "
     $SuffixLabel.FontSize = 14
+    $SuffixLabel.FontWeight = "Bold"
+    $SuffixLabel.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $SuffixLabel.Margin = [Windows.Thickness]::new(0, 0, 5, 0)
     $SuffixStackPanel.Children.Add($SuffixLabel)
 
     $SuffixTextBox = New-Object Windows.Controls.TextBox
-    $SuffixTextBox.Width = 220
+    $SuffixTextBox.Width = 210
     $SuffixTextBox.FontSize = 14
     $SuffixTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $SuffixTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -676,7 +752,7 @@ function ShowPrefixsuffixWindow {
 
     $PrefixSuffixCenterStackPanel.Children.Add($SuffixStackPanel)
 
-    # Buttons for Apply, Undo, Redo, and Back
+    # Buttons for Apply, Back
     $ButtonGrid = New-Object Windows.Controls.Grid
     $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 10)
 
@@ -688,14 +764,26 @@ function ShowPrefixsuffixWindow {
     }
 
     $ApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
-    $UndoButton = Create-SmallButton -Content "Undo" -Row 0 -Column 1
-    $RedoButton = Create-SmallButton -Content "Redo" -Row 1 -Column 0
-    $BackButton = Create-SmallButton -Content "Back" -Row 1 -Column 1
+    $ApplyButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
+
+    $BackButton = Create-SmallButton -Content "Back" -Row 0 -Column 1
+    $BackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
 
     $ButtonGrid.Children.Add($ApplyButton)
-    $ButtonGrid.Children.Add($UndoButton)
-    $ButtonGrid.Children.Add($RedoButton)
     $ButtonGrid.Children.Add($BackButton)
+
+    # Set the Exit Button's unique style
+    $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
+    $BackButton.BorderThickness = [Windows.Thickness]::new(1)
+
+    # Add a hover effect for the Exit button
+    $BackButton.Add_MouseEnter({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+    })
+    $BackButton.Add_MouseLeave({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
+    })
 
     $PrefixSuffixCenterStackPanel.Children.Add($ButtonGrid)
 
@@ -703,10 +791,13 @@ function ShowPrefixsuffixWindow {
     $RenamedFilesTitle = New-Object Windows.Controls.TextBlock
     $RenamedFilesTitle.Text = "Renamed Files:"
     $RenamedFilesTitle.FontSize = 14
+    $RenamedFilesTitle.FontWeight = "Bold"
+    $RenamedFilesTitle.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $RenamedFilesTitle.HorizontalAlignment = "Center"
     $RenamedFilesTitle.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
     $PrefixSuffixCenterStackPanel.Children.Add($RenamedFilesTitle)
 
+    # Output Text Box
     $SuffixPrefixOutputTextBox = New-Object Windows.Controls.TextBox
     $SuffixPrefixOutputTextBox.Width = 300
     $SuffixPrefixOutputTextBox.Height = 100
@@ -714,6 +805,7 @@ function ShowPrefixsuffixWindow {
     $SuffixPrefixOutputTextBox.Background = (ConvertTo-SolidColorBrush "#FFFFFF")
     $SuffixPrefixOutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
     $SuffixPrefixOutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $SuffixPrefixOutputTextBox.BorderThickness = [Windows.Thickness]::new(2)
     $SuffixPrefixOutputTextBox.IsReadOnly = $true
     $SuffixPrefixOutputTextBox.VerticalScrollBarVisibility = "Auto"
     $SuffixPrefixOutputTextBox.HorizontalScrollBarVisibility = "Auto"
@@ -728,10 +820,18 @@ function ShowPrefixsuffixWindow {
         # Get the prefix and suffix values from the textboxes
         $prefix = $PrefixTextBox.Text
         $suffix = $SuffixTextBox.Text
+
+        # Check if any files have been selected
+        if ($PrefixSuffixFileListBox.Items.Count -eq 0) {
+            Write-Host "Error: Please select a file to rename." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Please select files before proceeding.", "No Files Selected", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+            return
+        }
         
         # Ensure both prefix and suffix are entered
         if (-not $prefix -and -not $suffix) {
             Write-Host "Error: Both prefix and suffix cannot be empty." -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show("Both prefix and suffix cannot be empty.", "Incomplete Fill in Fields", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
     
@@ -760,6 +860,8 @@ function ShowPrefixsuffixWindow {
             # Display the message in the output TextBox, appending to existing content
             $SuffixPrefixOutputTextBox.AppendText($renamingMessage + "`r`n")
         }
+
+        [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
     })
 
     # Back Button Logic (close the current window and show the MainPageWindow)
@@ -783,15 +885,14 @@ function ShowPrefixsuffixWindow {
     $PrefixSuffixWindow.ShowDialog()
 }
 
-
 function showEncryptDecryptWindow {
     param()
     $MainPageWindow.Hide() 
 
     $EncryptionWindow = New-Object Windows.Window
     $EncryptionWindow.Title = "SHIFTIFY: Encryption and Decryption Tool"
-    $EncryptionWindow.Height = 650
-    $EncryptionWindow.Width = 400
+    $EncryptionWindow.Height = 600
+    $EncryptionWindow.Width = 500
     $EncryptionWindow.WindowStartupLocation = "CenterScreen"
     $EncryptionWindow.FontFamily = "Segoe UI"
     $EncryptionWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
@@ -800,6 +901,24 @@ function showEncryptDecryptWindow {
 
     # Create a Grid for Encryption Page
     $EncryptionGrid = New-Object Windows.Controls.Grid
+
+    # Load the Logo Image
+    $LogoSource = New-Object System.Windows.Media.Imaging.BitmapImage
+    $LogoSource.BeginInit()
+    $LogoSource.UriSource = New-Object System.Uri("Shiftify Logo.png", [System.UriKind]::RelativeOrAbsolute)
+    $LogoSource.EndInit()
+
+    # Create an Image Control for the Logo
+    $LogoImage = New-Object Windows.Controls.Image
+    $LogoImage.Source = $LogoSource
+    $LogoImage.Width = 500 # Adjust as needed
+    $LogoImage.Height = 200 # Adjust as needed
+    $LogoImage.HorizontalAlignment = "Center"
+    $LogoImage.VerticalAlignment = "Bottom"
+    $LogoImage.Margin = [Windows.Thickness]::new(0, 2, 0, -14)
+
+    # Add the Logo to the Main Grid (or use a DockPanel for more control)
+    $EncryptionGrid.Children.Add($LogoImage)
 
     # Title for Encryption Page
     $EncryptionTitleBorder = New-Object Windows.Controls.Border
@@ -813,6 +932,7 @@ function showEncryptDecryptWindow {
     $EncryptionTitleBorder.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4")
     $EncryptionTitleBorder.BorderThickness = [Windows.Thickness]::new(3)
 
+    # Encryption Title Text Block
     $EncryptionTitleTextBlock = New-Object Windows.Controls.TextBlock
     $EncryptionTitleTextBlock.Text = "Encryption and Decryption"
     $EncryptionTitleTextBlock.FontSize = 24
@@ -839,6 +959,7 @@ function showEncryptDecryptWindow {
     $SelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $SelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $SelectFileButton.FontSize = 14
+    $SelectFileButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $SelectFileButton.FontWeight = "Bold"
     $EncryptionCenterStackPanel.Children.Add($SelectFileButton)
 
@@ -856,10 +977,13 @@ function showEncryptDecryptWindow {
     $FindLabel = New-Object Windows.Controls.TextBlock
     $FindLabel.Text = "Enter secret key: "
     $FindLabel.FontSize = 14
+    $FindLabel.FontWeight = "Bold"
+    $FindLabel.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $FindLabel.Margin = [Windows.Thickness]::new(0, 10, 0, 5)
     $FindLabel.HorizontalAlignment = "Center"
     $EncryptionCenterStackPanel.Children.Add($FindLabel)
 
+    # Text Box for Find
     $FindTextBox = New-Object Windows.Controls.TextBox
     $FindTextBox.Width = 200
     $FindTextBox.FontSize = 14
@@ -868,12 +992,13 @@ function showEncryptDecryptWindow {
     $FindTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
     $EncryptionCenterStackPanel.Children.Add($FindTextBox)
 
-    # Buttons for Encrypt, Decrypt, Reset, and Back
+   # Buttons for Encrypt, Decrypt, and Back
     $ButtonGrid = New-Object Windows.Controls.Grid
     $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
     $ButtonGrid.HorizontalAlignment = "Center"
     $ButtonGrid.VerticalAlignment = "Center"
 
+    # Define Rows and Columns
     for ($row = 0; $row -lt 2; $row++) {
         $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
     }
@@ -881,19 +1006,40 @@ function showEncryptDecryptWindow {
         $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
     }
 
+    # Encrypt and Decrypt Buttons
     $EncryptButton = Create-StyledButton -Content "Encrypt" -Row 0 -Column 0
-    $DecryptButton = Create-StyledButton -Content "Decrypt" -Row 0 -Column 1
-    $ResetButton = Create-StyledButton -Content "Reset" -Row 1 -Column 0
-    $BackButton = Create-StyledButton -Content "Back" -Row 1 -Column 1
+    $EncryptButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
 
+    $DecryptButton = Create-StyledButton -Content "Decrypt" -Row 0 -Column 1
+    $DecryptButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
+
+    # Back Button - Centered Below Encrypt and Decrypt
+    $BackButton = Create-StyledButton -Content "Back" -Row 1 -Column 0
+
+    # Set the Exit Button's unique style
+    $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
+    $BackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
+    $BackButton.BorderThickness = [Windows.Thickness]::new(1)
+
+    # Add a hover effect for the Exit button
+    $BackButton.Add_MouseEnter({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+    })
+    $BackButton.Add_MouseLeave({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
+    })
+
+    [Windows.Controls.Grid]::SetColumnSpan($BackButton, 2)  # Span both columns to center
+
+    # Add Buttons to Grid
     $ButtonGrid.Children.Add($EncryptButton)
     $ButtonGrid.Children.Add($DecryptButton)
-    $ButtonGrid.Children.Add($ResetButton)
     $ButtonGrid.Children.Add($BackButton)
 
+    # Add the Grid to the Parent Container
     $EncryptionCenterStackPanel.Children.Add($ButtonGrid)
     $EncryptionGrid.Children.Add($EncryptionCenterStackPanel)
-
 
     # Set Grid as content
     $EncryptionWindow.Content = $EncryptionGrid
@@ -1008,7 +1154,6 @@ function showEncryptDecryptWindow {
     $EncryptionWindow.ShowDialog() | Out-Null
 }
 
-
 # Main code for the application window (unchanged)
 $form = New-Object System.Windows.Forms.Form
 $form.TopMost = $true
@@ -1022,7 +1167,7 @@ $form.Size = New-Object System.Drawing.Size(1, 1)
 $MainPageWindow = New-Object Windows.Window
 $MainPageWindow.Title = "SHIFTIFY: Main Page"
 $MainPageWindow.Height = 600
-$MainPageWindow.Width = 400
+$MainPageWindow.Width = 500
 $MainPageWindow.WindowStartupLocation = "CenterScreen"
 $MainPageWindow.FontFamily = "Segoe UI"
 $MainPageWindow.Background = (ConvertTo-SolidColorBrush "#E3F2FD")
@@ -1037,39 +1182,108 @@ $MainGrid.VerticalAlignment = "Center"
 # Load the Logo Image
 $LogoSource = New-Object System.Windows.Media.Imaging.BitmapImage
 $LogoSource.BeginInit()
-$LogoSource.UriSource = New-Object System.Uri("Shiftify Logo.png", [System.UriKind]::RelativeOrAbsolute)  
+$LogoSource.UriSource = New-Object System.Uri("Shiftify Logo.png", [System.UriKind]::RelativeOrAbsolute)
 $LogoSource.EndInit()
 
 # Create an Image Control for the Logo
 $LogoImage = New-Object Windows.Controls.Image
 $LogoImage.Source = $LogoSource
-$LogoImage.Width = 800 # Adjust as needed
-$LogoImage.Height = 290 # Adjust as needed
+$LogoImage.Width = 900 # Adjust as needed
+$LogoImage.Height = 420 # Adjust as needed
 $LogoImage.HorizontalAlignment = "Center"
 $LogoImage.VerticalAlignment = "Top"
-$LogoImage.Margin = [Windows.Thickness]::new(0, -115, 0, 0)
+$LogoImage.Margin = [Windows.Thickness]::new(0, -150, 0, 0)
 
 # Add the Logo to the Main Grid
 $MainGrid.Children.Add($LogoImage) | Out-Null
 
-# Buttons
-$ButtonStackPanel = New-Object Windows.Controls.StackPanel
-$ButtonStackPanel.HorizontalAlignment = "Center"
-$ButtonStackPanel.VerticalAlignment = "Top"
-$ButtonStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
+# Define the button grid
+$ButtonGrid = New-Object Windows.Controls.Grid
+$ButtonGrid.HorizontalAlignment = "Center"
+$ButtonGrid.VerticalAlignment = "Top"
+$ButtonGrid.Margin = [Windows.Thickness]::new(0, 160, 0, 0)
 
-$BulkRenameButton = Create-Button -Content "Bulk Renaming" -TopMargin 0
-$PrefixSuffixButton = Create-Button -Content "Prefix and Suffix" -TopMargin 10
-$ReplaceButton = Create-Button -Content "Replacing" -TopMargin 10
-$EncryptButton = Create-Button -Content "Encryption" -TopMargin 10
+# Define rows and columns for the grid
+for ($i = 0; $i -lt 3; $i++) {
+    $RowDefinition = New-Object Windows.Controls.RowDefinition
+    $RowDefinition.Height = "Auto"  # Auto-sized rows
+    $ButtonGrid.RowDefinitions.Add($RowDefinition) | Out-Null
+}
+for ($i = 0; $i -lt 2; $i++) {
+    $ColumnDefinition = New-Object Windows.Controls.ColumnDefinition
+    $ColumnDefinition.Width = "Auto"  # Auto-sized columns
+    $ButtonGrid.ColumnDefinitions.Add($ColumnDefinition) | Out-Null
+}
 
-# Add buttons to the stack panel and suppress output
-$ButtonStackPanel.Children.Add($BulkRenameButton) | Out-Null
-$ButtonStackPanel.Children.Add($ReplaceButton) | Out-Null
-$ButtonStackPanel.Children.Add($PrefixSuffixButton) | Out-Null
-$ButtonStackPanel.Children.Add($EncryptButton) | Out-Null
+# Create buttons with spacing adjustments
+$BulkRenameButton = Create-Button -Content "Bulk Renaming" -TopMargin 0 -Width 180 -Height 50
+$BulkRenameButton.Margin = [Windows.Thickness]::new(8)  # Add space around the button
 
-$MainGrid.Children.Add($ButtonStackPanel) | Out-Null
+$PrefixSuffixButton = Create-Button -Content "Prefix & Suffix" -TopMargin 0 -Width 180 -Height 50
+$PrefixSuffixButton.Margin = [Windows.Thickness]::new(8)
+
+$ReplaceButton = Create-Button -Content "Replacing" -TopMargin 0 -Width 180 -Height 50
+$ReplaceButton.Margin = [Windows.Thickness]::new(8)
+
+$EncryptButton = Create-Button -Content "Encryption & Decryption" -TopMargin 0 -Width 180 -Height 50
+$EncryptButton.Margin = [Windows.Thickness]::new(8)
+
+# Set the grid positions for each button
+$BulkRenameButton.SetValue([Windows.Controls.Grid]::RowProperty, 0)
+$BulkRenameButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 0)
+
+$ReplaceButton.SetValue([Windows.Controls.Grid]::RowProperty, 0)
+$ReplaceButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 1)
+
+$PrefixSuffixButton.SetValue([Windows.Controls.Grid]::RowProperty, 1)
+$PrefixSuffixButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 0)
+
+$EncryptButton.SetValue([Windows.Controls.Grid]::RowProperty, 1)
+$EncryptButton.SetValue([Windows.Controls.Grid]::ColumnProperty, 1)
+
+# Add the buttons to the grid
+$ButtonGrid.Children.Add($BulkRenameButton) | Out-Null
+$ButtonGrid.Children.Add($ReplaceButton) | Out-Null
+$ButtonGrid.Children.Add($PrefixSuffixButton) | Out-Null
+$ButtonGrid.Children.Add($EncryptButton) | Out-Null
+
+# Add the grid to the main grid
+$MainGrid.Children.Add($ButtonGrid) | Out-Null
+
+# Create the Exit Button
+$ExitButton = New-Object Windows.Controls.Button
+$ExitButton.Content = "Exit"
+$ExitButton.Width = 180
+$ExitButton.Height = 50
+$ExitButton.FontSize = 14
+$ExitButton.FontWeight = "Bold"
+$ExitButton.Margin = [Windows.Thickness]::new(8)
+
+# Set the Exit Button's unique style
+$ExitButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+$ExitButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
+$ExitButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")  # Even Darker Blue Border
+$ExitButton.BorderThickness = [Windows.Thickness]::new(2)
+
+# Add a hover effect for the Exit button
+$ExitButton.Add_MouseEnter({
+    $ExitButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+})
+$ExitButton.Add_MouseLeave({
+    $ExitButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
+})
+
+# Add the Exit button's click event
+$ExitButton.Add_Click({
+    $MainPageWindow.Close()
+})
+
+# Set the Exit Button's grid position
+$ExitButton.SetValue([Windows.Controls.Grid]::RowProperty, 2)
+$ExitButton.SetValue([Windows.Controls.Grid]::ColumnSpanProperty, 2)
+
+# Add the Exit Button to the grid
+$ButtonGrid.Children.Add($ExitButton) | Out-Null
 
 # Button Logic
 $BulkRenameButton.Add_Click({
