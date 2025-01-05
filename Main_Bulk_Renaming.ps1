@@ -915,7 +915,7 @@ function showEncryptDecryptWindow {
     $LogoImage.Height = 200 # Adjust as needed
     $LogoImage.HorizontalAlignment = "Center"
     $LogoImage.VerticalAlignment = "Bottom"
-    $LogoImage.Margin = [Windows.Thickness]::new(0, 2, 0, -14)
+    $LogoImage.Margin = [Windows.Thickness]::new(0, 2, 0, -18)
 
     # Add the Logo to the Main Grid (or use a DockPanel for more control)
     $EncryptionGrid.Children.Add($LogoImage)
