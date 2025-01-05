@@ -335,23 +335,23 @@ function HandleBulkRenameClick {
         # Perform the batch renaming operation
         $batchOperation = Rename-WithBaseName -selectedFiles $selectedFiles -baseName $baseName
     
-        # Add the operation to the undo stack (for potential undo functionality)
-        $undoStack += ,$batchOperation
-        $redoStack = @()  # Clear the redo stack since new operations are performed
-    
         # Display the renamed files in the OutputTextBox
         $OutputTextBox.Text = ""  # Clear previous output
     
+        $FileListBox.Items.Clear()  # Clear the existing file list
+        
         foreach ($operation in $batchOperation) {
             # Extract the file name part only (not the full path)
             $originalFileName = [System.IO.Path]::GetFileName($operation.OriginalPath)
             $newFileName = [System.IO.Path]::GetFileName($operation.NewPath)
-    
+
             # Display the renaming result in the OutputTextBox
             $OutputTextBox.Text += "Renamed '$originalFileName' to '$newFileName'`r`n"
-        }
 
-        [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+            # Add the new file path to the FileListBox
+            $FileListBox.Items.Add($operation.NewPath)
+        }
+            [System.Windows.Forms.MessageBox]::Show("All files were successfully renamed.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
     })
     # Show the Bulk Renaming window modally
     $BulkRenamingWindow.ShowDialog() | Out-Null
