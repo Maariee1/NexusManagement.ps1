@@ -198,6 +198,7 @@ function Encrypt-File {
 
     Write-Output "File is encrypted."
     }
+    
     catch {
         throw "Encryption failed: $($_.Exception.Message)"
     }
