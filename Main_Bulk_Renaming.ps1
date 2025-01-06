@@ -1,3 +1,4 @@
+
 # Load necessary components for WPF application
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName System.Windows.Forms
@@ -54,7 +55,7 @@ function Create-SmallButton {
     return $Button
 }
 
-function Create-Button { #Buttons for main window
+function Create-Button { 
     param ($Content, $TopMargin, $Width = 250, $Height = 55)
     $Button = New-Object Windows.Controls.Button
     $Button.Content = $Content
@@ -70,6 +71,32 @@ function Create-Button { #Buttons for main window
     $Button.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $Button.BorderThickness = [Windows.Thickness]::new(2)
 
+    # Define a ControlTemplate with rounded corners
+    $template = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $borderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+    
+    # Set corner radius
+    $borderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(15))  # Rounded corners with radius 15
+    
+    # Set background and border
+    $borderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $Button.Background)
+    $borderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $Button.BorderBrush)
+    $borderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $Button.BorderThickness)
+
+    # ContentPresenter to display button content
+    $contentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $contentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $contentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+    
+    # Add the ContentPresenter to the border
+    $borderFactory.AppendChild($contentPresenterFactory)
+
+    # Set the template's visual tree to the border
+    $template.VisualTree = $borderFactory
+    
+    # Apply the template to the button
+    $Button.Template = $template
+
     # Add hover effect
     $Button.Add_MouseEnter({
         if ($Button -is [System.Windows.Controls.Button]) {
@@ -81,6 +108,7 @@ function Create-Button { #Buttons for main window
             $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9")
         }
     })
+
     return $Button
 }
 
@@ -126,18 +154,6 @@ function HandleBulkRenameClick {
     $BulkTitleBorder.Child = $BulkTitleTextBlock
     $BulkGrid.Children.Add($BulkTitleBorder)
 
-    # border-radius for buttons
-    # $ReplaceButton = New-Object Windows.Controls.Border
-    # $ReplaceButton.Width = 350
-    # $ReplaceButton.Height = 60
-    # $ReplaceButton.HorizontalAlignment = "Center"
-    # $ReplaceButton.VerticalAlignment = "Top"
-    # $ReplaceButton.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
-    # $ReplaceButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
-    # $ReplaceButton.CornerRadius = [Windows.CornerRadius]::new(20)
-    # $ReplaceButton.BorderBrush = (ConvertTo-SolidColorBrush "#4682B4")
-    # $ReplaceButton.BorderThickness = [Windows.Thickness]::new(3)
-    # end
 
     # Center panel for actions and input
     $CenterStackPanel = New-Object Windows.Controls.StackPanel
@@ -151,11 +167,49 @@ function HandleBulkRenameClick {
     $SelectFilesButton.Width = 130
     $SelectFilesButton.Height = 35
     $SelectFilesButton.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+
+    # Set the Button's Base Style (background, font, etc.)
     $SelectFilesButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $SelectFilesButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $SelectFilesButton.FontSize = 14
     $SelectFilesButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $SelectFilesButton.FontWeight = "Bold"
+
+    # Define a ControlTemplate for rounded corners
+    $selectFilesTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $selectFilesBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+
+    # Set the corner radius for rounded corners
+    $selectFilesBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+
+    # Set the background and border for the button
+    $selectFilesBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $SelectFilesButton.Background)
+    $selectFilesBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $SelectFilesButton.BorderBrush)
+    $selectFilesBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $SelectFilesButton.BorderThickness)
+
+    # ContentPresenter to display button content
+    $selectFilesContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $selectFilesContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $selectFilesContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+    # Append ContentPresenter to the border
+    $selectFilesBorderFactory.AppendChild($selectFilesContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $selectFilesTemplate.VisualTree = $selectFilesBorderFactory
+
+    # Apply the ControlTemplate to the button
+    $SelectFilesButton.Template = $selectFilesTemplate
+
+    # Add hover effect for the button (change background color on hover)
+    $SelectFilesButton.Add_MouseEnter({
+        $SelectFilesButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Change to lighter blue on hover
+    })
+    $SelectFilesButton.Add_MouseLeave({
+        $SelectFilesButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Return to original color when mouse leaves
+    })
+
+    # Add the button to the stack panel
     $CenterStackPanel.Children.Add($SelectFilesButton)
 
     # File list box
@@ -198,8 +252,10 @@ function HandleBulkRenameClick {
     # Button Grid
     $ButtonGrid = New-Object Windows.Controls.Grid
     $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
-
+    
     # Buttons for Apply, Back
+
+    # Initialize ButtonGrid for layout
     for ($row = 0; $row -lt 2; $row++) {
         $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
     }
@@ -207,10 +263,102 @@ function HandleBulkRenameClick {
         $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
     }
 
-    $RenameButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
+    # Apply Button (Apply)
+    $RenameButton = New-Object Windows.Controls.Button
+    $RenameButton.Content = "Apply"
+    $RenameButton.Width = 130
+    $RenameButton.Height = 35
+    $RenameButton.Margin = [Windows.Thickness]::new(0, 1, 0, 0)
+    $RenameButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+    $RenameButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+    $RenameButton.FontSize = 14
+    $RenameButton.FontWeight = "Bold"
     $RenameButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
+    $RenameButton.BorderThickness = [Windows.Thickness]::new(1)
 
+    # Define rounded corners for Apply button
+    $RenameButtonTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $RenameButtonBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+    $RenameButtonBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+    $RenameButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $RenameButton.Background)
+    $RenameButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $RenameButton.BorderBrush)
+    $RenameButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $RenameButton.BorderThickness)
+
+    # ContentPresenter to display button content
+    $RenameButtonContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $RenameButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $RenameButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+    # Append ContentPresenter to the border
+    $RenameButtonBorderFactory.AppendChild($RenameButtonContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $RenameButtonTemplate.VisualTree = $RenameButtonBorderFactory
+
+    # Apply the ControlTemplate to the Apply button
+    $RenameButton.Template = $RenameButtonTemplate
+
+    # Hover effect for Apply button
+    $RenameButton.Add_MouseEnter({
+        $RenameButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Lighter blue on hover
+    })
+    $RenameButton.Add_MouseLeave({
+        $RenameButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Original color
+    })
+
+    # Set position in ButtonGrid
+    [Windows.Controls.Grid]::SetRow($RenameButton, 0)
+    [Windows.Controls.Grid]::SetColumn($RenameButton, 0)
     $ButtonGrid.Children.Add($RenameButton)
+
+    # Back Button (Bulk Renaming)
+    $BackButton = New-Object Windows.Controls.Button
+    $BackButton.Content = "Back"
+    $BackButton.Width = 130
+    $BackButton.Height = 35
+    $BackButton.Margin = [Windows.Thickness]::new(0, 1, 0, 0)
+    $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
+    $BackButton.FontSize = 14
+    $BackButton.FontWeight = "Bold"
+    $BackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
+    $BackButton.BorderThickness = [Windows.Thickness]::new(1)
+    $BackButton.HorizontalAlignment = "Center"
+
+    # Define rounded corners for Back button
+    $BackButtonTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $BackButtonBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+    $BackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+    $BackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $BackButton.Background)
+    $BackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $BackButton.BorderBrush)
+    $BackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $BackButton.BorderThickness)
+
+    # ContentPresenter to display button content
+    $BackButtonContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $BackButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $BackButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+    # Append ContentPresenter to the border
+    $BackButtonBorderFactory.AppendChild($BackButtonContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $BackButtonTemplate.VisualTree = $BackButtonBorderFactory
+
+    # Apply the ControlTemplate to the Back button
+    $BackButton.Template = $BackButtonTemplate
+
+    # Hover effect for Back button
+    $BackButton.Add_MouseEnter({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+    })
+    $BackButton.Add_MouseLeave({
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
+    })
+
+    # Set position in ButtonGrid
+    [Windows.Controls.Grid]::SetRow($BackButton, 0)
+    [Windows.Controls.Grid]::SetColumn($BackButton, 1)
+    $ButtonGrid.Children.Add($BackButton)
 
     # Add the ButtonGrid to the main StackPanel
     $CenterStackPanel.Children.Add($ButtonGrid)
@@ -234,53 +382,25 @@ function HandleBulkRenameClick {
     $OutputTextBox.BorderBrush = (ConvertTo-SolidColorBrush "#90CAF9")
     $OutputTextBox.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
     $OutputTextBox.BorderThickness = [Windows.Thickness]::new(2)
-    $OutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only (can't be edited by the user)
+    $OutputTextBox.IsReadOnly = $true  # Makes the TextBox read-only
     $OutputTextBox.VerticalScrollBarVisibility = "Auto"
     $OutputTextBox.HorizontalScrollBarVisibility = "Auto"
 
     # Add the Output TextBox after the ButtonGrid
     $CenterStackPanel.Children.Add($OutputTextBox)
 
-    # Bulk Renaming Back button
-    $BackButton = New-Object Windows.Controls.Button
-    $BackButton.Content = "Back"
-    $BackButton.Width = 100
-    $BackButton.Height = 30
-    $BackButton.Margin = [Windows.Thickness]::new(0, 1, 0, 0)
-    $BackButton.FontSize = 12
-    $BackButton.FontWeight = "Bold"
-    $BackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
-    $BackButton.HorizontalAlignment = "Center"
-
-    # Set the Exit Button's unique style
-    $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
-    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
-    $BackButton.BorderThickness = [Windows.Thickness]::new(1)
-
-    # Add a hover effect for the Exit button
-    $BackButton.Add_MouseEnter({
-        $BackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
-    })
-    $BackButton.Add_MouseLeave({
-        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
-    })
-
-    # Set the "Back" button's position in the grid
-    [Windows.Controls.Grid]::SetRow($BackButton, 0)
-    [Windows.Controls.Grid]::SetColumn($BackButton, 1)
-
-    # Add the "Back" button to the ButtonGrid
-    $ButtonGrid.Children.Add($BackButton)
-    
-    $BulkGrid.Children.Add($CenterStackPanel)
-
-    $BulkRenamingWindow.Content = $BulkGrid
-
     # Back button logic for Bulk Renaming page
     $BackButton.Add_Click({
         $BulkRenamingWindow.Hide()
         $MainPageWindow.ShowDialog() | Out-Null
     })
+
+    # Add the CenterStackPanel to the BulkGrid
+    $BulkGrid.Children.Add($CenterStackPanel)
+
+    # Set the content of the BulkRenamingWindow
+    $BulkRenamingWindow.Content = $BulkGrid
+    
     # File selection logic
     $SelectFilesButton.Add_Click({
         $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
@@ -414,6 +534,42 @@ function Show-ReplaceWindow {
     $ReplaceSelectFileButton.FontSize = 14
     $ReplaceSelectFileButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceSelectFileButton.FontWeight = "Bold"
+
+    # Define a ControlTemplate for rounded corners (same as for $SelectFilesButton)
+    $replaceSelectFilesTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $replaceSelectFilesBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+
+    # Set the corner radius for rounded corners
+    $replaceSelectFilesBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+
+    # Set the background and border for the button
+    $replaceSelectFilesBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $ReplaceSelectFileButton.Background)
+    $replaceSelectFilesBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $ReplaceSelectFileButton.BorderBrush)
+    $replaceSelectFilesBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $ReplaceSelectFileButton.BorderThickness)
+
+    # ContentPresenter to display button content
+    $replaceSelectFilesContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $replaceSelectFilesContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $replaceSelectFilesContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+    # Append ContentPresenter to the border
+    $replaceSelectFilesBorderFactory.AppendChild($replaceSelectFilesContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $replaceSelectFilesTemplate.VisualTree = $replaceSelectFilesBorderFactory
+
+    # Apply the ControlTemplate to the button
+    $ReplaceSelectFileButton.Template = $replaceSelectFilesTemplate
+
+    # Add hover effect for the button (same as for $SelectFilesButton)
+    $ReplaceSelectFileButton.Add_MouseEnter({
+        $ReplaceSelectFileButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Change to lighter blue on hover
+    })
+    $ReplaceSelectFileButton.Add_MouseLeave({
+        $ReplaceSelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Return to original color when mouse leaves
+    })
+
+    # Add the button to the replace stack panel
     $ReplaceCenterStackPanel.Children.Add($ReplaceSelectFileButton)
 
     # File list box
@@ -469,6 +625,7 @@ function Show-ReplaceWindow {
     $ReplaceCenterStackPanel.Children.Add($ReplaceWithPanel)
 
     # Buttons for Apply, Back
+    # Initialize ReplaceButtonGrid for layout
     $ReplaceButtonGrid = New-Object Windows.Controls.Grid
     $ReplaceButtonGrid.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
 
@@ -479,15 +636,107 @@ function Show-ReplaceWindow {
         $ReplaceButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
     }
 
-    $ReplaceApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
+    # Apply Button (Apply)
+    $ReplaceApplyButton = New-Object Windows.Controls.Button
+    $ReplaceApplyButton.Content = "Apply"
+    $ReplaceApplyButton.Width = 130
+    $ReplaceApplyButton.Height = 35
+    $ReplaceApplyButton.Margin = [Windows.Thickness]::new(0, 1, 0, 0)
+    $ReplaceApplyButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
+    $ReplaceApplyButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
+    $ReplaceApplyButton.FontSize = 14
+    $ReplaceApplyButton.FontWeight = "Bold"
     $ReplaceApplyButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
+    $ReplaceApplyButton.BorderThickness = [Windows.Thickness]::new(1)
 
+    # Define rounded corners for Apply button
+    $ReplaceApplyButtonTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $ReplaceApplyButtonBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+    $ReplaceApplyButtonBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+    $ReplaceApplyButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $ReplaceApplyButton.Background)
+    $ReplaceApplyButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $ReplaceApplyButton.BorderBrush)
+    $ReplaceApplyButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $ReplaceApplyButton.BorderThickness)
+
+    # ContentPresenter to display button content
+    $ReplaceApplyButtonContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $ReplaceApplyButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $ReplaceApplyButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+    # Append ContentPresenter to the border
+    $ReplaceApplyButtonBorderFactory.AppendChild($ReplaceApplyButtonContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $ReplaceApplyButtonTemplate.VisualTree = $ReplaceApplyButtonBorderFactory
+
+    # Apply the ControlTemplate to the Apply button
+    $ReplaceApplyButton.Template = $ReplaceApplyButtonTemplate
+
+    # Hover effect for Apply button
+    $ReplaceApplyButton.Add_MouseEnter({
+        $ReplaceApplyButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Lighter blue on hover
+    })
+    $ReplaceApplyButton.Add_MouseLeave({
+        $ReplaceApplyButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Original color
+    })
+
+    # Set position in ReplaceButtonGrid
+    [Windows.Controls.Grid]::SetRow($ReplaceApplyButton, 0)
+    [Windows.Controls.Grid]::SetColumn($ReplaceApplyButton, 0)
     $ReplaceButtonGrid.Children.Add($ReplaceApplyButton)
-    
-    # Add the ButtonGrid to the main StackPanel
+
+    # Back Button (Replace)
+    $ReplaceBackButton = New-Object Windows.Controls.Button
+    $ReplaceBackButton.Content = "Back"
+    $ReplaceBackButton.Width = 130
+    $ReplaceBackButton.Height = 35
+    $ReplaceBackButton.Margin = [Windows.Thickness]::new(0, 1, 0, 0)
+    $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+    $ReplaceBackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
+    $ReplaceBackButton.FontSize = 14
+    $ReplaceBackButton.FontWeight = "Bold"
+    $ReplaceBackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
+    $ReplaceBackButton.BorderThickness = [Windows.Thickness]::new(1)
+    $ReplaceBackButton.HorizontalAlignment = "Center"
+
+    # Define rounded corners for Back button
+    $ReplaceBackButtonTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $ReplaceBackButtonBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+    $ReplaceBackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+    $ReplaceBackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $ReplaceBackButton.Background)
+    $ReplaceBackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $ReplaceBackButton.BorderBrush)
+    $ReplaceBackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $ReplaceBackButton.BorderThickness)
+
+    # ContentPresenter to display button content
+    $ReplaceBackButtonContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $ReplaceBackButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $ReplaceBackButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+    # Append ContentPresenter to the border
+    $ReplaceBackButtonBorderFactory.AppendChild($ReplaceBackButtonContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $ReplaceBackButtonTemplate.VisualTree = $ReplaceBackButtonBorderFactory
+
+    # Apply the ControlTemplate to the Back button
+    $ReplaceBackButton.Template = $ReplaceBackButtonTemplate
+
+    # Hover effect for Back button
+    $ReplaceBackButton.Add_MouseEnter({
+        $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+    })
+    $ReplaceBackButton.Add_MouseLeave({
+        $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
+    })
+
+    # Set position in ReplaceButtonGrid
+    [Windows.Controls.Grid]::SetRow($ReplaceBackButton, 0)
+    [Windows.Controls.Grid]::SetColumn($ReplaceBackButton, 1)
+    $ReplaceButtonGrid.Children.Add($ReplaceBackButton)
+
+    # Add the ReplaceButtonGrid to the main StackPanel
     $ReplaceCenterStackPanel.Children.Add($ReplaceButtonGrid)
 
-    # Title for Output TextBox
+    # Add title for Output TextBox
     $OutputTitle = New-Object Windows.Controls.TextBlock
     $OutputTitle.Text = "Renamed Files:"
     $OutputTitle.FontSize = 14
@@ -513,45 +762,17 @@ function Show-ReplaceWindow {
     # Output TextBox after the ButtonGrid
     $ReplaceCenterStackPanel.Children.Add($ReplaceOutputTextBox)
 
-    # Replace Back button
-    $ReplaceBackButton = New-Object Windows.Controls.Button
-    $ReplaceBackButton.Content = "Back"
-    $ReplaceBackButton.Width = 100
-    $ReplaceBackButton.Height = 30
-    $ReplaceBackButton.Margin = [Windows.Thickness]::new(0, 1, 0, 0)
-    $ReplaceBackButton.FontSize = 12
-    $ReplaceBackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
-    $ReplaceBackButton.FontWeight = "Bold"
-    $ReplaceBackButton.HorizontalAlignment = "Center"
-
-    # Set the Exit Button's unique style
-    $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
-    $ReplaceBackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
-    $ReplaceBackButton.BorderThickness = [Windows.Thickness]::new(1)
-
-    # Add a hover effect for the Exit button
-    $ReplaceBackButton.Add_MouseEnter({
-        $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
-    })
-    $ReplaceBackButton.Add_MouseLeave({
-        $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
-    })
-
-    # Set the "Back" button's position in the grid
-    [Windows.Controls.Grid]::SetRow($ReplaceBackButton, 0)
-    [Windows.Controls.Grid]::SetColumn($ReplaceBackButton, 1)
-
-    $ReplaceButtonGrid.Children.Add($ReplaceBackButton)
-
-    $ReplaceGrid.Children.Add($ReplaceCenterStackPanel)
-
-    $ReplaceWindow.Content = $ReplaceGrid
-
-    #Back button logic
+    # Replace Back button logic
     $ReplaceBackButton.Add_Click({
         $ReplaceWindow.Close()  # Close the current Replace window
         $MainPageWindow.ShowDialog() | Out-Null # Open the main window
     })
+
+    # Add the ReplaceCenterStackPanel to the ReplaceGrid
+    $ReplaceGrid.Children.Add($ReplaceCenterStackPanel)
+
+    # Set the content of the ReplaceWindow
+    $ReplaceWindow.Content = $ReplaceGrid
 
     # Select File logic
     $ReplaceSelectFileButton.Add_Click({
@@ -677,7 +898,7 @@ function ShowPrefixsuffixWindow {
     $PrefixSuffixCenterStackPanel.VerticalAlignment = "Top"
     $PrefixSuffixCenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
 
-    # File selection button
+   # Prefix Suffix Select File button
     $PrefixSuffixSelectFileButton = New-Object Windows.Controls.Button
     $PrefixSuffixSelectFileButton.Content = "Select File"
     $PrefixSuffixSelectFileButton.Width = 130
@@ -688,12 +909,50 @@ function ShowPrefixsuffixWindow {
     $PrefixSuffixSelectFileButton.FontSize = 14
     $PrefixSuffixSelectFileButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $PrefixSuffixSelectFileButton.FontWeight = "Bold"
+
+    # Define a ControlTemplate for rounded corners (same as the previous buttons)
+    $prefixSuffixFilesTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $prefixSuffixFilesBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+
+    # Set the corner radius for rounded corners
+    $prefixSuffixFilesBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+
+    # Set the background and border for the button
+    $prefixSuffixFilesBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $PrefixSuffixSelectFileButton.Background)
+    $prefixSuffixFilesBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $PrefixSuffixSelectFileButton.BorderBrush)
+    $prefixSuffixFilesBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $PrefixSuffixSelectFileButton.BorderThickness)
+
+    # ContentPresenter to display button content
+    $prefixSuffixFilesContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $prefixSuffixFilesContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $prefixSuffixFilesContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+    # Append ContentPresenter to the border
+    $prefixSuffixFilesBorderFactory.AppendChild($prefixSuffixFilesContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $prefixSuffixFilesTemplate.VisualTree = $prefixSuffixFilesBorderFactory
+
+    # Apply the ControlTemplate to the button
+    $PrefixSuffixSelectFileButton.Template = $prefixSuffixFilesTemplate
+
+    # Add hover effect for the button (same as previous buttons)
+    $PrefixSuffixSelectFileButton.Add_MouseEnter({
+        $PrefixSuffixSelectFileButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Change to lighter blue on hover
+    })
+    $PrefixSuffixSelectFileButton.Add_MouseLeave({
+        $PrefixSuffixSelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Return to original color when mouse leaves
+    })
+
+    # Add the click event to open file dialog and add files to the list box
     $PrefixSuffixSelectFileButton.Add_Click({
         $dialog = New-Object Windows.Forms.OpenFileDialog
         $dialog.Multiselect = $true
         $dialog.ShowDialog() | Out-Null
         $dialog.FileNames | ForEach-Object { $PrefixSuffixFileListBox.Items.Add($_) }
     })
+
+    # Add the button to the PrefixSuffixCenterStackPanel
     $PrefixSuffixCenterStackPanel.Children.Add($PrefixSuffixSelectFileButton)
 
     # File list box
@@ -751,10 +1010,11 @@ function ShowPrefixsuffixWindow {
     $SuffixStackPanel.Children.Add($SuffixTextBox)
 
     $PrefixSuffixCenterStackPanel.Children.Add($SuffixStackPanel)
-
+   
     # Buttons for Apply, Back
+    # Initialize ButtonGrid for layout
     $ButtonGrid = New-Object Windows.Controls.Grid
-    $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 10)
+    $ButtonGrid.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
 
     for ($row = 0; $row -lt 2; $row++) {
         $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
@@ -763,21 +1023,68 @@ function ShowPrefixsuffixWindow {
         $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
     }
 
+    # Apply Button (Apply)
     $ApplyButton = Create-SmallButton -Content "Apply" -Row 0 -Column 0
     $ApplyButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
 
+    # Define rounded corners for Apply button
+    $ApplyButtonTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $ApplyButtonBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+    $ApplyButtonBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+    $ApplyButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $ApplyButton.Background)
+    $ApplyButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $ApplyButton.BorderBrush)
+    $ApplyButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $ApplyButton.BorderThickness)
+
+    # ContentPresenter to display button content
+    $ApplyButtonContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $ApplyButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $ApplyButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+    # Append ContentPresenter to the border
+    $ApplyButtonBorderFactory.AppendChild($ApplyButtonContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $ApplyButtonTemplate.VisualTree = $ApplyButtonBorderFactory
+
+    # Apply the ControlTemplate to the Apply button
+    $ApplyButton.Template = $ApplyButtonTemplate
+
+    # Hover effect for Apply button
+    $ApplyButton.Add_MouseEnter({
+        $ApplyButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Lighter blue on hover
+    })
+    $ApplyButton.Add_MouseLeave({
+        $ApplyButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Original color
+    })
+
+    # Back Button (Back)
     $BackButton = Create-SmallButton -Content "Back" -Row 0 -Column 1
     $BackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
+    $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue, like in Replace code
 
-    $ButtonGrid.Children.Add($ApplyButton)
-    $ButtonGrid.Children.Add($BackButton)
+    # Define rounded corners for Back button
+    $BackButtonTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $BackButtonBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+    $BackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+    $BackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $BackButton.Background)
+    $BackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $BackButton.BorderBrush)
+    $BackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $BackButton.BorderThickness)
 
-    # Set the Exit Button's unique style
-    $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
-    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
-    $BackButton.BorderThickness = [Windows.Thickness]::new(1)
+    # ContentPresenter to display button content
+    $BackButtonContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $BackButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $BackButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
 
-    # Add a hover effect for the Exit button
+    # Append ContentPresenter to the border
+    $BackButtonBorderFactory.AppendChild($BackButtonContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $BackButtonTemplate.VisualTree = $BackButtonBorderFactory
+
+    # Apply the ControlTemplate to the Back button
+    $BackButton.Template = $BackButtonTemplate
+
+    # Hover effect for Back button
     $BackButton.Add_MouseEnter({
         $BackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
     })
@@ -785,9 +1092,17 @@ function ShowPrefixsuffixWindow {
         $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
     })
 
+    # Adjusting margin between buttons to match Replace layout
+    $BackButton.Margin = [Windows.Thickness]::new(0, 0, 40, 0)  # Add margin to match the ReplaceButtonGrid spacing
+
+    # Add Buttons to Grid
+    $ButtonGrid.Children.Add($ApplyButton)
+    $ButtonGrid.Children.Add($BackButton)
+
+    # Add Buttons Grid to the PrefixSuffixCenterStackPanel
     $PrefixSuffixCenterStackPanel.Children.Add($ButtonGrid)
 
-    # Add output display box with title
+    # Add title for Renamed Files Output
     $RenamedFilesTitle = New-Object Windows.Controls.TextBlock
     $RenamedFilesTitle.Text = "Renamed Files:"
     $RenamedFilesTitle.FontSize = 14
@@ -797,7 +1112,7 @@ function ShowPrefixsuffixWindow {
     $RenamedFilesTitle.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
     $PrefixSuffixCenterStackPanel.Children.Add($RenamedFilesTitle)
 
-    # Output Text Box
+    # Layout for Output TextBox
     $SuffixPrefixOutputTextBox = New-Object Windows.Controls.TextBox
     $SuffixPrefixOutputTextBox.Width = 300
     $SuffixPrefixOutputTextBox.Height = 100
@@ -811,12 +1126,15 @@ function ShowPrefixsuffixWindow {
     $SuffixPrefixOutputTextBox.HorizontalScrollBarVisibility = "Auto"
     $PrefixSuffixCenterStackPanel.Children.Add($SuffixPrefixOutputTextBox)
 
+    # Add the PrefixSuffixCenterStackPanel to the PrefixSuffixGrid
     $PrefixSuffixGrid.Children.Add($PrefixSuffixCenterStackPanel)
 
     # Set Grid as content
     $PrefixSuffixWindow.Content = $PrefixSuffixGrid
 
+    # Apply Button logic (same as in your original code)
     $ApplyButton.Add_Click({
+
         # Get the prefix and suffix values from the textboxes
         $prefix = $PrefixTextBox.Text
         $suffix = $SuffixTextBox.Text
@@ -834,30 +1152,28 @@ function ShowPrefixsuffixWindow {
             [System.Windows.Forms.MessageBox]::Show("Both prefix and suffix cannot be empty.", "Incomplete Fill in Fields", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
             return
         }
-    
+
         # Get the list of selected files
         $selectedFiles = @()
         foreach ($file in $PrefixSuffixFileListBox.Items) {
             $selectedFiles += $file
         }
-    
+
         # Call the Rename-WithPrefixSuffix function to rename the files
         $batchOperation = Rename-WithPrefixSuffix -selectedFiles $selectedFiles -prefix $prefix -suffix $suffix
-        
+
         # Clear the output TextBox (but not the list box)
         $SuffixPrefixOutputTextBox.Clear()
 
         $PrefixSuffixFileListBox.Items.Clear()
-        
+
         # Process each operation in batch
         foreach ($operation in $batchOperation) {
             # Extract the old and new filenames from the operation
             $originalFileName = [System.IO.Path]::GetFileName($operation.OriginalPath)  # Get original file name
             $newFileName = [System.IO.Path]::GetFileName($operation.NewPath)  # Get new file name
-
             # Format the renaming message
             $renamingMessage = "Renamed '$originalFileName' to '$newFileName'"
-            
             # Display the message in the output TextBox, appending to existing content
             $SuffixPrefixOutputTextBox.AppendText($renamingMessage + "`r`n")
 
@@ -953,7 +1269,7 @@ function showEncryptDecryptWindow {
     $EncryptionCenterStackPanel.VerticalAlignment = "Top"
     $EncryptionCenterStackPanel.Margin = [Windows.Thickness]::new(0, 100, 0, 0)
 
-    # File selection button
+   # File selection button
     $SelectFileButton = New-Object Windows.Controls.Button
     $SelectFileButton.Content = "Select File"
     $SelectFileButton.Width = 150
@@ -964,6 +1280,42 @@ function showEncryptDecryptWindow {
     $SelectFileButton.FontSize = 14
     $SelectFileButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
     $SelectFileButton.FontWeight = "Bold"
+
+    # Define a ControlTemplate for rounded corners (same as previous buttons)
+    $selectFileTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $selectFileBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+
+    # Set the corner radius for rounded corners
+    $selectFileBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+
+    # Set the background and border for the button
+    $selectFileBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $SelectFileButton.Background)
+    $selectFileBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $SelectFileButton.BorderBrush)
+    $selectFileBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $SelectFileButton.BorderThickness)
+
+    # ContentPresenter to display button content
+    $selectFileContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $selectFileContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $selectFileContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+    # Append ContentPresenter to the border
+    $selectFileBorderFactory.AppendChild($selectFileContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $selectFileTemplate.VisualTree = $selectFileBorderFactory
+
+    # Apply the ControlTemplate to the button
+    $SelectFileButton.Template = $selectFileTemplate
+
+    # Add hover effect for the button (same as previous buttons)
+    $SelectFileButton.Add_MouseEnter({
+        $SelectFileButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Change to lighter blue on hover
+    })
+    $SelectFileButton.Add_MouseLeave({
+        $SelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Return to original color when mouse leaves
+    })
+
+    # Add the button to the EncryptionCenterStackPanel
     $EncryptionCenterStackPanel.Children.Add($SelectFileButton)
 
     # File list box
@@ -995,7 +1347,8 @@ function showEncryptDecryptWindow {
     $FindTextBox.Margin = [Windows.Thickness]::new(0, 0, 0, 10)
     $EncryptionCenterStackPanel.Children.Add($FindTextBox)
 
-   # Buttons for Encrypt, Decrypt, and Back
+    # Buttons for Encrypt, Decrypt, and Back
+    # Initialize ButtonGrid for layout
     $ButtonGrid = New-Object Windows.Controls.Grid
     $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
     $ButtonGrid.HorizontalAlignment = "Center"
@@ -1009,25 +1362,102 @@ function showEncryptDecryptWindow {
         $ButtonGrid.ColumnDefinitions.Add([Windows.Controls.ColumnDefinition]::new())
     }
 
-    # Encrypt and Decrypt Buttons
+    # Encrypt Button
     $EncryptButton = Create-StyledButton -Content "Encrypt" -Row 0 -Column 0
     $EncryptButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
 
+    # Define rounded corners for Encrypt button
+    $EncryptButtonTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $EncryptButtonBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+    $EncryptButtonBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+    $EncryptButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $EncryptButton.Background)
+    $EncryptButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $EncryptButton.BorderBrush)
+    $EncryptButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $EncryptButton.BorderThickness)
+
+    # ContentPresenter to display button content
+    $EncryptButtonContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $EncryptButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $EncryptButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+    # Append ContentPresenter to the border
+    $EncryptButtonBorderFactory.AppendChild($EncryptButtonContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $EncryptButtonTemplate.VisualTree = $EncryptButtonBorderFactory
+
+    # Apply the ControlTemplate to the Encrypt button
+    $EncryptButton.Template = $EncryptButtonTemplate
+
+    # Hover effect for Encrypt button
+    $EncryptButton.Add_MouseEnter({
+        $EncryptButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Lighter blue on hover
+    })
+    $EncryptButton.Add_MouseLeave({
+        $EncryptButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Original color
+    })
+
+    # Decrypt Button
     $DecryptButton = Create-StyledButton -Content "Decrypt" -Row 0 -Column 1
     $DecryptButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
 
-    # Back Button - Centered Below Encrypt and Decrypt
+    # Define rounded corners for Decrypt button
+    $DecryptButtonTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $DecryptButtonBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+    $DecryptButtonBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+    $DecryptButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $DecryptButton.Background)
+    $DecryptButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $DecryptButton.BorderBrush)
+    $DecryptButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $DecryptButton.BorderThickness)
+
+    # ContentPresenter to display button content
+    $DecryptButtonContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $DecryptButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $DecryptButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+    # Append ContentPresenter to the border
+    $DecryptButtonBorderFactory.AppendChild($DecryptButtonContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $DecryptButtonTemplate.VisualTree = $DecryptButtonBorderFactory
+
+    # Apply the ControlTemplate to the Decrypt button
+    $DecryptButton.Template = $DecryptButtonTemplate
+
+    # Hover effect for Decrypt button
+    $DecryptButton.Add_MouseEnter({
+        $DecryptButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Lighter blue on hover
+    })
+    $DecryptButton.Add_MouseLeave({
+        $DecryptButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Original color
+    })
+
+    # Back Button (Center Below Encrypt and Decrypt)
     $BackButton = Create-StyledButton -Content "Back" -Row 1 -Column 0
 
-    # Set the Exit Button's unique style
-    $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
-    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
-    $BackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
-    $BackButton.BorderThickness = [Windows.Thickness]::new(1)
+    # Define rounded corners for Back button
+    $BackButtonTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+    $BackButtonBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+    $BackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(10))  # Rounded corners with radius 10
+    $BackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $BackButton.Background)
+    $BackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $BackButton.BorderBrush)
+    $BackButtonBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $BackButton.BorderThickness)
 
-    # Add a hover effect for the Exit button
+    # ContentPresenter to display button content
+    $BackButtonContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+    $BackButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+    $BackButtonContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+    # Append ContentPresenter to the border
+    $BackButtonBorderFactory.AppendChild($BackButtonContentPresenterFactory)
+
+    # Set the visual tree of the button to the border
+    $BackButtonTemplate.VisualTree = $BackButtonBorderFactory
+
+    # Apply the ControlTemplate to the Back button
+    $BackButton.Template = $BackButtonTemplate
+
+    # Hover effect for Back button
     $BackButton.Add_MouseEnter({
-        $BackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
+        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker shade on hover
     })
     $BackButton.Add_MouseLeave({
         $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
@@ -1142,7 +1572,6 @@ function showEncryptDecryptWindow {
         }
     })
     
-
     # Back Button Logic
     $BackButton.Add_Click({
         if ($null -eq $MainPageWindow) {
@@ -1267,6 +1696,32 @@ $ExitButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
 $ExitButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
 $ExitButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")  # Even Darker Blue Border
 $ExitButton.BorderThickness = [Windows.Thickness]::new(2)
+
+# Define a ControlTemplate with rounded corners
+$exitTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
+$exitBorderFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.Border])
+
+# Set corner radius
+$exitBorderFactory.SetValue([System.Windows.Controls.Border]::CornerRadiusProperty, [System.Windows.CornerRadius]::new(15))  # Rounded corners with radius 15
+
+# Set background and border
+$exitBorderFactory.SetValue([System.Windows.Controls.Border]::BackgroundProperty, $ExitButton.Background)
+$exitBorderFactory.SetValue([System.Windows.Controls.Border]::BorderBrushProperty, $ExitButton.BorderBrush)
+$exitBorderFactory.SetValue([System.Windows.Controls.Border]::BorderThicknessProperty, $ExitButton.BorderThickness)
+
+# ContentPresenter to display button content
+$exitContentPresenterFactory = New-Object System.Windows.FrameworkElementFactory([System.Windows.Controls.ContentPresenter])
+$exitContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::HorizontalAlignmentProperty, [System.Windows.HorizontalAlignment]::Center)
+$exitContentPresenterFactory.SetValue([System.Windows.Controls.ContentPresenter]::VerticalAlignmentProperty, [System.Windows.VerticalAlignment]::Center)
+
+# Add the ContentPresenter to the border
+$exitBorderFactory.AppendChild($exitContentPresenterFactory)
+
+# Set the template's visual tree to the border
+$exitTemplate.VisualTree = $exitBorderFactory
+
+# Apply the template to the ExitButton
+$ExitButton.Template = $exitTemplate
 
 # Add a hover effect for the Exit button
 $ExitButton.Add_MouseEnter({
