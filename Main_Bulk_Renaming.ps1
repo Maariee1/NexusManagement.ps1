@@ -166,7 +166,7 @@ function HandleBulkRenameClick {
     $SelectFilesButton.Content = "Select File"
     $SelectFilesButton.Width = 130
     $SelectFilesButton.Height = 35
-    $SelectFilesButton.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $SelectFilesButton.Margin = [Windows.Thickness]::new(0, 10, 0, 10)
 
     # Set the Button's Base Style (background, font, etc.)
     $SelectFilesButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
@@ -528,7 +528,7 @@ function Show-ReplaceWindow {
     $ReplaceSelectFileButton.Content = "Select File"
     $ReplaceSelectFileButton.Width = 130
     $ReplaceSelectFileButton.Height = 35
-    $ReplaceSelectFileButton.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $ReplaceSelectFileButton.Margin = [Windows.Thickness]::new(0, 10, 0, 10)
     $ReplaceSelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $ReplaceSelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $ReplaceSelectFileButton.FontSize = 14
@@ -1014,7 +1014,7 @@ function ShowPrefixsuffixWindow {
     # Buttons for Apply, Back
     # Initialize ButtonGrid for layout
     $ButtonGrid = New-Object Windows.Controls.Grid
-    $ButtonGrid.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $ButtonGrid.Margin = [Windows.Thickness]::new(0, 20, 0, 0)
 
     for ($row = 0; $row -lt 2; $row++) {
         $ButtonGrid.RowDefinitions.Add([Windows.Controls.RowDefinition]::new())
@@ -1056,7 +1056,7 @@ function ShowPrefixsuffixWindow {
     $ApplyButton.Add_MouseLeave({
         $ApplyButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Original color
     })
-
+    
     # Back Button (Back)
     $BackButton = Create-SmallButton -Content "Back" -Row 0 -Column 1
     $BackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
@@ -1093,7 +1093,8 @@ function ShowPrefixsuffixWindow {
     })
 
     # Adjusting margin between buttons to match Replace layout
-    $BackButton.Margin = [Windows.Thickness]::new(0, 0, 40, 0)  # Add margin to match the ReplaceButtonGrid spacing
+    $ApplyButton.Margin = [Windows.Thickness]::new(0, 0, -30, 0)  # Add margin to match the ReplaceButtonGrid spacing
+    $BackButton.Margin = [Windows.Thickness]::new(0, 0, 30, 0)  # Add margin to match the ReplaceButtonGrid spacing
 
     # Add Buttons to Grid
     $ButtonGrid.Children.Add($ApplyButton)
@@ -1234,7 +1235,7 @@ function showEncryptDecryptWindow {
     $LogoImage.Height = 200 # Adjust as needed
     $LogoImage.HorizontalAlignment = "Center"
     $LogoImage.VerticalAlignment = "Bottom"
-    $LogoImage.Margin = [Windows.Thickness]::new(0, 2, 0, -18)
+    $LogoImage.Margin = [Windows.Thickness]::new(0, 2, 0, -22)
 
     # Add the Logo to the Main Grid (or use a DockPanel for more control)
     $EncryptionGrid.Children.Add($LogoImage)
@@ -1274,7 +1275,7 @@ function showEncryptDecryptWindow {
     $SelectFileButton.Content = "Select File"
     $SelectFileButton.Width = 150
     $SelectFileButton.Height = 35
-    $SelectFileButton.Margin = [Windows.Thickness]::new(0, 10, 0, 0)
+    $SelectFileButton.Margin = [Windows.Thickness]::new(0, 10, 0, 10)
     $SelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")
     $SelectFileButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")
     $SelectFileButton.FontSize = 14
@@ -1432,6 +1433,9 @@ function showEncryptDecryptWindow {
 
     # Back Button (Center Below Encrypt and Decrypt)
     $BackButton = Create-StyledButton -Content "Back" -Row 1 -Column 0
+    $BackButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
+    $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker Blue
+    $BackButton.Foreground = (ConvertTo-SolidColorBrush "#0D47A1")  # White Text
 
     # Define rounded corners for Back button
     $BackButtonTemplate = New-Object System.Windows.Controls.ControlTemplate([System.Windows.Controls.Button])
@@ -1762,3 +1766,4 @@ $EncryptButton.Add_Click({
 # Show the main window and suppress output
 $MainPageWindow.Content = $MainGrid
 $MainPageWindow.ShowDialog() | Out-Null
+
