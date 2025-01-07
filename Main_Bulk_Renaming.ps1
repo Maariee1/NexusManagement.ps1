@@ -97,18 +97,6 @@ function Create-Button {
     # Apply the template to the button
     $Button.Template = $template
 
-    # Add hover effect
-    $Button.Add_MouseEnter({
-        if ($Button -is [System.Windows.Controls.Button]) {
-            $Button.Background = (ConvertTo-SolidColorBrush "#64B5F6")
-        }
-    })
-    $Button.Add_MouseLeave({
-        if ($Button -is [System.Windows.Controls.Button]) {
-            $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9")
-        }
-    })
-
     return $Button
 }
 
@@ -201,14 +189,7 @@ function HandleBulkRenameClick {
     # Apply the ControlTemplate to the button
     $SelectFilesButton.Template = $selectFilesTemplate
 
-    # Add hover effect for the button (change background color on hover)
-    $SelectFilesButton.Add_MouseEnter({
-        $SelectFilesButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Change to lighter blue on hover
-    })
-    $SelectFilesButton.Add_MouseLeave({
-        $SelectFilesButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Return to original color when mouse leaves
-    })
-
+   
     # Add the button to the stack panel
     $CenterStackPanel.Children.Add($SelectFilesButton)
 
@@ -298,14 +279,6 @@ function HandleBulkRenameClick {
     # Apply the ControlTemplate to the Apply button
     $RenameButton.Template = $RenameButtonTemplate
 
-    # Hover effect for Apply button
-    $RenameButton.Add_MouseEnter({
-        $RenameButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Lighter blue on hover
-    })
-    $RenameButton.Add_MouseLeave({
-        $RenameButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Original color
-    })
-
     # Set position in ButtonGrid
     [Windows.Controls.Grid]::SetRow($RenameButton, 0)
     [Windows.Controls.Grid]::SetColumn($RenameButton, 0)
@@ -346,14 +319,6 @@ function HandleBulkRenameClick {
 
     # Apply the ControlTemplate to the Back button
     $BackButton.Template = $BackButtonTemplate
-
-    # Hover effect for Back button
-    $BackButton.Add_MouseEnter({
-        $BackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
-    })
-    $BackButton.Add_MouseLeave({
-        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
-    })
 
     # Set position in ButtonGrid
     [Windows.Controls.Grid]::SetRow($BackButton, 0)
@@ -561,14 +526,6 @@ function Show-ReplaceWindow {
     # Apply the ControlTemplate to the button
     $ReplaceSelectFileButton.Template = $replaceSelectFilesTemplate
 
-    # Add hover effect for the button (same as for $SelectFilesButton)
-    $ReplaceSelectFileButton.Add_MouseEnter({
-        $ReplaceSelectFileButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Change to lighter blue on hover
-    })
-    $ReplaceSelectFileButton.Add_MouseLeave({
-        $ReplaceSelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Return to original color when mouse leaves
-    })
-
     # Add the button to the replace stack panel
     $ReplaceCenterStackPanel.Children.Add($ReplaceSelectFileButton)
 
@@ -671,14 +628,6 @@ function Show-ReplaceWindow {
     # Apply the ControlTemplate to the Apply button
     $ReplaceApplyButton.Template = $ReplaceApplyButtonTemplate
 
-    # Hover effect for Apply button
-    $ReplaceApplyButton.Add_MouseEnter({
-        $ReplaceApplyButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Lighter blue on hover
-    })
-    $ReplaceApplyButton.Add_MouseLeave({
-        $ReplaceApplyButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Original color
-    })
-
     # Set position in ReplaceButtonGrid
     [Windows.Controls.Grid]::SetRow($ReplaceApplyButton, 0)
     [Windows.Controls.Grid]::SetColumn($ReplaceApplyButton, 0)
@@ -719,14 +668,6 @@ function Show-ReplaceWindow {
 
     # Apply the ControlTemplate to the Back button
     $ReplaceBackButton.Template = $ReplaceBackButtonTemplate
-
-    # Hover effect for Back button
-    $ReplaceBackButton.Add_MouseEnter({
-        $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
-    })
-    $ReplaceBackButton.Add_MouseLeave({
-        $ReplaceBackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
-    })
 
     # Set position in ReplaceButtonGrid
     [Windows.Controls.Grid]::SetRow($ReplaceBackButton, 0)
@@ -936,14 +877,6 @@ function ShowPrefixsuffixWindow {
     # Apply the ControlTemplate to the button
     $PrefixSuffixSelectFileButton.Template = $prefixSuffixFilesTemplate
 
-    # Add hover effect for the button (same as previous buttons)
-    $PrefixSuffixSelectFileButton.Add_MouseEnter({
-        $PrefixSuffixSelectFileButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Change to lighter blue on hover
-    })
-    $PrefixSuffixSelectFileButton.Add_MouseLeave({
-        $PrefixSuffixSelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Return to original color when mouse leaves
-    })
-
     # Add the click event to open file dialog and add files to the list box
     $PrefixSuffixSelectFileButton.Add_Click({
         $dialog = New-Object Windows.Forms.OpenFileDialog
@@ -1048,14 +981,6 @@ function ShowPrefixsuffixWindow {
 
     # Apply the ControlTemplate to the Apply button
     $ApplyButton.Template = $ApplyButtonTemplate
-
-    # Hover effect for Apply button
-    $ApplyButton.Add_MouseEnter({
-        $ApplyButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Lighter blue on hover
-    })
-    $ApplyButton.Add_MouseLeave({
-        $ApplyButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Original color
-    })
     
     # Back Button (Back)
     $BackButton = Create-SmallButton -Content "Back" -Row 0 -Column 1
@@ -1083,14 +1008,6 @@ function ShowPrefixsuffixWindow {
 
     # Apply the ControlTemplate to the Back button
     $BackButton.Template = $BackButtonTemplate
-
-    # Hover effect for Back button
-    $BackButton.Add_MouseEnter({
-        $BackButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
-    })
-    $BackButton.Add_MouseLeave({
-        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
-    })
 
     # Adjusting margin between buttons to match Replace layout
     $ApplyButton.Margin = [Windows.Thickness]::new(0, 0, -30, 0)  # Add margin to match the ReplaceButtonGrid spacing
@@ -1308,14 +1225,6 @@ function showEncryptDecryptWindow {
     # Apply the ControlTemplate to the button
     $SelectFileButton.Template = $selectFileTemplate
 
-    # Add hover effect for the button (same as previous buttons)
-    $SelectFileButton.Add_MouseEnter({
-        $SelectFileButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Change to lighter blue on hover
-    })
-    $SelectFileButton.Add_MouseLeave({
-        $SelectFileButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Return to original color when mouse leaves
-    })
-
     # Add the button to the EncryptionCenterStackPanel
     $EncryptionCenterStackPanel.Children.Add($SelectFileButton)
 
@@ -1389,14 +1298,6 @@ function showEncryptDecryptWindow {
     # Apply the ControlTemplate to the Encrypt button
     $EncryptButton.Template = $EncryptButtonTemplate
 
-    # Hover effect for Encrypt button
-    $EncryptButton.Add_MouseEnter({
-        $EncryptButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Lighter blue on hover
-    })
-    $EncryptButton.Add_MouseLeave({
-        $EncryptButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Original color
-    })
-
     # Decrypt Button
     $DecryptButton = Create-StyledButton -Content "Decrypt" -Row 0 -Column 1
     $DecryptButton.BorderBrush = (ConvertTo-SolidColorBrush "#0D47A1")
@@ -1422,14 +1323,6 @@ function showEncryptDecryptWindow {
 
     # Apply the ControlTemplate to the Decrypt button
     $DecryptButton.Template = $DecryptButtonTemplate
-
-    # Hover effect for Decrypt button
-    $DecryptButton.Add_MouseEnter({
-        $DecryptButton.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Lighter blue on hover
-    })
-    $DecryptButton.Add_MouseLeave({
-        $DecryptButton.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Original color
-    })
 
     # Back Button (Center Below Encrypt and Decrypt)
     $BackButton = Create-StyledButton -Content "Back" -Row 1 -Column 0
@@ -1458,14 +1351,6 @@ function showEncryptDecryptWindow {
 
     # Apply the ControlTemplate to the Back button
     $BackButton.Template = $BackButtonTemplate
-
-    # Hover effect for Back button
-    $BackButton.Add_MouseEnter({
-        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Darker shade on hover
-    })
-    $BackButton.Add_MouseLeave({
-        $BackButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
-    })
 
     [Windows.Controls.Grid]::SetColumnSpan($BackButton, 2)  # Span both columns to center
 
@@ -1726,14 +1611,6 @@ $exitTemplate.VisualTree = $exitBorderFactory
 
 # Apply the template to the ExitButton
 $ExitButton.Template = $exitTemplate
-
-# Add a hover effect for the Exit button
-$ExitButton.Add_MouseEnter({
-    $ExitButton.Background = (ConvertTo-SolidColorBrush "#0D47A1")  # Darker shade on hover
-})
-$ExitButton.Add_MouseLeave({
-    $ExitButton.Background = (ConvertTo-SolidColorBrush "#6FA8DC")  # Original color
-})
 
 # Add the Exit button's click event
 $ExitButton.Add_Click({
