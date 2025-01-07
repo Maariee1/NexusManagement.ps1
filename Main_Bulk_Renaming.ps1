@@ -55,7 +55,7 @@ function Create-SmallButton {
     return $Button
 }
 
-function Create-Button { 
+function Create-Button { #Buttons for main window
     param ($Content, $TopMargin, $Width = 250, $Height = 55)
     $Button = New-Object Windows.Controls.Button
     $Button.Content = $Content
@@ -97,20 +97,17 @@ function Create-Button {
     # Apply the template to the button
     $Button.Template = $template
 
-    # Add hover effect
+   # Add hover effect
     $Button.Add_MouseEnter({
-        if ($Button -is [System.Windows.Controls.Button]) {
-            $Button.Background = (ConvertTo-SolidColorBrush "#64B5F6")
-        }
-    })
-    $Button.Add_MouseLeave({
-        if ($Button -is [System.Windows.Controls.Button]) {
-            $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9")
-        }
+        $Button.Background = (ConvertTo-SolidColorBrush "#64B5F6")  # Lighter blue on hover
     })
 
-    return $Button
-}
+    $Button.Add_MouseLeave({
+        $Button.Background = (ConvertTo-SolidColorBrush "#90CAF9")  # Original color
+    })
+
+        return $Button
+    }
 
 # Function to handle the bulk rename button click
 function HandleBulkRenameClick {
